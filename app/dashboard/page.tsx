@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/sidebar"
 import { DefaultPage, CheatsPage, GamesPage, VideosPage } from "@/app/components/pages"
 
-const PAGES: Record<string, { component: React.ComponentType; label: string }> = {
+type PageProps = { onSelectPage?: (pageId: string) => void }
+
+const PAGES: Record<string, { component: React.ComponentType<PageProps>; label: string }> = {
   default: { component: DefaultPage, label: "Home" },
   content: { component: DefaultPage, label: "Content" },
-  cheats: { component: CheatsPage, label: "Cheats" },
-  games: { component: GamesPage, label: "Games" },
-  videos: { component: VideosPage, label: "Vidéos" },
+  cheats: { component: CheatsPage as React.ComponentType<PageProps>, label: "Cheats" },
+  games: { component: GamesPage as React.ComponentType<PageProps>, label: "Games" },
+  videos: { component: VideosPage as React.ComponentType<PageProps>, label: "Videos" },
   misc: { component: DefaultPage, label: "Misc." },
 }
 
@@ -56,7 +58,7 @@ export default function Dashboard() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Page />
+          <Page onSelectPage={setCurrentPage} />
         </div>
       </SidebarInset>
     </SidebarProvider>

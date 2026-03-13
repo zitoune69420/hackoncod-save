@@ -9,7 +9,7 @@ export function SearchBar({
   value,
   onChange,
   onSearch,
-  placeholder = "Rechercher...",
+  placeholder = "Search...",
 }: {
   value: string
   onChange: (value: string) => void

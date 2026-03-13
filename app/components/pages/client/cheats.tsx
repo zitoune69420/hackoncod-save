@@ -19,7 +19,7 @@ export type CheatRow = {
 }
 
 const CHEATS_COLUMNS = [
-  { key: "name" as const, label: "Nom" },
+  { key: "name" as const, label: "Name" },
   { key: "mode" as const, label: "Mode" },
   { key: "extension" as const, label: "Extension" },
   {
@@ -50,16 +50,16 @@ const CHEATS_COLUMNS = [
         {row.link ? (
           <Button size="sm" variant="default" asChild>
             <a href={row.link} target="_blank">
-              Télécharger
+              Download
             </a>
           </Button>
         ) : (
           <Button size="sm" variant="default" disabled>
-            Télécharger
+            Download
           </Button>
         )}
         <Button size="sm" variant="outline">
-          Signaler
+          Report
         </Button>
       </div>
     ),

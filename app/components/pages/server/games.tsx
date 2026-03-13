@@ -75,11 +75,11 @@ export function GamesPage() {
         <p className="text-sm text-muted-foreground">Find your favorite games</p>
       </div>
       <div className="flex justify-between">
-        <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder="Name, mode, extension..." />
+        <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder="Title, description..." />
 
         <Button variant="outline" onClick={handleRefresh} className="mr-2">
           <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          Actualiser
+          Refresh
         </Button>
       </div>
       {loading ? (

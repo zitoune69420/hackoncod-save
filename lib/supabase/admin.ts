@@ -1,7 +1,7 @@
 /**
- * Client Supabase avec la clé service_role.
- * Contourne RLS - à utiliser UNIQUEMENT côté serveur (API routes, Server Components).
- * Ne jamais exposer SUPABASE_SERVICE_ROLE_KEY au client.
+ * Supabase client with service_role key.
+ * Bypasses RLS - use ONLY server-side (API routes, Server Components).
+ * Never expose SUPABASE_SERVICE_ROLE_KEY to the client.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
@@ -15,8 +15,8 @@ export function createAdminClient(): SupabaseClient {
 
   if (!url || !key) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY manquant dans .env.local. " +
-        "Récupère-le dans Supabase > Project Settings > API > service_role (secret)."
+      "SUPABASE_SERVICE_ROLE_KEY missing in .env.local. " +
+        "Get it from Supabase > Project Settings > API > service_role (secret)."
     )
   }
 

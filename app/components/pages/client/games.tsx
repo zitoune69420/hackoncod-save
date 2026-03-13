@@ -14,7 +14,7 @@ export type GameRow = {
 }
 
 const GAMES_COLUMNS = [
-  { key: "title" as const, label: "Titre" },
+  { key: "title" as const, label: "Title" },
   {
     key: "description" as const,
     label: "Description",
@@ -43,12 +43,12 @@ const GAMES_COLUMNS = [
         {row.link ? (
           <Button size="sm" variant="default" asChild>
             <a href={row.link} target="_blank" rel="noopener noreferrer">
-              Télécharger
+              Download
             </a>
           </Button>
         ) : (
           <Button size="sm" variant="default" disabled>
-            Télécharger
+            Download
           </Button>
         )}
         {row.client ? (

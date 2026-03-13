@@ -1,12 +1,12 @@
 /**
- * Cache persistant (localStorage + mémoire) pour les données fetchées.
- * - Survit au reload de la page.
- * - Expiration après 3 jours.
- * - Le bouton "Actualiser" supprime l'entrée puis refetch.
+ * Persistent cache (localStorage + memory) for fetched data.
+ * - Survives page reload.
+ * - Expires after 3 days.
+ * - "Refresh" button deletes entry then refetches.
  */
 
 const PREFIX = "hackoncod_cache:"
-const TTL_MS = 3 * 24 * 60 * 60 * 1000 // 3 jours
+const TTL_MS = 3 * 24 * 60 * 60 * 1000 // 3 days
 const memory = new Map<string, { value: unknown; expiresAt: number }>()
 
 function storageKey(key: string) {

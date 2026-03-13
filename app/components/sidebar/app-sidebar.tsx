@@ -37,7 +37,7 @@ const data = {
         <HugeiconsIcon icon={UserGroup02Icon} strokeWidth={2} />
       ),
       items: [
-        { title: "Vidéos", pageId: "videos" },
+        { title: "Videos", pageId: "videos" },
         { title: "Reviews", pageId: "content" },
         { title: "Forum", pageId: "content" },
       ],

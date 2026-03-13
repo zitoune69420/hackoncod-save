@@ -83,7 +83,7 @@ export function CheatsPage() {
         <div className="flex">
           <Button variant="outline" onClick={handleRefresh} className="mr-2">
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            Actualiser
+            Refresh
           </Button>
           <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder="Name, mode, extension..." />
         </div>

@@ -21,7 +21,7 @@ async function fetchVideos(): Promise<VideoRow[]> {
   const res = await fetch("/api/videos")
   const json = await res.json()
   if (!res.ok) {
-    throw new Error(json?.error ?? `Erreur ${res.status}`)
+    throw new Error(json?.error ?? `Error ${res.status}`)
   }
   return Array.isArray(json) ? json : []
 }
@@ -138,19 +138,19 @@ export function VideosPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Vidéos</h1>
-          <p className="text-sm text-muted-foreground">Découvrez nos tutoriels et contenus vidéo</p>
+          <h1 className="text-2xl font-semibold">Videos</h1>
+          <p className="text-sm text-muted-foreground">Discover our tutorials and video content</p>
         </div>
         <div className="flex gap-2">
           <SearchBar
             value={search}
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
-            placeholder="Titre, description..."
+            placeholder="Title, description..."
           />
           <Button variant="outline" onClick={handleRefresh}>
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            Actualiser
+            Refresh
           </Button>
         </div>
       </div>
