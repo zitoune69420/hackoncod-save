@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -57,6 +57,14 @@ const activityChartConfig = {
 const topGamesChartConfig = {
   downloads: { label: "Downloads", color: "hsl(var(--primary))" },
 } satisfies ChartConfig
+
+const TOP_GAMES_COLORS = [
+  "hsl(0 0% 15%)",   // noir
+  "hsl(0 0% 30%)",
+  "hsl(0 0% 45%)",
+  "hsl(0 0% 60%)",
+  "hsl(0 0% 75%)",   // gris clair
+]
 
 const SECTIONS = [
   {
@@ -184,7 +192,11 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
                   width={100}
                 />
                 <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
-                <Bar dataKey="downloads" fill="var(--color-downloads)" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="downloads" radius={[0, 12, 12, 0]}>
+                  {TOP_GAMES_DATA.map((_, index) => (
+                    <Cell key={index} fill={TOP_GAMES_COLORS[index]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>

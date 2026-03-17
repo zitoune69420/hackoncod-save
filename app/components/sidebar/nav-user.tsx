@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   Avatar,
   AvatarFallback,
@@ -22,6 +23,8 @@ import {
 } from "@/components/ui/sidebar"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, SparklesIcon, CheckmarkBadgeIcon, CreditCardIcon, NotificationIcon, LogoutIcon, DiscordIcon, Setting07Icon } from "@hugeicons/core-free-icons"
+import { SettingsModal } from "@/app/components/settings-modal"
+import Link from "next/link"
 
 export function NavUser({
   user,
@@ -33,21 +36,28 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
 
   return (
     <SidebarMenu>
+      <Link href="https://discord.gg/hackoncod">
+        <SidebarMenuItem>
+            <SidebarMenuButton className="pl-4">
+              <HugeiconsIcon icon={DiscordIcon} strokeWidth={2} />
+              <span>Discord</span>
+            </SidebarMenuButton>
+        </SidebarMenuItem>
+      </Link>
       <SidebarMenuItem>
-          <SidebarMenuButton className="pl-4">
-            <HugeiconsIcon icon={DiscordIcon} strokeWidth={2} />
-            <span>Discord</span>
-          </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-          <SidebarMenuButton className="pl-4">
+          <SidebarMenuButton
+            className="pl-4"
+            onClick={() => setSettingsOpen(true)}
+          >
             <HugeiconsIcon icon={Setting07Icon} strokeWidth={2} />
             <span>Settings</span>
           </SidebarMenuButton>
       </SidebarMenuItem>
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

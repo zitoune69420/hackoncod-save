@@ -28,8 +28,8 @@ async function fetchVideos(): Promise<VideoRow[]> {
 
 function VideoCard({ video }: { video: VideoRow }) {
   const content = (
-    <div className="group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-colors hover:bg-muted/50">
-      <div className="relative aspect-video w-full overflow-hidden bg-muted">
+    <div className="group flex h-full flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-colors hover:bg-muted/50">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-muted">
         {video.image ? (
           <Image
             src={video.image}
@@ -50,27 +50,25 @@ function VideoCard({ video }: { video: VideoRow }) {
           </div>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex min-h-[88px] flex-1 flex-col justify-between gap-2 p-4">
         <div className="flex items-start gap-2">
           <HugeiconsIcon icon={Video01Icon} className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2} />
           <h3 className="line-clamp-2 font-semibold">{video.title}</h3>
         </div>
-        {video.description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{video.description}</p>
-        )}
+        <p className="line-clamp-2 text-sm text-muted-foreground">{video.description || "\u00A0"}</p>
       </div>
     </div>
   )
 
   if (video.link) {
     return (
-      <a href={video.link} target="_blank" rel="noopener noreferrer" className="block">
+      <a href={video.link} target="_blank" rel="noopener noreferrer" className="block h-full">
         {content}
       </a>
     )
   }
 
-  return content
+  return <div className="h-full">{content}</div>
 }
 
 export function VideosPage() {

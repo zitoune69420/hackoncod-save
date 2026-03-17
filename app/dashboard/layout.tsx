@@ -1,0 +1,226 @@
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import "@/app/globals.css";
+import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+    title: "Hack on COD - Dashboard",
+    description: "Hack on COD - La meilleure plateforme de cheats pour Call of Duty",
+    keywords: [
+
+        /* Core franchise */
+        "call of duty",
+        "cod",
+        "cod game",
+        "call of duty hacks",
+        "call of duty cheats",
+        "cod cheat",
+        "cod hacks",
+        
+        /* Cheat types */
+        "cod aimbot",
+        "cod silent aimbot",
+        "cod legit aimbot",
+        "cod rage aimbot",
+        "cod triggerbot",
+        "cod wallhack",
+        "cod esp",
+        "cod radar hack",
+        "cod no recoil hack",
+        "cod no spread hack",
+        "cod unlock tool",
+        "cod unlock all",
+        "cod unlock all tool",
+        "cod camo unlock tool",
+        "cod unlock all skins",
+        "cod unlock all weapons",
+        "cod unlock all camos",
+        "cod unlock operator skins",
+        
+        /* Cheat safety / detection queries */
+        "undetected cod cheats",
+        "cod undetected cheat",
+        "cod safe cheat",
+        "cod private cheat",
+        "cod external cheat",
+        "cod internal cheat",
+        "cod bypass anti cheat",
+        "cod cheat spoofer",
+        "cod hwid spoofer",
+        
+        /* Downloads / intent */
+        "download cod cheats",
+        "cod cheat download",
+        "free cod cheats",
+        "free cod hack",
+        "cod hacks free download",
+        "cod mod menu download",
+        "cod cheat injector",
+        "cod cheat loader",
+        "cod cheat tool",
+        
+        /* Warzone */
+        "warzone cheats",
+        "warzone hacks",
+        "warzone aimbot",
+        "warzone esp",
+        "warzone wallhack",
+        "warzone unlock tool",
+        "free warzone hacks",
+        "undetected warzone cheats",
+        
+        /* Multiplayer / modes */
+        "cod multiplayer hacks",
+        "cod zombies hacks",
+        "cod campaign mods",
+        "cod mod menu multiplayer",
+        "cod zombie mod menu",
+        
+        /* Games — historical */
+        "cod bo1",
+        "cod bo2",
+        "cod bo3",
+        "cod bo4",
+        "cod bo5",
+        "cod bo6",
+        "cod bocw",
+        "black ops 1 hacks",
+        "black ops 2 hacks",
+        "black ops 3 hacks",
+        "black ops 4 hacks",
+        "black ops cold war hacks",
+        
+        /* Modern titles */
+        "modern warfare hacks",
+        "modern warfare 2 hacks",
+        "modern warfare 3 hacks",
+        "mw2 cheats",
+        "mw3 cheats",
+        
+        /* Latest titles */
+        "black ops 6 hacks",
+        "black ops 6 cheats",
+        "bo6 cheat",
+        "bo6 unlock tool",
+        "bo6 aimbot",
+        "bo6 esp",
+        
+        "black ops 7 hacks",
+        "black ops 7 cheats",
+        "bo7 cheat",
+        "bo7 unlock tool",
+        "bo7 aimbot",
+        "bo7 esp",
+        
+        /* Formatting variants (SEO capture) */
+        "blackops6 hacks",
+        "blackops7 hacks",
+        "blackops coldwar cheats",
+        
+        /* Feature keywords */
+        "cod mod menu",
+        "cod game mods",
+        "cod modding tools",
+        "cod cheat forum",
+        "cod cheat community",
+        "cod private cheat forum",
+        
+        /* Cheat features */
+        "silent aim cod",
+        "magic bullet cod",
+        "cod zoomhack",
+        "cod radar cheat",
+        "cod esp box",
+        "cod player esp",
+        "cod item esp",
+        "cod bone esp",
+        
+        /* Platform queries */
+        "cod cheats pc",
+        "cod cheats windows",
+        "cod hacks steam",
+        "cod hacks battlenet",
+        
+        /* Temporal queries */
+        "cod cheats 2025",
+        "cod cheats 2026",
+        "cod unlock all 2025",
+        "cod unlock all 2026"
+        
+    ],
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: "/apple-touch-icon.png",
+    },
+    openGraph: {
+      title: "Hack on COD | Free COD Hacks, Aimbots & Unlock Tools (2025)",
+      description: "Top-tier cheats for Warzone & Black Ops – undetected, free and safe. Download now!",
+      url: "https://hackoncod.com",
+      siteName: "Hack on COD",
+      images: [
+        {
+          url: "https://i.imgur.com/Uf4wFTq.png",
+          width: 1200,
+          height: 630,
+          alt: "Hack on COD",
+        },
+      ],
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Hack on COD | Free COD Hacks, Aimbots & Unlock Tools (2025)",
+      description: "Download top-tier COD cheats, unlock all camos & weapons, and stay undetected in Warzone, Black Ops, and more.",
+      images: "https://i.imgur.com/Uf4wFTq.png",
+    },
+    robots: {
+      index: true,
+      follow: true,
+      nocache: true,
+      googleBot: {
+        index: true,
+        follow: true,
+      },
+    },
+    viewport: "width=device-width, initial-scale=1.0",
+    themeColor: "#262626",
+    authors: [
+      { name: "Hack on COD", url: "https://hackoncod.com" }
+    ],
+    category: "Gaming",
+    creator: "Hack on COD",
+    applicationName: "Hack on COD",
+  };  
+
+export default function DashboardLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={cn("font-sans", inter.variable)}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
+      </body>
+    </html>
+  );
+}
