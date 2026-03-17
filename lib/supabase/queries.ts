@@ -2,6 +2,7 @@ import { createAdminClient } from "./admin"
 import type { CheatWithGame } from "./types"
 import type { Game } from "./types"
 import type { Video } from "./types"
+import type { Review } from "./types"
 
 export async function getCheatsByGameTitle(gameTitle: string): Promise<CheatWithGame[]> {
   const supabase = createAdminClient()
@@ -69,4 +70,23 @@ export async function getVideos(): Promise<Video[]> {
   }
 
   return (data ?? []) as Video[]
+}
+
+const REVIEWS_PAGE_SIZE = 12
+
+export async function getReviews(offset = 0, limit = REVIEWS_PAGE_SIZE): Promise<Review[]> {
+  const supabase = createAdminClient()
+
+  const { data, error } = await supabase
+    .from("review")
+    .select("id, user_id, message, note, created_at, updated_at")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    console.error("[queries] getReviews error:", error.message, error.code, error.details)
+    throw new Error(`Supabase: ${error.message} (${error.code})`)
+  }
+
+  return (data ?? []) as Review[]
 }

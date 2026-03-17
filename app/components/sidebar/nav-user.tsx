@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import {
   Avatar,
   AvatarFallback,
@@ -35,6 +36,7 @@ export function NavUser({
     avatar: string
   }
 }) {
+  const { t } = useTranslations()
   const { isMobile } = useSidebar()
   const [settingsOpen, setSettingsOpen] = React.useState(false)
 
@@ -44,7 +46,7 @@ export function NavUser({
         <SidebarMenuItem>
             <SidebarMenuButton className="pl-4">
               <HugeiconsIcon icon={DiscordIcon} strokeWidth={2} />
-              <span>Discord</span>
+              <span>{t("sidebar.discord")}</span>
             </SidebarMenuButton>
         </SidebarMenuItem>
       </Link>
@@ -54,7 +56,7 @@ export function NavUser({
             onClick={() => setSettingsOpen(true)}
           >
             <HugeiconsIcon icon={Setting07Icon} strokeWidth={2} />
-            <span>Settings</span>
+            <span>{t("sidebar.settings")}</span>
           </SidebarMenuButton>
       </SidebarMenuItem>
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />

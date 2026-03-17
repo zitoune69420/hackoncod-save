@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/app/components/theme-provider";
+import { I18nProvider } from "@/app/components/i18n-provider";
+import { ThemeInitScript } from "@/app/theme-init-script";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -27,13 +30,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)}>
+    <html
+      lang="en"
+      className={cn("font-sans dark", inter.variable)}
+      data-theme="purple"
+      data-background="darker"
+      suppressHydrationWarning
+    >
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <ThemeInitScript />
+        <ThemeProvider>
+          <I18nProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

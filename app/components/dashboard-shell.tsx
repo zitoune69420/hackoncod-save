@@ -16,7 +16,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { DefaultPage, CheatsPage, GamesPage, VideosPage, ReviewsPage } from "@/app/components/pages"
+import { DefaultPage, CheatsPage, GamesPage, VideosPage } from "@/app/components/pages"
 
 type PageProps = { onSelectPage?: (pageId: string) => void }
 
@@ -26,13 +26,20 @@ const PAGES: Record<string, { component: React.ComponentType<PageProps>; label: 
   cheats: { component: CheatsPage as React.ComponentType<PageProps>, label: "Cheats" },
   games: { component: GamesPage as React.ComponentType<PageProps>, label: "Games" },
   videos: { component: VideosPage as React.ComponentType<PageProps>, label: "Videos" },
-  reviews: { component: ReviewsPage as React.ComponentType<PageProps>, label: "Avis" },
   misc: { component: DefaultPage, label: "Misc." },
 }
 
-export default function Dashboard() {
+type DashboardShellProps = {
+  reviewsContent: React.ReactNode
+}
+
+export function DashboardShell({ reviewsContent }: DashboardShellProps) {
   const [currentPage, setCurrentPage] = useState<string>("default")
-  const { component: Page, label } = PAGES[currentPage] ?? { component: DefaultPage, label: currentPage }
+
+  const isReviews = currentPage === "reviews"
+  const { component: Page, label } = isReviews
+    ? { component: null, label: "Avis" }
+    : (PAGES[currentPage] ?? { component: DefaultPage, label: currentPage })
 
   return (
     <SidebarProvider>
@@ -59,7 +66,7 @@ export default function Dashboard() {
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Page onSelectPage={setCurrentPage} />
+          {isReviews ? reviewsContent : Page && <Page onSelectPage={setCurrentPage} />}
         </div>
       </SidebarInset>
     </SidebarProvider>

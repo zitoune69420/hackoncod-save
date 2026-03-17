@@ -28,6 +28,19 @@ import {
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import {
+  getStoredTheme,
+  setStoredTheme,
+  getStoredBackground,
+  setStoredBackground,
+  getStoredToast,
+  setStoredToast,
+  applyAllStyles,
+  type ThemeColor,
+  type BackgroundColor,
+} from "@/lib/theme";
+import { useTranslations } from "@/app/components/i18n-provider";
+import { getStoredLanguage, setStoredLanguage, type Locale } from "@/lib/i18n";
 
 const COLOR_THEMES = [
   { value: "purple", label: "Purple", color: "bg-[#8B5CF6]" },
@@ -65,9 +78,9 @@ const BACKGROUND_OPTIONS = [
   },
 ];
 
-const LANGUAGES = [
-  { value: "fr", label: "French", flag: "/flags/france.png" },
-  { value: "en", label: "English", flag: "/flags/united-kingdom.png" },
+const LANGUAGES: { value: Locale; labelKey: string; flag: string }[] = [
+  { value: "fr", labelKey: "settings.language.french", flag: "/flags/france.png" },
+  { value: "en", labelKey: "settings.language.english", flag: "/flags/united-kingdom.png" },
 ];
 
 interface SettingsModalProps {
@@ -75,19 +88,93 @@ interface SettingsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const THEME_UPDATED_EVENT = "settings-updated";
+
+type InitialConfig = {
+  colorTheme: ThemeColor;
+  backgroundColor: BackgroundColor;
+  language: Locale;
+  toastEnabled: boolean;
+};
+
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const [colorTheme, setColorTheme] = React.useState("purple");
-  const [backgroundColor, setBackgroundColor] = React.useState("darker");
-  const [language, setLanguage] = React.useState("fr");
+  const { t, setLocale, setLocalePreview } = useTranslations();
+  const [colorTheme, setColorTheme] = React.useState<ThemeColor>("purple");
+  const [backgroundColor, setBackgroundColor] =
+    React.useState<BackgroundColor>("darker");
+  const [language, setLanguage] = React.useState<Locale>("fr");
   const [toastEnabled, setToastEnabled] = React.useState(false);
+  const initialConfig = React.useRef<InitialConfig | null>(null);
+
+  React.useEffect(() => {
+    if (open) {
+      const theme = getStoredTheme();
+      const bg = getStoredBackground();
+      const lang = getStoredLanguage();
+      const toast = getStoredToast();
+      initialConfig.current = { colorTheme: theme, backgroundColor: bg, language: lang, toastEnabled: toast };
+      setColorTheme(theme);
+      setBackgroundColor(bg);
+      setLanguage(lang);
+      setToastEnabled(toast);
+    }
+  }, [open]);
 
   const currentTheme = COLOR_THEMES.find((t) => t.value === colorTheme);
+
+  const handleColorThemeChange = (v: ThemeColor) => {
+    setColorTheme(v);
+    applyAllStyles(v, backgroundColor);
+  };
+
+  const handleBackgroundChange = (v: BackgroundColor) => {
+    setBackgroundColor(v);
+    applyAllStyles(colorTheme, v);
+  };
+
+  const handleLanguageChange = (newLang: Locale) => {
+    setLanguage(newLang);
+    React.startTransition(() => setLocalePreview(newLang));
+  };
+
+  const handleToastChange = (checked: boolean) => {
+    setToastEnabled(checked);
+  };
+
+  const handleSave = () => {
+    setStoredTheme(colorTheme);
+    setStoredBackground(backgroundColor);
+    setStoredLanguage(language);
+    setStoredToast(toastEnabled);
+    setLocale(language);
+    applyAllStyles(colorTheme, backgroundColor);
+    window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    const init = initialConfig.current;
+    if (init) {
+      setColorTheme(init.colorTheme);
+      setBackgroundColor(init.backgroundColor);
+      setLanguage(init.language);
+      setToastEnabled(init.toastEnabled);
+      setStoredTheme(init.colorTheme);
+      setStoredBackground(init.backgroundColor);
+      setStoredLanguage(init.language);
+      setStoredToast(init.toastEnabled);
+      setLocale(init.language);
+      applyAllStyles(init.colorTheme, init.backgroundColor);
+      window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
+    }
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" showCloseButton={true}>
         <DialogHeader className="hidden">
-          <DialogTitle>Settings</DialogTitle>
+          <DialogTitle>{t("settings.title")}</DialogTitle>
         </DialogHeader>
         <div>
           <div className="flex items-center gap-2">
@@ -96,17 +183,17 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               className="size-5"
               strokeWidth={2}
             />
-            <h3 className="text-base font-semibold leading-none">Appearance</h3>
+            <h3 className="text-base font-semibold leading-none">{t("settings.appearance.title")}</h3>
           </div>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Customize the appearance of the application
+            {t("settings.appearance.description")}
           </p>
         </div>
 
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label htmlFor="color-theme">Color theme</Label>
-            <Select value={colorTheme} onValueChange={setColorTheme}>
+            <Label htmlFor="color-theme">{t("settings.appearance.colorTheme")}</Label>
+            <Select value={colorTheme} onValueChange={(v) => handleColorThemeChange(v as ThemeColor)}>
               <SelectTrigger id="color-theme" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -141,8 +228,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="background">Background color</Label>
-            <Select value={backgroundColor} onValueChange={setBackgroundColor}>
+            <Label htmlFor="background">{t("settings.appearance.backgroundColor")}</Label>
+            <Select value={backgroundColor} onValueChange={(v) => handleBackgroundChange(v as BackgroundColor)}>
               <SelectTrigger id="background" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -176,8 +263,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="language">Language</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Label htmlFor="language">{t("settings.language.title")}</Label>
+            <Select value={language} onValueChange={(v) => handleLanguageChange(v as Locale)}>
               <SelectTrigger id="language" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -186,8 +273,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       className="size-4 text-muted-foreground"
                       strokeWidth={2}
                     />
-                    {LANGUAGES.find((l) => l.value === language)?.label ??
-                      "French"}
+                    {t(LANGUAGES.find((l) => l.value === language)?.labelKey ?? "settings.language.french")}
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -197,11 +283,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <span className="flex items-center gap-2">
                       <Image
                         src={lang.flag}
-                        alt={lang.label}
+                        alt={t(lang.labelKey)}
                         width={20}
                         height={20}
                       />
-                      {lang.label}
+                      {t(lang.labelKey)}
                     </span>
                   </SelectItem>
                 ))}
@@ -232,34 +318,30 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
           <div className="space-y-4">
             <div>
-              <h4 className="mb-2 text-sm font-medium">Toast notifications</h4>
+              <h4 className="mb-2 text-sm font-medium">{t("settings.notifications.toastNotifications")}</h4>
               <div className="flex items-center justify-between gap-4 rounded-lg border border-input bg-muted/30 p-3">
                 <Label
                   htmlFor="toast-notifications"
                   className="flex-1 cursor-pointer text-sm font-normal text-muted-foreground"
                 >
-                  Show toast notifications for actions
+                  {t("settings.notifications.toastNotificationsDescription")}
                 </Label>
                 <Switch
                   id="toast-notifications"
                   checked={toastEnabled}
-                  onCheckedChange={setToastEnabled}
+                  onCheckedChange={handleToastChange}
                 />
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+            <Button variant="outline" onClick={handleCancel}>
+              {t("common.cancel")}
             </Button>
-            <Button onClick={() => onOpenChange(false)}>
-              <HugeiconsIcon
-                icon={SaveIcon}
-                className="size-4"
-                strokeWidth={2}
-              />
-              Save
+            <Button onClick={handleSave}>
+              <HugeiconsIcon icon={SaveIcon} className="size-4" strokeWidth={2} />
+              {t("common.save")}
             </Button>
           </DialogFooter>
         </div>

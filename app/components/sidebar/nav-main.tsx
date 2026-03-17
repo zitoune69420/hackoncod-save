@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "@/app/components/i18n-provider"
 import {
   Collapsible,
   CollapsibleContent,
@@ -24,6 +25,7 @@ export function NavMain({
   onSelectPage,
 }: {
   items: {
+    id?: string
     title: string
     icon?: React.ReactNode
     items?: {
@@ -34,13 +36,14 @@ export function NavMain({
   currentPage?: string
   onSelectPage?: (pageId: string) => void
 }) {
+  const { t } = useTranslations()
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{t("sidebar.platform")}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
-            key={item.title}
+            key={item.id ?? item.title}
             asChild
             defaultOpen={true}
             className="group/collapsible"
@@ -55,8 +58,8 @@ export function NavMain({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
+                  {item.items?.map((subItem, idx) => (
+                    <SidebarMenuSubItem key={`${item.id ?? item.title}-${idx}`}>
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}
                         onClick={() => onSelectPage?.(subItem.pageId)}

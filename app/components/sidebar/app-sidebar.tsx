@@ -1,5 +1,6 @@
-import * as React from "react"
+"use client"
 
+import * as React from "react"
 import { NavMain } from "@/app/components/sidebar/nav-main"
 import { NavUser } from "@/app/components/sidebar/nav-user"
 import { AppSidebarTitle } from "@/app/components/sidebar/app-sidebar-title"
@@ -12,49 +13,53 @@ import {
 } from "@/components/ui/sidebar"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UserGroup02Icon, ChevronDoubleCloseIcon, ShoppingBag01Icon } from "@hugeicons/core-free-icons"
+import { useTranslations } from "@/app/components/i18n-provider"
 
-const data = {
-  user: { 
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Content",
-      icon: (
-        <HugeiconsIcon icon={ChevronDoubleCloseIcon} strokeWidth={2} />
-      ),
-      items: [
-        { title: "Cheats", pageId: "cheats" },
-        { title: "Games", pageId: "games" },
-        { title: "Misc.", pageId: "test" },
+function useNavData() {
+  const { t } = useTranslations()
+  return React.useMemo(
+    () => ({
+      user: {
+        name: "shadcn",
+        email: "m@example.com",
+        avatar: "/avatars/shadcn.jpg",
+      },
+      navMain: [
+        {
+          id: "content",
+          title: t("sidebar.content"),
+          icon: <HugeiconsIcon icon={ChevronDoubleCloseIcon} strokeWidth={2} />,
+          items: [
+            { title: t("sidebar.cheats"), pageId: "cheats" },
+            { title: t("sidebar.games"), pageId: "games" },
+            { title: t("sidebar.misc"), pageId: "test" },
+          ],
+        },
+        {
+          id: "community",
+          title: t("sidebar.community"),
+          icon: <HugeiconsIcon icon={UserGroup02Icon} strokeWidth={2} />,
+          items: [
+            { title: t("sidebar.videos"), pageId: "videos" },
+            { title: t("sidebar.reviews"), pageId: "reviews" },
+            { title: t("sidebar.forum"), pageId: "content" },
+          ],
+        },
+        {
+          id: "shop",
+          title: t("sidebar.shop"),
+          icon: <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />,
+          items: [
+            { title: t("sidebar.cheats"), pageId: "content" },
+            { title: t("sidebar.services"), pageId: "content" },
+            { title: t("sidebar.accounts"), pageId: "content" },
+            { title: t("sidebar.reviews"), pageId: "content" },
+          ],
+        },
       ],
-    },
-    {
-      title: "Community",
-      icon: (
-        <HugeiconsIcon icon={UserGroup02Icon} strokeWidth={2} />
-      ),
-      items: [
-        { title: "Videos", pageId: "videos" },
-        { title: "Reviews", pageId: "content" },
-        { title: "Forum", pageId: "content" },
-      ],
-    },
-    {
-      title: "Shop",
-      icon: (
-        <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />
-      ),
-      items: [
-        { title: "Cheats", pageId: "content" },
-        { title: "Services", pageId: "content" },
-        { title: "Accounts", pageId: "content" },
-        { title: "Reviews", pageId: "content" },
-      ],
-    },
-  ],
+    }),
+    [t]
+  )
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -63,6 +68,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ currentPage, onSelectPage, ...props }: AppSidebarProps) {
+  const data = useNavData()
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
