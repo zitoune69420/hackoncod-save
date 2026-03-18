@@ -59,11 +59,13 @@ export function setStoredBackground(bg: BackgroundColor): void {
 }
 
 export function getStoredToast(): boolean {
-  if (typeof window === "undefined") return false
+  if (typeof window === "undefined") return true
   try {
-    return localStorage.getItem(TOAST_STORAGE_KEY) === "true"
+    const stored = localStorage.getItem(TOAST_STORAGE_KEY)
+    if (stored === "false") return false
+    return true
   } catch {
-    return false
+    return true
   }
 }
 
