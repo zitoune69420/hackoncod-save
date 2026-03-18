@@ -1,4 +1,53 @@
 {
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Activity overview and quick access to sections",
+    "breadcrumb": "Dashboard",
+    "home": "Home",
+    "content": "Content",
+    "quickAccess": "Quick access",
+    "stats": {
+      "availableCheats": "Available cheats",
+      "cataloguedGames": "Catalogued games",
+      "downloads": "Downloads",
+      "videosViewed": "Videos viewed",
+      "thisMonth": "This month",
+      "newAdditions": "New additions",
+      "last30Days": "Last 30 days"
+    },
+    "charts": {
+      "activity7Days": "Activity (7 days)",
+      "downloadsAndVisits": "Downloads and visits per day",
+      "topGames": "Top games (downloads)",
+      "topGamesDesc": "The 5 most popular games",
+      "downloads": "Downloads",
+      "visits": "Visits"
+    },
+    "sections": {
+      "cheatsTitle": "Cheats",
+      "cheatsDesc": "Browse our cheats for Call of Duty and other games.",
+      "gamesTitle": "Games",
+      "gamesDesc": "Game catalogue. Steam links, downloads and clients.",
+      "videosTitle": "Videos",
+      "videosDesc": "Tutorials and video content to master our tools."
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "navUser": {
+    "upgradeToPro": "Upgrade to Pro",
+    "account": "Account",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "logOut": "Log out"
+  },
   "common": {
     "save": "Save",
     "cancel": "Cancel",
@@ -23,6 +72,31 @@
       "backgroundColor": "Background Color",
       "compactMode": "Compact Mode",
       "compactModeDescription": "Use a compact spacing and smaller text"
+    },
+    "colorThemes": {
+      "purple": "Purple",
+      "green": "Green",
+      "blue": "Blue",
+      "red": "Red",
+      "orange": "Orange",
+      "pink": "Pink",
+      "cyan": "Cyan"
+    },
+    "backgroundOptions": {
+      "default": "Default",
+      "defaultDesc": "Standard background color",
+      "dark": "Dark",
+      "darkDesc": "Dark background color",
+      "darker": "Darker",
+      "darkerDesc": "Darker background color",
+      "darkest": "Darkest",
+      "darkestDesc": "Darkest background color",
+      "amoled": "AMOLED",
+      "amoledDesc": "Black background color for AMOLED screens",
+      "light": "Light",
+      "lightDesc": "Light background color",
+      "lighter": "Lighter",
+      "lighterDesc": "Lighter background color"
     },
     "notifications": {
       "title": "Notifications",
@@ -64,7 +138,8 @@
       "description": "Choose your preferred language",
       "french": "Français",
       "english": "English",
-      "changed": "Langue changée avec succès"
+      "changed": "Language changed successfully",
+      "saved": "Settings saved successfully"
     },
     "security": {
       "title": "Security",
@@ -268,6 +343,16 @@
     "tools": "Tools",
     "clickToDownload": "Click here to",
     "download": "download",
+    "items": {
+      "processHacker2": "Process Hacker 2",
+      "xenosInjector": "Xenos Injector",
+      "dllInjector": "DLL Injector",
+      "coldWarInjector": "Cold War Injector",
+      "t7cInjector": "T7C Injector",
+      "opsLoaderFull": "Ops Loader Full",
+      "allCppInstaller": "All C++ Installer",
+      "allDotNetInstaller": "All .NET Installer"
+    },
     "toasts": {
       "downloadStarted": "Download started..."
     }
@@ -275,8 +360,11 @@
   "videos": {
     "title": "Our Videos",
     "description": "Find all our videos of different cheats and games",
+    "searchPlaceholder": "Search videos by title or description...",
+    "refresh": "Refresh",
     "toasts": {
-      "videoOpened": "Opening video..."
+      "videoOpened": "Opening video...",
+      "errorLoading": "Error loading videos"
     }
   },
   "reviews": {
@@ -299,6 +387,7 @@
       "publish": "Publish"
     },
     "toasts": {
+      "errorLoading": "Error loading reviews",
       "mustBeLoggedIn": "You must be logged in to add a review",
       "reviewAdded": "Review added successfully!",
       "errorAdding": "Error adding review",
@@ -853,7 +942,7 @@
       "userAgent": "User-Agent"
     },
     "toasts": {
-      "errorRetrievingLogs": "Impossible to retrieve logs: {{message}}"
+      "errorRetrievingLogs": "Unable to retrieve logs: {{message}}"
     }
   },
   "adminBlacklist": {
@@ -896,7 +985,7 @@
     },
     "toasts": {
       "noUsers": "No user in the blacklist/whitelist",
-      "errorRetrievingList": "Impossible to retrieve the list: {{message}}",
+      "errorRetrievingList": "Unable to retrieve the list: {{message}}",
       "userAdded": "User added/updated",
       "errorAdding": "Failure to add: {{message}}",
       "userDeleted": "User deleted successfully",
@@ -986,7 +1075,7 @@
       "orderCreated": "Order created successfully. Opening ticket...",
       "loadingTicket": "Loading ticket...",
       "errorCreatingOrder": "Error creating order",
-      "preOrderInfo": "Informations",
+      "preOrderInfo": "Information",
       "paymentInfo": "Payment information",
       "confirmation": "Confirmation",
       "game": "Game",
@@ -1069,7 +1158,7 @@
       "orderCreated": "Order created successfully. Opening ticket...",
       "loadingTicket": "Loading ticket...",
       "errorCreatingOrder": "Error creating order",
-      "preOrderInfo": "Informations",
+      "preOrderInfo": "Information",
       "paymentInfo": "Payment information",
       "confirmation": "Confirmation",
       "serviceType": "Service type *",
@@ -1168,7 +1257,7 @@
       "orderCreated": "Order created successfully. Opening ticket...",
       "loadingTicket": "Loading ticket...",
       "errorCreatingOrder": "Error creating order",
-      "preOrderInfo": "Informations",
+      "preOrderInfo": "Information",
       "paymentInfo": "Payment information",
       "confirmation": "Confirmation",
       "payment": "Payment",

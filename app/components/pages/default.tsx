@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,23 +22,22 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 
-// Fake stats
-const STATS = [
-  { label: "Available cheats", value: "247", change: "+18%", trend: "up", desc: "This month" },
-  { label: "Catalogued games", value: "42", change: "+5", trend: "up", desc: "New additions" },
-  { label: "Downloads", value: "12.4k", change: "+24%", trend: "up", desc: "Last 30 days" },
-  { label: "Videos viewed", value: "8.2k", change: "-3%", trend: "down", desc: "This month" },
+const STATS_KEYS = [
+  { labelKey: "dashboard.stats.availableCheats", value: "247", change: "+18%", trend: "up" as const, descKey: "dashboard.stats.thisMonth" },
+  { labelKey: "dashboard.stats.cataloguedGames", value: "42", change: "+5", trend: "up" as const, descKey: "dashboard.stats.newAdditions" },
+  { labelKey: "dashboard.stats.downloads", value: "12.4k", change: "+24%", trend: "up" as const, descKey: "dashboard.stats.last30Days" },
+  { labelKey: "dashboard.stats.videosViewed", value: "8.2k", change: "-3%", trend: "down" as const, descKey: "dashboard.stats.thisMonth" },
 ]
 
-// Fake activity data (7 days)
-const ACTIVITY_DATA = [
-  { day: "Mon", downloads: 420, visits: 1250 },
-  { day: "Tue", downloads: 380, visits: 1180 },
-  { day: "Wed", downloads: 510, visits: 1420 },
-  { day: "Thu", downloads: 290, visits: 980 },
-  { day: "Fri", downloads: 620, visits: 1680 },
-  { day: "Sat", downloads: 480, visits: 1320 },
-  { day: "Sun", downloads: 350, visits: 1050 },
+const ACTIVITY_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const
+const ACTIVITY_VALUES = [
+  { downloads: 420, visits: 1250 },
+  { downloads: 380, visits: 1180 },
+  { downloads: 510, visits: 1420 },
+  { downloads: 290, visits: 980 },
+  { downloads: 620, visits: 1680 },
+  { downloads: 480, visits: 1320 },
+  { downloads: 350, visits: 1050 },
 ]
 
 // Fake top games
@@ -49,14 +49,6 @@ const TOP_GAMES_DATA = [
   { game: "Infinite Warfare", downloads: 1240 },
 ]
 
-const activityChartConfig = {
-  downloads: { label: "Downloads", color: "hsl(var(--primary))" },
-  visits: { label: "Visits", color: "hsl(var(--primary) / 0.6)" },
-} satisfies ChartConfig
-
-const topGamesChartConfig = {
-  downloads: { label: "Downloads", color: "hsl(var(--primary))" },
-} satisfies ChartConfig
 
 const TOP_GAMES_COLORS = [
   "hsl(0 0% 15%)",   // noir
@@ -67,24 +59,9 @@ const TOP_GAMES_COLORS = [
 ]
 
 const SECTIONS = [
-  {
-    id: "cheats",
-    title: "Cheats",
-    description: "Browse our cheats for Call of Duty and other games.",
-    icon: ShoppingBag01Icon,
-  },
-  {
-    id: "games",
-    title: "Games",
-    description: "Game catalogue. Steam links, downloads and clients.",
-    icon: Controller,
-  },
-  {
-    id: "videos",
-    title: "Videos",
-    description: "Tutorials and video content to master our tools.",
-    icon: Video01Icon,
-  },
+  { id: "cheats", titleKey: "dashboard.sections.cheatsTitle", descKey: "dashboard.sections.cheatsDesc", icon: ShoppingBag01Icon },
+  { id: "games", titleKey: "dashboard.sections.gamesTitle", descKey: "dashboard.sections.gamesDesc", icon: Controller },
+  { id: "videos", titleKey: "dashboard.sections.videosTitle", descKey: "dashboard.sections.videosDesc", icon: Video01Icon },
 ]
 
 interface DefaultPageProps {
@@ -92,23 +69,38 @@ interface DefaultPageProps {
 }
 
 export function DefaultPage({ onSelectPage }: DefaultPageProps) {
+  const { t } = useTranslations()
   const activityId = React.useId().replace(/:/g, "")
+
+  const activityChartConfig: ChartConfig = React.useMemo(() => ({
+    downloads: { label: t("dashboard.charts.downloads"), color: "hsl(var(--primary))" },
+    visits: { label: t("dashboard.charts.visits"), color: "hsl(var(--primary) / 0.6)" },
+  }), [t])
+
+  const topGamesChartConfig: ChartConfig = React.useMemo(() => ({
+    downloads: { label: t("dashboard.charts.downloads"), color: "hsl(var(--primary))" },
+  }), [t])
+
+  const activityData = React.useMemo(() =>
+    ACTIVITY_DAYS.map((day, i) => ({ day: t(`dashboard.days.${day}`), ...ACTIVITY_VALUES[i] })),
+    [t]
+  )
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Activity overview and quick access to sections
+          {t("dashboard.description")}
         </p>
       </div>
 
       {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {STATS.map((stat) => (
-          <Card key={stat.label}>
+        {STATS_KEYS.map((stat) => (
+          <Card key={stat.labelKey}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+              <CardTitle className="text-sm font-medium">{t(stat.labelKey)}</CardTitle>
               <Badge
                 variant={stat.trend === "up" ? "default" : "secondary"}
                 className="gap-0.5 text-xs"
@@ -123,7 +115,7 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.desc}</p>
+              <p className="text-xs text-muted-foreground">{t(stat.descKey)}</p>
             </CardContent>
           </Card>
         ))}
@@ -134,12 +126,12 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
         {/* Activity chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Activity (7 days)</CardTitle>
-            <CardDescription>Downloads and visits per day</CardDescription>
+            <CardTitle>{t("dashboard.charts.activity7Days")}</CardTitle>
+            <CardDescription>{t("dashboard.charts.downloadsAndVisits")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={activityChartConfig} className="h-[280px] w-full">
-              <AreaChart data={ACTIVITY_DATA} margin={{ left: 0, right: 0 }}>
+              <AreaChart data={activityData} margin={{ left: 0, right: 0 }}>
                 <defs>
                   <linearGradient id={`fillDownloads-${activityId}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-downloads)" stopOpacity={0.8} />
@@ -176,8 +168,8 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
         {/* Top games bar chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Top games (downloads)</CardTitle>
-            <CardDescription>The 5 most popular games</CardDescription>
+            <CardTitle>{t("dashboard.charts.topGames")}</CardTitle>
+            <CardDescription>{t("dashboard.charts.topGamesDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={topGamesChartConfig} className="h-[280px] w-full">
@@ -205,7 +197,7 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
 
       {/* Section cards */}
       <div>
-        <h2 className="mb-4 text-lg font-medium">Quick access</h2>
+        <h2 className="mb-4 text-lg font-medium">{t("dashboard.quickAccess")}</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {SECTIONS.map((section) => (
             <Card
@@ -223,8 +215,8 @@ export function DefaultPage({ onSelectPage }: DefaultPageProps) {
                     />
                   </div>
                   <div>
-                    <CardTitle>{section.title}</CardTitle>
-                    <CardDescription className="mt-1">{section.description}</CardDescription>
+                    <CardTitle>{t(section.titleKey)}</CardTitle>
+                    <CardDescription className="mt-1">{t(section.descKey)}</CardDescription>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" className="shrink-0">

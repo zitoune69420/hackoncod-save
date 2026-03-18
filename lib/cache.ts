@@ -72,9 +72,10 @@ export function invalidateCache(key: string): void {
   removeFromStorage(key)
 }
 
-export function cacheKey(type: "cheats" | "games" | "videos", gameTitle?: string): string {
+export function cacheKey(type: "cheats" | "games" | "videos" | "reviews", gameTitle?: string): string {
   if (type === "cheats" && gameTitle) return `cheats:${gameTitle}`
   if (type === "games") return "games"
   if (type === "videos") return "videos"
+  if (type === "reviews") return "reviews"
   throw new Error("Invalid cache key: cheats requires gameTitle")
 }

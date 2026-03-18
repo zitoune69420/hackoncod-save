@@ -1,12 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import { Progress } from "@/components/ui/progress"
 import { SearchBar } from "@/components/commons/search-bar"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { PlayIcon, Refresh01Icon, Video01Icon } from "@hugeicons/core-free-icons"
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache"
+import { showToast } from "@/components/commons/toasts"
 import Image from "next/image"
 
 export type VideoRow = {
@@ -72,6 +74,7 @@ function VideoCard({ video }: { video: VideoRow }) {
 }
 
 export function VideosPage() {
+  const { t } = useTranslations()
   const [data, setData] = useState<VideoRow[]>([])
   const [search, setSearch] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -109,8 +112,10 @@ export function VideosPage() {
         setProgress(100)
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : String(err))
+        const msg = err instanceof Error ? err.message : String(err)
+        setError(msg)
         setProgress(0)
+        showToast({ text: t("videos.toasts.errorLoading"), variant: "error" })
       })
       .finally(() => setLoading(false))
   }, [])
@@ -136,19 +141,19 @@ export function VideosPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Videos</h1>
-          <p className="text-sm text-muted-foreground">Discover our tutorials and video content</p>
+          <h1 className="text-2xl font-semibold">{t("videos.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("videos.description")}</p>
         </div>
         <div className="flex gap-2">
           <SearchBar
             value={search}
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
-            placeholder="Title, description..."
+            placeholder={t("videos.searchPlaceholder")}
           />
           <Button variant="outline" onClick={handleRefresh}>
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            Refresh
+            {t("videos.refresh")}
           </Button>
         </div>
       </div>

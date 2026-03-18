@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { CommonTable } from "@/components/commons/table/table"
+import { useTranslations } from "@/app/components/i18n-provider"
 
 export type GameRow = {
   id: string
@@ -13,12 +14,13 @@ export type GameRow = {
   action?: React.ReactNode
 }
 
-const GAMES_COLUMNS = [
-  { key: "title" as const, label: "Title" },
-  {
-    key: "description" as const,
-    label: "Description",
-    render: (row: GameRow) => (
+function getGamesColumns(t: (key: string) => string) {
+  return [
+    { key: "title" as const, label: t("games.tableHeaders.title") },
+    {
+      key: "description" as const,
+      label: t("games.tableHeaders.description"),
+      render: (row: GameRow) => (
       <span className="line-clamp-2 max-w-md" title={row.description}>
         {row.description}
       </span>
@@ -26,47 +28,49 @@ const GAMES_COLUMNS = [
   },
   {
     key: "action" as const,
-    label: "Action",
+    label: t("games.tableHeaders.action"),
     render: (row: GameRow) => (
       <div className="flex gap-2">
         {row.steam ? (
           <Button size="sm" variant="outline" asChild>
             <a href={row.steam} target="_blank" rel="noopener noreferrer">
-              Steam
+              {t("games.steam")}
             </a>
           </Button>
         ) : (
           <Button size="sm" variant="outline" disabled>
-            Steam
+            {t("games.steam")}
           </Button>
         )}
         {row.link ? (
           <Button size="sm" variant="default" asChild>
             <a href={row.link} target="_blank" rel="noopener noreferrer">
-              Download
+              {t("games.download")}
             </a>
           </Button>
         ) : (
           <Button size="sm" variant="default" disabled>
-            Download
+            {t("games.download")}
           </Button>
         )}
         {row.client ? (
           <Button size="sm" variant="outline" asChild>
             <a href={row.client} target="_blank" rel="noopener noreferrer">
-              Client
+              {t("games.client")}
             </a>
           </Button>
         ) : (
           <Button size="sm" variant="outline" disabled>
-            Client
+            {t("games.client")}
           </Button>
         )}
       </div>
     ),
   },
-]
+  ]
+}
 
 export function GamesTable({ data = [] }: { data?: GameRow[] }) {
-  return <CommonTable columns={GAMES_COLUMNS} data={data} pageSize={10} />
+  const { t } = useTranslations()
+  return <CommonTable columns={getGamesColumns(t)} data={data} pageSize={10} />
 }

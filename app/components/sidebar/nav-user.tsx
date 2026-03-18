@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sidebar"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { UnfoldMoreIcon, SparklesIcon, CheckmarkBadgeIcon, CreditCardIcon, NotificationIcon, LogoutIcon, DiscordIcon, Setting07Icon } from "@hugeicons/core-free-icons"
-import { SettingsModal } from "@/app/components/settings-modal"
+import { SettingsModal } from "@/app/components/dialogs/settings"
 import Link from "next/link"
 
 export function NavUser({
@@ -100,28 +100,28 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <HugeiconsIcon icon={SparklesIcon} strokeWidth={2} />
-                Upgrade to Pro
+                {t("navUser.upgradeToPro")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <HugeiconsIcon icon={CheckmarkBadgeIcon} strokeWidth={2} />
-                Account
+                {t("navUser.account")}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
-                Billing
+                {t("navUser.billing")}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <HugeiconsIcon icon={NotificationIcon} strokeWidth={2} />
-                Notifications
+                {t("navUser.notifications")}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <HugeiconsIcon icon={LogoutIcon} strokeWidth={2} />
-              Log out
+              {t("navUser.logOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

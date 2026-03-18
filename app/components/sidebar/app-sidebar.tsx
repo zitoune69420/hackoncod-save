@@ -32,7 +32,7 @@ function useNavData() {
           items: [
             { title: t("sidebar.cheats"), pageId: "cheats" },
             { title: t("sidebar.games"), pageId: "games" },
-            { title: t("sidebar.misc"), pageId: "test" },
+            { title: t("sidebar.misc"), pageId: "misc" },
           ],
         },
         {

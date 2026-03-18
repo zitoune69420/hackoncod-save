@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { StarIcon, UserIcon } from "@hugeicons/core-free-icons"
-import { ReviewsLoadMore } from "@/app/components/pages/client/reviews"
+import { ReviewsLoadMore, ReviewDate } from "@/app/components/pages/client/reviews"
 
 function getBaseUrl() {
   if (typeof window !== "undefined") return ""
@@ -44,21 +44,6 @@ function StarRating({ note }: { note: number }) {
   )
 }
 
-function formatDate(iso: string) {
-  if (!iso) return "—"
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return "—"
-    return d.toLocaleDateString(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-  } catch {
-    return "—"
-  }
-}
-
 function ReviewCard({ review }: { review: Review }) {
   return (
     <Card className="flex h-full flex-col overflow-hidden">
@@ -72,9 +57,7 @@ function ReviewCard({ review }: { review: Review }) {
           </p>
           <StarRating note={review.note ?? 0} />
         </div>
-        <time className="shrink-0 text-xs text-muted-foreground" dateTime={review.created_at ?? ""}>
-          {formatDate(review.created_at ?? "")}
-        </time>
+        <ReviewDate iso={review.created_at ?? ""} />
       </CardHeader>
       <CardContent className="flex-1">
         <p className="line-clamp-4 text-sm">{review.message ?? "—"}</p>

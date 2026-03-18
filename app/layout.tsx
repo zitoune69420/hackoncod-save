@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/app/components/theme-provider";
 import { I18nProvider } from "@/app/components/i18n-provider";
 import { ThemeInitScript } from "@/app/theme-init-script";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -45,6 +46,7 @@ export default function RootLayout({
           <I18nProvider>
             <TooltipProvider>
               {children}
+              <Toaster />
             </TooltipProvider>
           </I18nProvider>
         </ThemeProvider>

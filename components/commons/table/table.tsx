@@ -18,9 +18,11 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { useTranslations } from "@/app/components/i18n-provider"
 import type { CommonTableProps } from "./types"
 
 export function CommonTable<T>({ columns, data, pageSize = 10 }: CommonTableProps<T>) {
+  const { t } = useTranslations()
   const [page, setPage] = React.useState(1)
   const totalPages = Math.ceil(data.length / pageSize) || 1
   const paginatedData = data.slice((page - 1) * pageSize, page * pageSize)
@@ -58,7 +60,7 @@ export function CommonTable<T>({ columns, data, pageSize = 10 }: CommonTableProp
             <PaginationItem>
               <PaginationPrevious
                 href="#"
-                text="Précédent"
+                text={t("common.previous")}
                 onClick={(e) => {
                   e.preventDefault()
                   if (page > 1) setPage((p) => p - 1)
@@ -103,7 +105,7 @@ export function CommonTable<T>({ columns, data, pageSize = 10 }: CommonTableProp
             <PaginationItem>
               <PaginationNext
                 href="#"
-                text="Suivant"
+                text={t("common.next")}
                 onClick={(e) => {
                   e.preventDefault()
                   if (page < totalPages) setPage((p) => p + 1)

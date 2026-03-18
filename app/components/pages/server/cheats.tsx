@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import { Progress } from "@/components/ui/progress"
 import { SearchBar } from "@/components/commons/search-bar"
 import { CheatsTable, CheatsToolbar, type CheatRow } from "@/app/components/pages/client/cheats"
@@ -8,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Refresh01Icon } from "@hugeicons/core-free-icons"
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache"
+import { showToast } from "@/components/commons/toasts"
 
 function fetchCheats(game: string): Promise<CheatRow[]> {
   return fetch(`/api/cheats?game=${encodeURIComponent(game)}`).then((res) => res.json())
 }
 
 export function CheatsPage() {
+  const { t } = useTranslations()
   const [data, setData] = useState<CheatRow[]>([])
   const [selectedGame, setSelectedGame] = useState<string>("Call of Duty: Black Ops 3")
   const [search, setSearch] = useState("")
@@ -51,7 +54,10 @@ export function CheatsPage() {
         setData(json)
         setProgress(100)
       })
-      .catch(() => setProgress(0))
+      .catch(() => {
+        setProgress(0)
+        showToast({ text: t("cheats.toasts.errorLoading"), variant: "error" })
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -75,17 +81,17 @@ export function CheatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Cheats</h1>
-        <p className="text-sm text-muted-foreground">Find the perfect cheat for your favorite game</p>
+        <h1 className="text-2xl font-semibold">{t("cheats.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("cheats.description")}</p>
       </div>
       <div className="flex justify-between">
         <CheatsToolbar selectedGame={selectedGame} onSelectGame={setSelectedGame} />
         <div className="flex">
           <Button variant="outline" onClick={handleRefresh} className="mr-2">
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            Refresh
+            {t("cheats.refresh")}
           </Button>
-          <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder="Name, mode, extension..." />
+          <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder={t("cheats.searchPlaceholder")} />
         </div>
       </div>
       {loading ? (

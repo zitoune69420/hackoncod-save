@@ -8,7 +8,7 @@ export function AppSidebarTitle() {
             <SidebarMenuItem>
                 <SidebarMenuButton size="lg" asChild>
                     <a href="#">
-                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-neutral-200 text-sidebar-foreground">
+                        <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-secondary text-sidebar-foreground">
                             <HugeiconsIcon icon={ChevronDoubleCloseIcon} strokeWidth={2} />
                         </div>
                         <div className="flex flex-col gap-0.5 leading-none">

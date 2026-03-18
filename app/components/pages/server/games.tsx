@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import { Progress } from "@/components/ui/progress"
 import { SearchBar } from "@/components/commons/search-bar"
 import { GamesTable, type GameRow } from "@/app/components/pages/client/games"
@@ -8,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Refresh01Icon } from "@hugeicons/core-free-icons"
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache"
+import { showToast } from "@/components/commons/toasts"
 
 function fetchGames(): Promise<GameRow[]> {
   return fetch("/api/games").then((res) => res.json())
 }
 
 export function GamesPage() {
+  const { t } = useTranslations()
   const [data, setData] = useState<GameRow[]>([])
   const [search, setSearch] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -47,7 +50,10 @@ export function GamesPage() {
         setData(json)
         setProgress(100)
       })
-      .catch(() => setProgress(0))
+      .catch(() => {
+        setProgress(0)
+        showToast({ text: t("games.toasts.errorLoading"), variant: "error" })
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -71,15 +77,15 @@ export function GamesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Games</h1>
-        <p className="text-sm text-muted-foreground">Find your favorite games</p>
+        <h1 className="text-2xl font-semibold">{t("games.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("games.description")}</p>
       </div>
       <div className="flex justify-between">
-        <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder="Title, description..." />
+        <SearchBar value={search} onChange={setSearch} onSearch={() => setSearchQuery(search)} placeholder={t("games.searchPlaceholder")} />
 
         <Button variant="outline" onClick={handleRefresh} className="mr-2">
           <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          Refresh
+          {t("games.refresh")}
         </Button>
       </div>
       {loading ? (

@@ -6,6 +6,7 @@ import { CommonTable } from "@/components/commons/table/table"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, Tick01Icon } from "@hugeicons/core-free-icons"
 import Image from "next/image"
+import { useTranslations } from "@/app/components/i18n-provider"
 
 export type CheatRow = {
   id: string
@@ -18,53 +19,55 @@ export type CheatRow = {
   action?: React.ReactNode
 }
 
-const CHEATS_COLUMNS = [
-  { key: "name" as const, label: "Name" },
-  { key: "mode" as const, label: "Mode" },
-  { key: "extension" as const, label: "Extension" },
-  {
-    key: "crack" as const,
-    label: "Crack",
-    render: (row: CheatRow) =>
-      row.crack ? (
-        <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-5 text-green-600" />
-      ) : (
-        <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-5 text-red-600" />
-      ),
-  },
-  {
-    key: "client" as const,
-    label: "Client",
-    render: (row: CheatRow) =>
-      row.client ? (
-        <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-5 text-green-600" />
-      ) : (
-        <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-5 text-red-600" />
-      ),
-  },
-  {
-    key: "action" as const,
-    label: "Action",
-    render: (row: CheatRow) => (
-      <div className="flex gap-2">
-        {row.link ? (
-          <Button size="sm" variant="default" asChild>
-            <a href={row.link} target="_blank">
-              Download
-            </a>
-          </Button>
+function getCheatsColumns(t: (key: string) => string) {
+  return [
+    { key: "name" as const, label: t("cheats.tableHeaders.name") },
+    { key: "mode" as const, label: t("cheats.tableHeaders.mode") },
+    { key: "extension" as const, label: t("cheats.tableHeaders.extension") },
+    {
+      key: "crack" as const,
+      label: t("cheats.tableHeaders.crack"),
+      render: (row: CheatRow) =>
+        row.crack ? (
+          <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-5 text-green-600" />
         ) : (
-          <Button size="sm" variant="default" disabled>
-            Download
+          <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-5 text-red-600" />
+        ),
+    },
+    {
+      key: "client" as const,
+      label: t("cheats.tableHeaders.client"),
+      render: (row: CheatRow) =>
+        row.client ? (
+          <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-5 text-green-600" />
+        ) : (
+          <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-5 text-red-600" />
+        ),
+    },
+    {
+      key: "action" as const,
+      label: t("cheats.tableHeaders.action"),
+      render: (row: CheatRow) => (
+        <div className="flex gap-2">
+          {row.link ? (
+            <Button size="sm" variant="default" asChild>
+              <a href={row.link} target="_blank">
+                {t("cheats.download")}
+              </a>
+            </Button>
+          ) : (
+            <Button size="sm" variant="default" disabled>
+              {t("cheats.download")}
+            </Button>
+          )}
+          <Button size="sm" variant="outline">
+            {t("cheats.report")}
           </Button>
-        )}
-        <Button size="sm" variant="outline">
-          Report
-        </Button>
-      </div>
-    ),
-  },
-]
+        </div>
+      ),
+    },
+  ]
+}
 
 const GAMES = [
   { label: "Call of Duty: Black Ops", icon: "cod-bo1.png", value: "cod-bo1", pinned: false },
@@ -123,5 +126,6 @@ export function CheatsToolbar({
 }
 
 export function CheatsTable({ data = [] }: { data?: CheatRow[] }) {
-  return <CommonTable columns={CHEATS_COLUMNS} data={data} pageSize={10} />
+  const { t } = useTranslations()
+  return <CommonTable columns={getCheatsColumns(t)} data={data} pageSize={10} />
 }

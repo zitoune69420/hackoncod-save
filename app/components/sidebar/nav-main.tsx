@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslations } from "@/app/components/i18n-provider"
+import { prefetchReviews } from "@/app/components/pages/client/reviews"
 import {
   Collapsible,
   CollapsibleContent,
@@ -63,6 +64,7 @@ export function NavMain({
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}
                         onClick={() => onSelectPage?.(subItem.pageId)}
+                        onMouseEnter={() => subItem.pageId === "reviews" && prefetchReviews()}
                       >
                         <span>{subItem.title}</span>
                       </SidebarMenuSubButton>

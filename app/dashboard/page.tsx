@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useTranslations } from "@/app/components/i18n-provider"
 import { AppSidebar } from "@/app/components/sidebar/app-sidebar"
 import {
   Breadcrumb,
@@ -16,23 +17,40 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { DefaultPage, CheatsPage, GamesPage, VideosPage, ReviewsPage } from "@/app/components/pages"
+import { DefaultPage, CheatsPage, GamesPage, VideosPage, ReviewsPage, MiscPage } from "@/app/components/pages"
+import { prefetchReviews } from "@/app/components/pages/client/reviews"
 
 type PageProps = { onSelectPage?: (pageId: string) => void }
 
-const PAGES: Record<string, { component: React.ComponentType<PageProps>; label: string }> = {
-  default: { component: DefaultPage, label: "Home" },
-  content: { component: DefaultPage, label: "Content" },
-  cheats: { component: CheatsPage as React.ComponentType<PageProps>, label: "Cheats" },
-  games: { component: GamesPage as React.ComponentType<PageProps>, label: "Games" },
-  videos: { component: VideosPage as React.ComponentType<PageProps>, label: "Videos" },
-  reviews: { component: ReviewsPage as React.ComponentType<PageProps>, label: "Avis" },
-  misc: { component: DefaultPage, label: "Misc." },
+const PAGE_KEYS: Record<string, string> = {
+  default: "dashboard.home",
+  content: "dashboard.content",
+  cheats: "sidebar.cheats",
+  games: "sidebar.games",
+  videos: "sidebar.videos",
+  reviews: "sidebar.reviews",
+  misc: "sidebar.misc",
+}
+
+const PAGES: Record<string, React.ComponentType<PageProps>> = {
+  default: DefaultPage,
+  content: DefaultPage,
+  cheats: CheatsPage as React.ComponentType<PageProps>,
+  games: GamesPage as React.ComponentType<PageProps>,
+  videos: VideosPage as React.ComponentType<PageProps>,
+  reviews: ReviewsPage as React.ComponentType<PageProps>,
+  misc: MiscPage as React.ComponentType<PageProps>,
 }
 
 export default function Dashboard() {
+  const { t } = useTranslations()
   const [currentPage, setCurrentPage] = useState<string>("default")
-  const { component: Page, label } = PAGES[currentPage] ?? { component: DefaultPage, label: currentPage }
+
+  useEffect(() => {
+    prefetchReviews()
+  }, [])
+  const Page = PAGES[currentPage] ?? DefaultPage
+  const label = t(PAGE_KEYS[currentPage] ?? "dashboard.home")
 
   return (
     <SidebarProvider>

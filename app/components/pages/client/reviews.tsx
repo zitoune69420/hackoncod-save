@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   Card,
   CardContent,
@@ -11,8 +11,23 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowDown01Icon, StarIcon, UserIcon } from "@hugeicons/core-free-icons"
 import { useTranslations } from "@/app/components/i18n-provider"
 import type { Review } from "@/lib/supabase/types"
+import { cacheKey, getCached, setCached } from "@/lib/cache"
+import { showToast } from "@/components/commons/toasts"
 
 const PAGE_SIZE = 12
+
+async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
+  const res = await fetch(`/api/reviews?offset=${offset}&limit=${limit}`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data?.error ?? "Error")
+  return Array.isArray(data) ? data : []
+}
+
+export function prefetchReviews(): void {
+  const key = cacheKey("reviews")
+  if (getCached<Review[]>(key)) return
+  fetchReviews(0, PAGE_SIZE).then((data) => setCached(key, data))
+}
 
 function StarRating({ note }: { note: number }) {
   const full = Math.min(5, Math.max(0, Math.round(note)))
@@ -30,12 +45,14 @@ function StarRating({ note }: { note: number }) {
   )
 }
 
-function formatDate(iso: string) {
+const LOCALE_MAP: Record<string, string> = { fr: "fr-FR", en: "en-US" }
+
+function formatDate(iso: string, locale: string) {
   if (!iso) return "—"
   try {
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return "—"
-    return d.toLocaleDateString(undefined, {
+    return d.toLocaleDateString(LOCALE_MAP[locale] ?? locale, {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -43,6 +60,15 @@ function formatDate(iso: string) {
   } catch {
     return "—"
   }
+}
+
+export function ReviewDate({ iso }: { iso: string }) {
+  const { locale } = useTranslations()
+  return (
+    <time className="shrink-0 text-xs text-muted-foreground" dateTime={iso}>
+      {formatDate(iso, locale)}
+    </time>
+  )
 }
 
 function ReviewCard({ review }: { review: Review }) {
@@ -58,9 +84,7 @@ function ReviewCard({ review }: { review: Review }) {
           </p>
           <StarRating note={review.note ?? 0} />
         </div>
-        <time className="shrink-0 text-xs text-muted-foreground" dateTime={review.created_at ?? ""}>
-          {formatDate(review.created_at ?? "")}
-        </time>
+        <ReviewDate iso={review.created_at ?? ""} />
       </CardHeader>
       <CardContent className="flex-1">
         <p className="line-clamp-4 text-sm">{review.message ?? "—"}</p>
@@ -69,25 +93,39 @@ function ReviewCard({ review }: { review: Review }) {
   )
 }
 
-async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
-  const res = await fetch(`/api/reviews?offset=${offset}&limit=${limit}`)
-  const data = await res.json()
-  if (!res.ok) throw new Error(data?.error ?? "Error")
-  return Array.isArray(data) ? data : []
-}
-
 export function ReviewsPage() {
   const { t } = useTranslations()
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadData = useCallback((skipCache = false) => {
+    const key = cacheKey("reviews")
+    if (!skipCache) {
+      const cached = getCached<Review[]>(key)
+      if (cached) {
+        setReviews(cached)
+        setLoading(false)
+        setError(null)
+        return
+      }
+    }
+    setLoading(true)
     fetchReviews(0, PAGE_SIZE)
-      .then(setReviews)
-      .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+      .then((data) => {
+        setCached(key, data)
+        setReviews(data)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : String(err))
+        showToast({ text: t("reviews.toasts.errorLoading"), variant: "error" })
+      })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   if (loading) {
     return (
@@ -96,8 +134,25 @@ export function ReviewsPage() {
           <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
         </div>
-        <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
-          {t("common.loading")}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
+              <CardHeader className="space-y-2">
+                <div className="flex gap-2">
+                  <div className="size-9 shrink-0 animate-pulse rounded-full bg-muted" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     )
