@@ -1,13 +1,14 @@
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDoubleCloseIcon } from "@hugeicons/core-free-icons";
+import Link from "next/link";
 
 export function AppSidebarTitle() {
     return (
         <SidebarMenu>
             <SidebarMenuItem>
                 <SidebarMenuButton size="lg" asChild>
-                    <a href="#">
+                    <Link href="/">
                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-secondary text-sidebar-foreground">
                             <HugeiconsIcon icon={ChevronDoubleCloseIcon} strokeWidth={2} />
                         </div>
@@ -15,7 +16,7 @@ export function AppSidebarTitle() {
                             <span className="font-semibold">Hack on COD</span>
                             <span className="">v3.0.0</span>
                         </div>
-                    </a>
+                    </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
         </SidebarMenu>

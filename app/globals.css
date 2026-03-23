@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* 110% viewport — utilitaires min-h-screen-110 / h-screen-110 */
+  --min-height-screen-110: 110vh;
+  --height-screen-110: 110vh;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -211,4 +215,16 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ScrollControls @react-three/drei : barre masquée (scroll + interactions conservés) */
+.fluid-glass-scroll-hide,
+.fluid-glass-scroll-hide * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.fluid-glass-scroll-hide *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }

@@ -1,6 +1,6 @@
 /**
- * Script inline qui s'exécute avant le premier paint pour appliquer le thème
- * et le fond stockés, évitant un flash.
+ * Inline script that runs before first paint to apply stored theme and background,
+ * avoiding a flash.
  */
 export function ThemeInitScript() {
   const script = `
