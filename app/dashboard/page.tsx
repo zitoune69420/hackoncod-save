@@ -44,7 +44,7 @@ const PAGES: Record<string, React.ComponentType<PageProps>> = {
 
 export default function Dashboard() {
   const { t } = useTranslations()
-  const [currentPage, setCurrentPage] = useState<string>("default")
+  const [currentPage, setCurrentPage] = useState<string>("cheats")
 
   useEffect(() => {
     prefetchReviews()
