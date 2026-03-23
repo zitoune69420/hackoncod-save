@@ -2,25 +2,26 @@
 
 import { motion, useReducedMotion } from "framer-motion"
 import GradientBlinds from "@/app/components/animated/gradient-blinds"
-import { useDeferSectionMount } from "@/hooks/use-defer-section-mount"
+import { DEFER_ROOT_MARGIN_HEAVY, useDeferSectionMount } from "@/hooks/use-defer-section-mount"
+import { useSectionVisible } from "@/hooks/use-section-visible"
 import { SectionPlaceholder } from "@/app/components/home/section-placeholder"
 import { cn } from "@/lib/utils"
 
 const QUOTES = [
   {
     quote:
-      "I had an install issue after a Windows update — got an answer on Discord in under an hour, without being sent in circles.",
-    author: "K. — EU West",
+      "I strongly encourage you to explore this option, as it truly deserves your attention. Take the time to discover it in detail—you might be pleasantly surprised by its advantages.",
+    author: "CaptainGreg7",
   },
   {
     quote:
-      "I expected the usual marketing pitch. This is restrained: you see what you download, and the comparison view actually helps you choose.",
-    author: "Marcus — freelance",
+      "The instructions are clear and easy to follow, the staff is competent and well-trained, and you will always find people ready to assist you with kindness.",
+    author: "zoxxq",
   },
   {
     quote:
-      "No ‘undetectable forever’ cheat promises — they explain risk like adults. That’s different from other sites.",
-    author: "Anonymous — email review",
+      "Honestly, this is the best server I've ever seen, and I'm not just saying that because I'm the proud founder — we truly deserve a big round of applause! :)",
+    author: "Omega",
   },
 ] as const
 
@@ -47,7 +48,8 @@ type SocialProofSectionProps = {
 const BG_H = "min(820px,90vh)" as const
 
 export function SocialProofSection({ titleFontClassName }: SocialProofSectionProps) {
-  const { sectionRef, shouldLoad } = useDeferSectionMount()
+  const { sectionRef, shouldLoad } = useDeferSectionMount(DEFER_ROOT_MARGIN_HEAVY)
+  const webglSectionVisible = useSectionVisible(sectionRef, { rootMargin: "96px 0px" })
   const reduceMotion = useReducedMotion()
 
   return (
@@ -72,6 +74,7 @@ export function SocialProofSection({ titleFontClassName }: SocialProofSectionPro
             style={{ height: BG_H }}
           >
             <GradientBlinds
+              paused={!webglSectionVisible}
               gradientColors={["#FF9FFC", "#5227FF"]}
               angle={0}
               noise={0.3}

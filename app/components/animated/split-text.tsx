@@ -54,7 +54,7 @@ const SplitText: React.FC<SplitTextProps> = ({
   textAlign = 'center',
   onLetterAnimationComplete
 }) => {
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLElement | null>(null);
   const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);
   const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
@@ -63,6 +63,11 @@ const SplitText: React.FC<SplitTextProps> = ({
   useEffect(() => {
     onCompleteRef.current = onLetterAnimationComplete;
   }, [onLetterAnimationComplete]);
+
+  /** New `text` must allow the GSAP effect to run again */
+  useEffect(() => {
+    animationCompletedRef.current = false;
+  }, [text]);
 
   useEffect(() => {
     if (document.fonts.status === 'loaded') {
@@ -178,28 +183,29 @@ const SplitText: React.FC<SplitTextProps> = ({
     }
   );
 
-  const renderTag = () => {
-    const style: React.CSSProperties = {
-      textAlign,
-      wordWrap: 'break-word',
-      willChange: 'transform, opacity',
-      ...(fontFamily != null && fontFamily !== '' ? { fontFamily } : {})
-    };
-    const classes = cn(
-      'split-parent inline-block overflow-hidden whitespace-normal',
-      font,
-      className
-    );
-    const Tag = (tag || 'p') as React.ElementType;
-
-    return (
-      <Tag ref={ref} id={id} style={style} className={classes}>
-        {text}
-      </Tag>
-    );
+  const style: React.CSSProperties = {
+    textAlign,
+    wordWrap: 'break-word',
+    willChange: 'transform, opacity',
+    ...(fontFamily != null && fontFamily !== '' ? { fontFamily } : {}),
   };
+  const classes = cn(
+    'split-parent inline-block overflow-hidden whitespace-normal',
+    font,
+    className,
+  );
 
-  return renderTag();
+  /**
+   * `React.createElement` avoids polymorphic `<Tag ref>` typing bugs (TS `never` on children/ref)
+   * when `Tag` is `React.ElementType`.
+   */
+  return React.createElement(tag || 'p', {
+    ref,
+    id,
+    style,
+    className: classes,
+    children: text,
+  });
 };
 
 export default SplitText;

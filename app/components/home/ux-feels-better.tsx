@@ -1,25 +1,16 @@
 "use client"
 
-import dynamic from "next/dynamic"
-import { useDeferSectionMount } from "@/hooks/use-defer-section-mount"
+import { DEFER_ROOT_MARGIN_HEAVY, useDeferSectionMount } from "@/hooks/use-defer-section-mount"
 import { SectionPlaceholder } from "@/app/components/home/section-placeholder"
+import { UxFeelsBetterContent } from "@/app/components/home/ux-feels-better-content"
 import { cn } from "@/lib/utils"
-
-const UxFeelsBetterContentLoaded = dynamic(
-  () => import("./ux-feels-better-content").then((m) => ({ default: m.UxFeelsBetterContent })),
-  {
-    loading: () => (
-      <SectionPlaceholder className="min-h-[min(76vh,720px)] bg-black ring-white/8" />
-    ),
-  },
-)
 
 type UxFeelsBetterProps = {
   titleFontClassName?: string
 }
 
 export function UxFeelsBetter({ titleFontClassName }: UxFeelsBetterProps) {
-  const { sectionRef, shouldLoad } = useDeferSectionMount()
+  const { sectionRef, shouldLoad } = useDeferSectionMount(DEFER_ROOT_MARGIN_HEAVY)
 
   return (
     <section
@@ -36,7 +27,7 @@ export function UxFeelsBetter({ titleFontClassName }: UxFeelsBetterProps) {
       {!shouldLoad ? (
         <SectionPlaceholder className="min-h-[min(76vh,720px)] bg-black ring-white/8" />
       ) : (
-        <UxFeelsBetterContentLoaded titleFontClassName={titleFontClassName} />
+        <UxFeelsBetterContent titleFontClassName={titleFontClassName} />
       )}
     </section>
   )

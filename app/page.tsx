@@ -8,6 +8,7 @@ import { SupportSection } from '@/app/components/home/support-section';
 import { SocialProofSection } from '@/app/components/home/social-proof-section';
 import { StatsSection } from '@/app/components/home/stats-section';
 import { FaqSection } from '@/app/components/home/faq-section';
+import { CtaSection } from '@/app/components/home/cta-section';
 import { Syne } from 'next/font/google'
 import Link from 'next/link';
 
@@ -46,6 +47,7 @@ export default function Home() {
     <SocialProofSection titleFontClassName={syne.className} />
     <StatsSection titleFontClassName={syne.className} />
     <FaqSection titleFontClassName={syne.className} />
+    <CtaSection titleFontClassName={syne.className} />
     </>
   );
 }

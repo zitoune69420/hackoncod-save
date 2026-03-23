@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 import { Renderer, Program, Mesh, Triangle } from 'ogl';
 
 export interface GradientBlindsProps {
@@ -59,7 +59,10 @@ const GradientBlinds: React.FC<GradientBlindsProps> = ({
   mixBlendMode = 'lighten'
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
   const rafRef = useRef<number | null>(null);
+  const loopRef = useRef<(t: number) => void>(() => {});
   const programRef = useRef<Program | null>(null);
   const meshRef = useRef<Mesh<Triangle> | null>(null);
   const geometryRef = useRef<Triangle | null>(null);
@@ -310,6 +313,10 @@ void main() {
     canvas.addEventListener('pointermove', onPointerMove);
 
     const loop = (t: number) => {
+      if (pausedRef.current) {
+        rafRef.current = null;
+        return;
+      }
       rafRef.current = requestAnimationFrame(loop);
       uniforms.iTime.value = t * 0.001;
       if (mouseDampening > 0) {
@@ -326,7 +333,7 @@ void main() {
       } else {
         lastTimeRef.current = t;
       }
-      if (!paused && programRef.current && meshRef.current) {
+      if (programRef.current && meshRef.current) {
         try {
           renderer.render({ scene: meshRef.current });
         } catch (e) {
@@ -334,6 +341,7 @@ void main() {
         }
       }
     };
+    loopRef.current = loop;
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
@@ -359,7 +367,6 @@ void main() {
     };
   }, [
     dpr,
-    paused,
     gradientColors,
     angle,
     noise,
@@ -373,6 +380,14 @@ void main() {
     distortAmount,
     shineDirection
   ]);
+
+  useEffect(() => {
+    if (paused) return;
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame((t) => {
+      loopRef.current(t);
+    });
+  }, [paused]);
 
   return (
     <div

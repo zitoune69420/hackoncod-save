@@ -3,28 +3,28 @@ import { cn } from "@/lib/utils"
 
 const FAQ_ITEMS = [
   {
-    q: "What is a FAQ and why is it important?",
-    a: "FAQ stands for Frequently Asked Questions. It is a list that provides answers to common questions people may have about a specific product, service, or topic.",
+    q: "Is it really free?",
+    a: "Yes. Most features are available for free. You can access the platform, explore tools and use core functionality without paying. Premium services are optional and designed for users who want more speed, features or priority support.",
   },
   {
-    q: "Why should I use a FAQ on my website or app?",
-    a: "Utilizing a FAQ section on your website or app is a practical way to offer instant assistance to your users or customers. Instead of waiting for customer support responses, they can find quick answers to commonly asked questions.",
+    q: "What do I get with premium?",
+    a: "Premium gives you: faster updates, extended features, priority support. It’s not required, but it improves the overall experience if you use the platform regularly.",
   },
   {
-    q: "How do I effectively create a FAQ section?",
-    a: "Creating a FAQ section starts with gathering the most frequent questions you receive from your users or customers. Once you have a list, you need to write clear, detailed, and helpful answers to each question.",
+    q: "How often is the platform updated?",
+    a: "The platform is updated regularly to maintain stability, improve performance, and keep everything working smoothly. Updates are continuous rather than occasional.",
   },
   {
-    q: "What are the benefits of having a well-maintained FAQ section?",
-    a: "There are numerous advantages to maintaining a robust FAQ section. Firstly, it provides immediate answers to common queries, which improves the user experience.",
+    q: "Is the platform stable?",
+    a: "Yes. Stability is a core focus. The platform is built to provide consistent access, minimize issues, and reduce downtime as much as possible.",
   },
   {
-    q: "How should I organize my FAQ for optimal usability?",
-    a: 'An organized FAQ is critical for user-friendliness. Start by grouping similar questions into categories, such as "Billing," "Account Setup," or "Technical Support." This way, users can quickly find the section that addresses their specific concerns.',
+    q: "How does support work?",
+    a: 'Support is available to all users. Free users get standard response times, while premium users receive faster, priority handling.',
   },
   {
-    q: "How often should I update my FAQ, and why is it necessary?",
-    a: "Regular updates to your FAQ are essential to keeping the information accurate and relevant. As your product or service evolves, so will the types of questions your users ask.",
+    q: "Do I need technical knowledge to use it?",
+    a: "No. The platform is designed to be simple and accessible. Everything is organized to reduce friction and make usage straightforward, even for new users.",
   },
 ] as const
 
@@ -41,14 +41,14 @@ export function FaqSection({ titleFontClassName }: FaqSectionProps) {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
-          <Badge variant="default" className="h-5 gap-1 rounded-4xl px-2 py-0.5">
-            FAQ
-          </Badge>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400/90">
+            Frequently Asked Questions
+          </p>
           <h2
             id="faq-heading"
             className={cn(
               titleFontClassName,
-              "mt-4 text-4xl font-semibold tracking-tight text-white",
+              "mt-3 text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl",
             )}
           >
             Common Questions & Answers

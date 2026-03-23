@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import DarkVeil from "@/app/components/animated/dark-veil"
 import FluidGlass from "@/app/components/animated/fluid-glass"
+import { useSectionVisible } from "@/hooks/use-section-visible"
 import { cn } from "@/lib/utils"
 
 const UX_SLIDES = [
@@ -34,29 +35,43 @@ export type UxFeelsBetterContentProps = {
   titleFontClassName?: string
 }
 
-/** Veil + glass + scroll chunk — mounted only after parent section defer. */
+/**
+ * Veil + glass + scroll — mounted only after parent `useDeferSectionMount`.
+ * Ne pas piloter `backdropActive` via un IO instable (scroll interne) : on observe le cadre
+ * glass pour `paused` / `renderActive` afin de couper RAF + R3F quand le bloc n’est pas visible.
+ */
 export function UxFeelsBetterContent({ titleFontClassName }: UxFeelsBetterContentProps) {
   const [veilCanvas, setVeilCanvas] = useState<HTMLCanvasElement | null>(null)
-  const [glassInView, setGlassInView] = useState(true)
   const glassFrameRef = useRef<HTMLDivElement>(null)
+  /** Cadre lentille + voile : pause RAF / R3F quand ce bloc n’est pas au viewport. */
+  const glassInView = useSectionVisible(glassFrameRef, { rootMargin: "96px 0px" })
+  /**
+   * La lentille lit le canvas du voile : si R3F reprend la même frame que la reprise du voile,
+   * la texture est vide / périmée → flash. On attend 2 frames de RAF (voile peint d’abord),
+   * puis on active le Canvas + fondu (voir wrapper ci‑dessous).
+   */
+  const [r3fReady, setR3fReady] = useState(false)
+
+  useEffect(() => {
+    if (!glassInView) {
+      setR3fReady(false)
+      return
+    }
+    let raf1 = 0
+    let raf2 = 0
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        setR3fReady(true)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+    }
+  }, [glassInView])
 
   const onVeilCanvasRef = useCallback((el: HTMLCanvasElement | null) => {
     setVeilCanvas(el)
-  }, [])
-
-  /**
-   * Wide root margin: avoids clipping the texture while the frame is still below the fold
-   * while the section title is already visible.
-   */
-  useEffect(() => {
-    const el = glassFrameRef.current
-    if (!el || typeof IntersectionObserver === "undefined") return
-    const io = new IntersectionObserver(
-      ([e]) => setGlassInView(e.isIntersecting),
-      { root: null, rootMargin: "320px 0px 520px 0px", threshold: 0 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
   }, [])
 
   return (
@@ -87,7 +102,8 @@ export function UxFeelsBetterContent({ titleFontClassName }: UxFeelsBetterConten
       >
         <DarkVeil
           ref={onVeilCanvasRef}
-          resolutionScale={0.82}
+          paused={!glassInView}
+          resolutionScale={0.76}
           speed={0.35}
           hueShift={-42}
           noiseIntensity={0.035}
@@ -101,9 +117,16 @@ export function UxFeelsBetterContent({ titleFontClassName }: UxFeelsBetterConten
           aria-hidden
         />
 
-        <div className="relative z-10 flex h-full min-h-0 min-w-0 flex-1 flex-col bg-transparent">
+        <div
+          className={cn(
+            "relative z-10 flex h-full min-h-0 min-w-0 flex-1 flex-col bg-transparent",
+            "transition-opacity duration-200 ease-out motion-reduce:transition-none",
+            glassInView && r3fReady ? "opacity-100" : "opacity-0",
+          )}
+        >
           <FluidGlass
-            backdropActive={glassInView}
+            renderActive={glassInView && r3fReady}
+            backdropActive
             backdropCanvas={veilCanvas}
             className="h-full min-h-0 flex-1 bg-transparent"
             mode="lens"
@@ -113,11 +136,11 @@ export function UxFeelsBetterContent({ titleFontClassName }: UxFeelsBetterConten
             }}
             lensProps={{
               scale: 0.15,
-              ior: 1.05,
-              thickness: 4.75,
+              ior: 1.15,
+              thickness: 2,
               chromaticAberration: 0.05,
               anisotropy: 0.02,
-              samples: 6,
+              samples: 4,
             }}
           />
         </div>

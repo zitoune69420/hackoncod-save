@@ -84,6 +84,8 @@ type Props = {
   scanlineFrequency?: number;
   warpAmount?: number;
   resolutionScale?: number;
+  /** Quand true : aucune boucle RAF / rendu (section hors viewport). */
+  paused?: boolean;
 };
 
 const DarkVeil = forwardRef<HTMLCanvasElement, Props>(function DarkVeil(
@@ -95,11 +97,16 @@ const DarkVeil = forwardRef<HTMLCanvasElement, Props>(function DarkVeil(
     scanlineFrequency = 0,
     warpAmount = 0,
     resolutionScale = 1,
+    paused = false,
   },
   forwardedRef
 ) {
   const innerRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+  const rafRef = useRef<number | null>(null);
+  const loopRef = useRef<() => void>(() => {});
 
   const setCanvasRef = useCallback(
     (node: HTMLCanvasElement | null) => {
@@ -157,9 +164,12 @@ const DarkVeil = forwardRef<HTMLCanvasElement, Props>(function DarkVeil(
     resize();
 
     const start = performance.now();
-    let frame = 0;
 
     const loop = () => {
+      if (pausedRef.current) {
+        rafRef.current = null;
+        return;
+      }
       program.uniforms.uTime.value = ((performance.now() - start) / 1000) * speed;
       program.uniforms.uHueShift.value = hueShift;
       program.uniforms.uNoise.value = noiseIntensity;
@@ -167,17 +177,27 @@ const DarkVeil = forwardRef<HTMLCanvasElement, Props>(function DarkVeil(
       program.uniforms.uScanFreq.value = scanlineFrequency;
       program.uniforms.uWarp.value = warpAmount;
       renderer.render({ scene: mesh });
-      frame = requestAnimationFrame(loop);
+      rafRef.current = requestAnimationFrame(loop);
     };
 
-    loop();
+    loopRef.current = loop;
+    rafRef.current = requestAnimationFrame(loop);
 
     return () => {
-      cancelAnimationFrame(frame);
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
       ro.disconnect();
       window.removeEventListener('resize', resize);
     };
   }, [hueShift, noiseIntensity, scanlineIntensity, speed, scanlineFrequency, warpAmount, resolutionScale]);
+
+  useEffect(() => {
+    if (paused) return;
+    if (rafRef.current != null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      loopRef.current();
+    });
+  }, [paused]);
 
   return (
     <div ref={wrapRef} className="pointer-events-none absolute inset-0 size-full min-h-full min-w-0">

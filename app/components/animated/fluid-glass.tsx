@@ -2,7 +2,14 @@
 
 import * as THREE from 'three';
 import { useRef, useState, useEffect, useMemo, memo, ReactNode } from 'react';
-import { Canvas, createPortal, useFrame, useThree, ThreeElements } from '@react-three/fiber';
+import {
+  Canvas,
+  createPortal,
+  invalidate,
+  useFrame,
+  useThree,
+  ThreeElements,
+} from '@react-three/fiber';
 import {
   useFBO,
   useGLTF,
@@ -28,13 +35,13 @@ type ModeProps = Record<string, unknown>;
 const BUFFER_BACKDROP = '#0a0b0e' as const;
 
 /** Compromis netteté transmission / perf (trop bas = lentille « crado ») */
-const FBO_RES_SCALE = 0.64;
+const FBO_RES_SCALE = 0.52;
 
 /**
- * 1 = texture voile à jour chaque frame (évite flashs dus au throttling).
- * Remonter à 2 si besoin de perf sur machine faible.
+ * 2 = upload texture voile tous les 2 frames (moins de bande passante GPU).
+ * Repasser à 1 si artefact visible sur la lentille.
  */
-const VEIL_TEXTURE_FRAME_SKIP = 1;
+const VEIL_TEXTURE_FRAME_SKIP = 2;
 
 /**
  * Amplitude du déplacement (curseur -1…+1). X = gauche/droite (zone latérale un peu plus large).
@@ -76,6 +83,18 @@ interface FluidGlassProps {
   backdropCanvas?: HTMLCanvasElement | null;
   /** Quand false (section hors viewport) : pas de texture live → grosse économie GPU */
   backdropActive?: boolean;
+  /**
+   * Quand false : `frameloop="never"` — plus de `useFrame` / rendu R3F (section hors viewport).
+   * À combiner avec pause du DarkVeil côté parent.
+   */
+  renderActive?: boolean;
+}
+
+function ResumeR3FWhenActive({ active }: { active: boolean }) {
+  useEffect(() => {
+    if (active) invalidate();
+  }, [active]);
+  return null;
 }
 
 function FluidGlassScrollPanels({ slides, titleFontClassName }: FluidGlassOverlayScroll) {
@@ -140,6 +159,7 @@ export default function FluidGlass({
   cubeProps = {},
   backdropCanvas = null,
   backdropActive = true,
+  renderActive = true,
 }: FluidGlassProps) {
   const Wrapper = mode === 'bar' ? Bar : mode === 'cube' ? Cube : Lens;
   const rawOverrides = mode === 'bar' ? barProps : mode === 'cube' ? cubeProps : lensProps;
@@ -165,15 +185,17 @@ export default function FluidGlass({
       )}
     >
       <Canvas
+        frameloop={renderActive ? 'always' : 'never'}
         camera={{ position: [0, 0, 20], fov: 15 }}
-        dpr={[1, 1.35]}
+        dpr={[1, 1.2]}
         gl={{
           alpha: true,
           /** true : meilleure composition avec le DarkVeil CSS derrière le canvas */
           premultipliedAlpha: true,
           preserveDrawingBuffer: false,
           antialias: true,
-          powerPreference: 'high-performance',
+          /** default : moins agressif que high-performance, souvent plus fluide avec le reste de la page */
+          powerPreference: 'default',
         }}
         onCreated={({ gl, scene }) => {
           gl.setClearColor(0x000000, 0);
@@ -187,6 +209,7 @@ export default function FluidGlass({
           background: 'transparent',
         }}
       >
+        <ResumeR3FWhenActive active={renderActive} />
         {/* Pas de HDRI Environment (très coûteux) — suffisant pour la lentille */}
         <ambientLight intensity={0.42} />
         <directionalLight position={[6, 10, 8]} intensity={0.55} />
@@ -315,7 +338,10 @@ const ModeWrapper = memo(function ModeWrapper({
   const { nodes } = useGLTF(glb);
   const { size, gl } = useThree();
 
-  /** Coordonnées normalisées depuis le canvas WebGL (évite le décalage ScrollControls / parent) */
+  /**
+   * `window` (et pas le canvas) : avec ScrollControls + overlay scroll, le canvas est en
+   * `pointer-events: none` pour laisser passer le scroll HTML — aucun `pointermove` sur le canvas.
+   */
   useEffect(() => {
     const canvas = gl.domElement;
     const onMove = (e: PointerEvent) => {

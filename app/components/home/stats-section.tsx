@@ -327,21 +327,6 @@ export function StatsSection({ titleFontClassName }: StatsSectionProps) {
               marketing fluff.
             </p>
             <div className="my-10 flex flex-wrap gap-3">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="group rounded-full px-5 text-base tracking-tight"
-                asChild
-              >
-                <Link href="/dashboard" className="inline-flex items-center gap-2">
-                  <span>Docs</span>
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    className="size-4 -rotate-45 transition-all ease-out group-hover:ml-1 group-hover:rotate-0"
-                    strokeWidth={2}
-                  />
-                </Link>
-              </Button>
               <Button size="lg" className="group rounded-full px-5 text-base tracking-tight" asChild>
                 <Link href="/dashboard" className="inline-flex items-center gap-2">
                   <span>Get started</span>

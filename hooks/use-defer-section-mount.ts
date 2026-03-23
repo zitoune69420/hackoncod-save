@@ -1,15 +1,28 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { startTransition, useEffect, useRef, useState } from "react"
 
-/** Même ordre de grandeur que l’ancien préchargement viewport (LazySection). */
-const DEFAULT_ROOT_MARGIN = "320px 0px 400px 0px"
+/**
+ * Marges modérées : un `rootMargin` trop large (ex. 300px+/400px+) fait entrer **plusieurs**
+ * sections lourdes (WebGL, GSAP, R3F) dans la zone d’intersection **en même temps** → pics CPU/GPU
+ * et scroll saccadé. On ne précharge que lorsque la section est **proche** du viewport.
+ */
+export const DEFER_ROOT_MARGIN_DEFAULT = "72px 0px 96px 0px"
+
+/**
+ * Sections très lourdes (WebGL plein cadre, R3F) : monter un peu plus tard pour éviter le chevauchement
+ * avec d’autres blocs qui deviennent visibles dans la même fenêtre de scroll.
+ */
+export const DEFER_ROOT_MARGIN_HEAVY = "32px 0px 56px 0px"
 
 /**
  * Passe `shouldLoad` à true quand la section entre dans la zone (viewport ± rootMargin).
  * À utiliser avec `ref` sur le `<section>` racine — pas de wrapper div supplémentaire.
+ *
+ * Le passage à `shouldLoad` utilise `startTransition` pour ne pas bloquer les interactions / le scroll
+ * sur le thread principal.
  */
-export function useDeferSectionMount(rootMargin: string = DEFAULT_ROOT_MARGIN) {
+export function useDeferSectionMount(rootMargin: string = DEFER_ROOT_MARGIN_DEFAULT) {
   const sectionRef = useRef<HTMLElement | null>(null)
   const [shouldLoad, setShouldLoad] = useState(false)
 
@@ -19,7 +32,11 @@ export function useDeferSectionMount(rootMargin: string = DEFAULT_ROOT_MARGIN) {
     if (!el || typeof IntersectionObserver === "undefined") return
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setShouldLoad(true)
+        if (!entry.isIntersecting) return
+        io.disconnect()
+        startTransition(() => {
+          setShouldLoad(true)
+        })
       },
       { root: null, rootMargin, threshold: 0 },
     )
