@@ -1,5 +1,6 @@
 "use client"
 
+import { toast as sonnerToast } from "sonner"
 import { toast } from "@/lib/toast"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -15,6 +16,8 @@ export interface ToastOptions {
   text: string
   icon?: React.ReactNode
   variant?: ToastVariant
+  /** Si true, affiche le toast même si les notifications sont désactivées (ex. confirmation de sauvegarde des paramètres). */
+  force?: boolean
 }
 
 const defaultIcons: Record<ToastVariant, React.ReactNode> = {
@@ -31,8 +34,16 @@ const variantMap = {
   info: toast.info,
 } as const
 
-export function showToast({ text, icon, variant = "info" }: ToastOptions) {
-  const fn = variantMap[variant]
+/** Contourne la préférence utilisateur (même usage que variantMap, sans filtre getStoredToast). */
+const variantMapForced = {
+  success: sonnerToast.success,
+  error: sonnerToast.error,
+  warning: sonnerToast.warning,
+  info: sonnerToast.info,
+} as const
+
+export function showToast({ text, icon, variant = "info", force }: ToastOptions) {
+  const fn = force ? variantMapForced[variant] : variantMap[variant]
   const iconNode = icon ?? defaultIcons[variant]
   fn(text, { icon: iconNode })
 }

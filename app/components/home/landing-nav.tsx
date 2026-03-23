@@ -4,6 +4,9 @@ import Link from "next/link"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { gsap } from "gsap"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { authClient } from "@/lib/auth-client"
+import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url"
 import { cn } from "@/lib/utils"
 import {
   HERO_SUBTITLE_START_EVENT,
@@ -14,10 +17,26 @@ const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
   { label: "Community", href: "#community" },
-  { label: "Docs", href: "/dashboard" },
+  { label: "Docs", href: `/dashboard?page=${DASHBOARD_DEFAULT_PAGE}` },
 ] as const
 
 const SCROLL_THRESHOLD_PX = 8
+
+const NAV_AUTH_BTN =
+  "h-10 rounded-full px-5 text-sm font-semibold sm:h-11 sm:px-7" as const
+
+function userInitials(name: string | null | undefined, email: string | null | undefined) {
+  const n = name?.trim()
+  if (n) {
+    const parts = n.split(/\s+/)
+    if (parts.length >= 2) {
+      return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase()
+    }
+    return n.slice(0, 2).toUpperCase()
+  }
+  if (email) return email.slice(0, 2).toUpperCase()
+  return "?"
+}
 
 type LandingNavProps = {
   brandName?: string
@@ -34,6 +53,9 @@ export function LandingNav({
   const introCtxRef = useRef<gsap.Context | null>(null)
   const introDoneRef = useRef(false)
   const [scrolled, setScrolled] = useState(false)
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  const { data: session, isPending: sessionPending } = authClient.useSession()
+  const user = session?.user
 
   /* Hidden until title animation ends — same moment as subtitle. */
   useLayoutEffect(() => {
@@ -97,6 +119,20 @@ export function LandingNav({
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
+  const signInWithDiscord = async () => {
+    try {
+      setIsSigningIn(true)
+      await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: `/dashboard?page=${DASHBOARD_DEFAULT_PAGE}`,
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSigningIn(false)
+    }
+  }
+
   return (
     <header
       ref={headerRef}
@@ -138,20 +174,67 @@ export function LandingNav({
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 md:ml-0">
-          <Button
-            asChild
-            size="lg"
-            className="h-10 rounded-full border-white bg-transparent px-5 text-sm font-semibold text-white hover:border-accent sm:h-11 sm:px-7"
-          >
-            <Link href="/dashboard">Log in</Link>
-          </Button>
-          <Button
-            asChild
-            size="lg"
-            className="h-10 rounded-full border-0 bg-white px-5 text-sm font-semibold text-black shadow-sm hover:bg-white/90 sm:h-11 sm:px-7"
-          >
-            <Link href="/dashboard">Start free</Link>
-          </Button>
+          {sessionPending ? (
+            <div className="flex items-center gap-2 sm:gap-3" aria-hidden>
+              <div
+                className={cn(NAV_AUTH_BTN, "w-24 animate-pulse bg-white/10")}
+              />
+              <div
+                className={cn(NAV_AUTH_BTN, "w-28 animate-pulse bg-white/10")}
+              />
+            </div>
+          ) : user ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Button
+                asChild
+                variant="default"
+                size="lg"
+                className={cn(NAV_AUTH_BTN, "border-0 px-6")}
+              >
+                <Link href={`/dashboard?page=${DASHBOARD_DEFAULT_PAGE}`}>Account</Link>
+              </Button>
+              <Link
+                href={`/dashboard?page=${DASHBOARD_DEFAULT_PAGE}`}
+                className={cn(
+                  "shrink-0 rounded-full ring-2 ring-white/25 ring-offset-2 ring-offset-black transition-opacity hover:opacity-90",
+                  "size-10 sm:size-11",
+                )}
+                aria-label="Account"
+              >
+                <Avatar className="size-10 sm:size-11">
+                  <AvatarImage src={user.image ?? undefined} alt="" />
+                  <AvatarFallback className="bg-primary/90 text-xs font-semibold text-primary-foreground">
+                    {userInitials(user.name, user.email)}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <Button
+                type="button"
+                size="lg"
+                disabled={isSigningIn}
+                onClick={signInWithDiscord}
+                className={cn(
+                  NAV_AUTH_BTN,
+                  "border border-white bg-transparent text-white hover:border-accent hover:bg-white/5",
+                )}
+              >
+                {isSigningIn ? "Redirecting…" : "Log in"}
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                className={cn(
+                  NAV_AUTH_BTN,
+                  "border-0 bg-white text-black shadow-sm hover:bg-white/90",
+                )}
+              >
+                <Link href={`/dashboard?page=${DASHBOARD_DEFAULT_PAGE}`}>Start free</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

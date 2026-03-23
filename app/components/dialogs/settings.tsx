@@ -134,7 +134,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     setLocale(language);
     applyAllStyles(colorTheme, backgroundColor);
     window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
-    showToast({ text: t("settings.language.saved"), variant: "success" })
+    showToast({
+      text: t("settings.language.saved"),
+      variant: "success",
+      force: true,
+    })
     onOpenChange(false);
   };
 

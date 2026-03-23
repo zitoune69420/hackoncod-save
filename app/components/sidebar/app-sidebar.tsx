@@ -19,11 +19,6 @@ function useNavData() {
   const { t } = useTranslations()
   return React.useMemo(
     () => ({
-      user: {
-        name: "shadcn",
-        email: "m@example.com",
-        avatar: "/avatars/shadcn.jpg",
-      },
       navMain: [
         {
           id: "content",
@@ -65,9 +60,17 @@ function useNavData() {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentPage?: string
   onSelectPage?: (pageId: string) => void
+  settingsOpen?: boolean
+  onSettingsOpenChange?: (open: boolean) => void
 }
 
-export function AppSidebar({ currentPage, onSelectPage, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  currentPage,
+  onSelectPage,
+  settingsOpen,
+  onSettingsOpenChange,
+  ...props
+}: AppSidebarProps) {
   const data = useNavData()
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -78,7 +81,7 @@ export function AppSidebar({ currentPage, onSelectPage, ...props }: AppSidebarPr
         <NavMain items={data.navMain} currentPage={currentPage} onSelectPage={onSelectPage} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser settingsOpen={settingsOpen} onSettingsOpenChange={onSettingsOpenChange} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

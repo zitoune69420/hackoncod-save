@@ -60,7 +60,9 @@
     "account": "Compte",
     "billing": "Facturation",
     "notifications": "Notifications",
-    "logOut": "Déconnexion"
+    "logOut": "Déconnexion",
+    "signIn": "Connexion avec Discord",
+    "signingIn": "Redirection…"
   },
   "settings": {
     "title": "Paramètres",
