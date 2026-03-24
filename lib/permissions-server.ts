@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { AuthContext } from "@better-auth/core";
 import { decryptOAuthToken } from "better-auth/oauth2";
 import { auth } from "@/app/auth";
 import {
@@ -177,7 +178,7 @@ async function resolveDiscordUserIdForAppUser(
   try {
     const accessToken = await decryptOAuthToken(
       discordAccount.accessToken,
-      context,
+      context as AuthContext,
     );
     if (!accessToken) {
       return null;
