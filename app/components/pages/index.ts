@@ -4,5 +4,6 @@ export { GamesPage } from "./server/games";
 export { VideosPage } from "./server/videos";
 export { ReviewsPage } from "./client/reviews";
 export { MiscPage } from "./server/misc";
-export { VipCheatsPage } from "./server/vip-cheats";
-export { SemiVipCheatsPage } from "./server/semivip-cheats";
+export { VipCheatsPage } from "./client/vip-cheats";
+export { SemiVipCheatsPage } from "./client/semivip-cheats";
+export { PartnersPage } from "./server/partners";

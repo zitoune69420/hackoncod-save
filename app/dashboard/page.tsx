@@ -27,6 +27,7 @@ import {
   MiscPage,
   VipCheatsPage,
   SemiVipCheatsPage,
+  PartnersPage,
 } from "@/app/components/pages";
 import { prefetchReviews } from "@/app/components/pages/client/reviews";
 import {
@@ -48,6 +49,7 @@ const PAGE_KEYS: Record<string, string> = {
   misc: "sidebar.misc",
   "vip-cheats": "sidebar.vip",
   "semivip-cheats": "sidebar.semivip",
+  partners: "sidebar.partners",
 };
 
 const PAGES: Record<string, React.ComponentType<PageProps>> = {
@@ -60,6 +62,7 @@ const PAGES: Record<string, React.ComponentType<PageProps>> = {
   misc: MiscPage as React.ComponentType<PageProps>,
   "vip-cheats": VipCheatsPage as React.ComponentType<PageProps>,
   "semivip-cheats": SemiVipCheatsPage as React.ComponentType<PageProps>,
+  partners: PartnersPage as React.ComponentType<PageProps>,
 };
 
 function DashboardContent() {

@@ -2,6 +2,8 @@
 
 import { useTranslations } from "@/app/components/i18n-provider";
 import { prefetchReviews } from "@/app/components/pages/client/reviews";
+import { useUserRole } from "@/hooks/use-user-role";
+import { hasPermissions, type Permission } from "@/lib/permissions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -25,6 +27,7 @@ export function NavMain({
   currentPage,
   onSelectPageAction,
   label,
+  optimisticPermissions = false,
 }: {
   items: {
     id?: string;
@@ -33,18 +36,42 @@ export function NavMain({
     items?: {
       title: string;
       pageId: string;
+      perms?: Permission[];
     }[];
   }[];
   currentPage?: string;
   onSelectPageAction?: (pageId: string) => void;
   label?: string;
+  optimisticPermissions?: boolean;
 }) {
   const { t } = useTranslations();
+  const { role, status, isAuthenticated } = useUserRole();
+  const filteredItems = items
+    .map((item) => ({
+      ...item,
+      items: item.items?.filter((subItem) =>
+        hasPermissions(role, subItem.perms ?? []),
+      ),
+    }))
+    .filter((item) => (item.items?.length ?? 0) > 0);
+
+  const visibleItems = !isAuthenticated
+    ? filteredItems
+    : optimisticPermissions
+      ? items
+      : status === "resolved"
+        ? filteredItems
+        : items;
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{label ?? t("sidebar.platform")}</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Collapsible
             key={item.id ?? item.title}
             asChild

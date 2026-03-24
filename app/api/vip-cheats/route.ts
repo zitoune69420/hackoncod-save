@@ -1,8 +1,27 @@
-import { getVipCheats } from "@/lib/supabase/queries"
-import { NextResponse } from "next/server"
+import { auth } from "@/app/auth";
+import { hasPermissions } from "@/lib/permissions";
+import { resolveUserRoleForUserId } from "@/lib/permissions-server";
+import { getVipCheats } from "@/lib/supabase/queries";
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  const cheats = await getVipCheats()
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (
+    !hasPermissions(
+      await resolveUserRoleForUserId(session.user.id, session.user),
+      ["vip"],
+    )
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const cheats = await getVipCheats();
 
   const tableData = cheats.map((c) => ({
     id: c.id,
@@ -15,7 +34,7 @@ export async function GET() {
     crack: c.crack,
     client: c.client,
     link: c.link,
-  }))
+  }));
 
-  return NextResponse.json(tableData)
+  return NextResponse.json(tableData);
 }

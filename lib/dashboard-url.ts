@@ -17,6 +17,7 @@ export const DASHBOARD_PAGE_IDS = [
   "misc",
   "vip-cheats",
   "semivip-cheats",
+  "partners",
 ] as const;
 
 export type DashboardPageId = (typeof DASHBOARD_PAGE_IDS)[number];

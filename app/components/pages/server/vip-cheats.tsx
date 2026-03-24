@@ -1,185 +1,46 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations } from "@/app/components/i18n-provider";
-import { Progress } from "@/components/ui/progress";
-import { SearchBar } from "@/components/commons/search-bar";
+import { headers } from "next/headers";
+import { auth } from "@/app/auth";
 import {
-  VipCheatsTable,
+  VipCheatsPage as VipCheatsClientPage,
   type VipCheatRow,
 } from "@/app/components/pages/client/vip-cheats";
-import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Refresh01Icon, CrownIcon } from "@hugeicons/core-free-icons";
-import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
-import { showToast } from "@/components/commons/toasts";
-import { authClient } from "@/lib/auth-client";
-import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
+import { hasPermissions } from "@/lib/permissions";
+import { resolveUserRoleForUserId } from "@/lib/permissions-server";
+import { getVipCheats } from "@/lib/supabase/queries";
 
-function fetchVipCheats(): Promise<VipCheatRow[]> {
-  return fetch("/api/vip-cheats").then((res) => res.json());
+async function getInitialVipCheats(): Promise<VipCheatRow[]> {
+  const cheats = await getVipCheats();
+
+  return cheats.map((cheat) => ({
+    id: cheat.id,
+    name: cheat.name,
+    game: Array.isArray(cheat.game)
+      ? (cheat.game[0]?.title ?? "")
+      : (cheat.game?.title ?? ""),
+    mode: cheat.mode,
+    extension: cheat.extension,
+    crack: cheat.crack,
+    client: cheat.client,
+    link: cheat.link,
+  }));
 }
 
-export function VipCheatsPage() {
-  const { t } = useTranslations();
-  const { data: session, isPending: sessionPending } = authClient.useSession();
-  const user = session?.user;
-
-  const [data, setData] = useState<VipCheatRow[]>([]);
-  const [search, setSearch] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [howToVipOpen, setHowToVipOpen] = useState(false);
-  const [refreshTick, setRefreshTick] = useState(0);
-  const refreshRef = useRef(false);
-
-  const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data;
-    const q = searchQuery.toLowerCase();
-    return data.filter(
-      (row) =>
-        row.name.toLowerCase().includes(q) ||
-        row.game.toLowerCase().includes(q) ||
-        row.mode.toLowerCase().includes(q) ||
-        row.extension.toLowerCase().includes(q),
-    );
-  }, [data, searchQuery]);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const isRefresh = refreshRef.current;
-    refreshRef.current = false;
-    (async () => {
-      const key = cacheKey("vip-cheats");
-      if (!isRefresh) {
-        const cached = getCached<VipCheatRow[]>(key);
-        if (cached) {
-          if (!cancelled) {
-            setData(cached);
-            setLoading(false);
-          }
-          return;
-        }
-      }
-      if (isRefresh) invalidateCache(key);
-      if (!cancelled) {
-        setLoading(true);
-        setProgress(0);
-      }
-      try {
-        const json = await fetchVipCheats();
-        if (!cancelled) {
-          setCached(key, json);
-          setData(json);
-          setProgress(100);
-        }
-      } catch {
-        if (!cancelled) {
-          setProgress(0);
-          showToast({ text: t("vip.toasts.errorLoading"), variant: "error" });
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, refreshTick, t]);
-
-  useEffect(() => {
-    if (!loading) return;
-    const interval = setInterval(() => {
-      setProgress((p) => (p >= 90 ? 90 : p + 10));
-    }, 200);
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  const handleRefresh = useCallback(() => {
-    refreshRef.current = true;
-    setRefreshTick((k) => k + 1);
-    showToast({ text: t("vip.toasts.cacheCleared"), variant: "success" });
-  }, [t]);
-
-  if (sessionPending) {
-    return (
-      <div className="flex min-h-16 items-center justify-center">
-        <Progress value={progress} className="h-1 w-48" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t("vip.description")}
-            </p>
-          </div>
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-              <HugeiconsIcon
-                icon={CrownIcon}
-                className="size-8 text-primary"
-                strokeWidth={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">
-                {t("vip.accessRequired")}
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                {t("vip.accessRequiredDescription")}
-              </p>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                {t("vip.accessRequiredNote")}
-              </p>
-            </div>
-            <Button onClick={() => setHowToVipOpen(true)}>
-              <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
-              {t("vip.howTo.menuLabel")}
-            </Button>
-          </div>
-        </div>
-        <HowToVipDialog
-          open={howToVipOpen}
-          onOpenChangeAction={setHowToVipOpen}
-        />
-      </>
-    );
-  }
+export async function VipCheatsPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const isAuthenticated = Boolean(session?.user);
+  const userRole = await resolveUserRoleForUserId(
+    session?.user?.id,
+    session?.user,
+  );
+  const canAccess = hasPermissions(userRole, ["vip"]);
+  const initialData = canAccess ? await getInitialVipCheats() : [];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("vip.description")}</p>
-      </div>
-      <div className="flex justify-between">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={() => setSearchQuery(search)}
-          placeholder={t("vip.searchPlaceholder")}
-        />
-        <Button variant="outline" onClick={handleRefresh} className="ml-2">
-          <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          {t("vip.refresh")}
-        </Button>
-      </div>
-      {loading ? (
-        <div className="flex min-h-16 items-center justify-center">
-          <Progress value={progress} className="h-1 w-48" />
-        </div>
-      ) : (
-        <VipCheatsTable data={filteredData} />
-      )}
-    </div>
+    <VipCheatsClientPage
+      initialData={initialData}
+      initialDataLoaded={canAccess}
+      isAuthenticated={isAuthenticated}
+      userRole={userRole}
+    />
   );
 }

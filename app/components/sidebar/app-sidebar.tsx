@@ -19,6 +19,7 @@ import {
   Diamond02Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
+import type { Permission } from "@/lib/permissions";
 
 function useNavData() {
   const { t } = useTranslations();
@@ -63,9 +64,21 @@ function useNavData() {
           title: t("sidebar.content"),
           icon: <HugeiconsIcon icon={Diamond02Icon} strokeWidth={2} />,
           items: [
-            { title: t("sidebar.vip"), pageId: "vip-cheats" },
-            { title: t("sidebar.semivip"), pageId: "semivip-cheats" },
-            { title: t("sidebar.partners"), pageId: "partners" },
+            {
+              title: t("sidebar.vip"),
+              pageId: "vip-cheats",
+              perms: ["vip"] satisfies Permission[],
+            },
+            {
+              title: t("sidebar.semivip"),
+              pageId: "semivip-cheats",
+              perms: ["semivip"] satisfies Permission[],
+            },
+            {
+              title: t("sidebar.partners"),
+              pageId: "partners",
+              perms: ["partner"] satisfies Permission[],
+            },
           ],
         },
       ],
@@ -107,6 +120,7 @@ export function AppSidebar({
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
           label={t("sidebar.exclusive")}
+          optimisticPermissions
         />
       </SidebarContent>
       <SidebarFooter>
