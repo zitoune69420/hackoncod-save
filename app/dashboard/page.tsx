@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Suspense, useCallback, useMemo, useRef } from "react"
-import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { useTranslations } from "@/app/components/i18n-provider"
-import { AppSidebar } from "@/app/components/sidebar/app-sidebar"
+import { Suspense, useCallback, useMemo, useRef } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTranslations } from "@/app/components/i18n-provider";
+import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,13 +11,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 import {
   DefaultPage,
   CheatsPage,
@@ -25,17 +25,18 @@ import {
   VideosPage,
   ReviewsPage,
   MiscPage,
-} from "@/app/components/pages"
-import { prefetchReviews } from "@/app/components/pages/client/reviews"
-import { useEffect } from "react"
+  VipCheatsPage,
+} from "@/app/components/pages";
+import { prefetchReviews } from "@/app/components/pages/client/reviews";
+import { useEffect } from "react";
 import {
   DASHBOARD_DEFAULT_PAGE,
   isDashboardSettingsOpen,
   isValidDashboardPageId,
   type DashboardPageId,
-} from "@/lib/dashboard-url"
+} from "@/lib/dashboard-url";
 
-type PageProps = { onSelectPage?: (pageId: string) => void }
+type PageProps = { onSelectPage?: (pageId: string) => void };
 
 const PAGE_KEYS: Record<string, string> = {
   default: "dashboard.home",
@@ -45,7 +46,8 @@ const PAGE_KEYS: Record<string, string> = {
   videos: "sidebar.videos",
   reviews: "sidebar.reviews",
   misc: "sidebar.misc",
-}
+  "vip-cheats": "sidebar.vip",
+};
 
 const PAGES: Record<string, React.ComponentType<PageProps>> = {
   default: DefaultPage,
@@ -55,68 +57,69 @@ const PAGES: Record<string, React.ComponentType<PageProps>> = {
   videos: VideosPage as React.ComponentType<PageProps>,
   reviews: ReviewsPage as React.ComponentType<PageProps>,
   misc: MiscPage as React.ComponentType<PageProps>,
-}
+  "vip-cheats": VipCheatsPage as React.ComponentType<PageProps>,
+};
 
 function DashboardContent() {
-  const { t } = useTranslations()
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const { t } = useTranslations();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   /** Dernière page de contenu quand `page=settings` (ou URL invalide / vide). */
-  const lastContentPageRef = useRef<DashboardPageId>(DASHBOARD_DEFAULT_PAGE)
+  const lastContentPageRef = useRef<DashboardPageId>(DASHBOARD_DEFAULT_PAGE);
 
-  const pageParam = searchParams.get("page")
+  const pageParam = searchParams.get("page");
 
   const contentPage = useMemo((): DashboardPageId => {
     if (isDashboardSettingsOpen(searchParams)) {
-      return lastContentPageRef.current
+      return lastContentPageRef.current;
     }
     if (isValidDashboardPageId(pageParam)) {
-      lastContentPageRef.current = pageParam
-      return pageParam
+      lastContentPageRef.current = pageParam;
+      return pageParam;
     }
-    return lastContentPageRef.current
-  }, [pageParam, searchParams])
+    return lastContentPageRef.current;
+  }, [pageParam, searchParams]);
 
-  const settingsOpen = isDashboardSettingsOpen(searchParams)
+  const settingsOpen = isDashboardSettingsOpen(searchParams);
 
   useEffect(() => {
-    prefetchReviews()
-  }, [])
+    prefetchReviews();
+  }, []);
 
   const onSelectPage = useCallback(
     (pageId: string) => {
-      if (!isValidDashboardPageId(pageId)) return
-      lastContentPageRef.current = pageId
-      const params = new URLSearchParams(searchParams.toString())
-      params.set("page", pageId)
-      params.delete("settings")
-      const qs = params.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      if (!isValidDashboardPageId(pageId)) return;
+      lastContentPageRef.current = pageId;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", pageId);
+      params.delete("settings");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router, searchParams],
-  )
+  );
 
   const onSettingsOpenChange = useCallback(
     (open: boolean) => {
       if (open) {
-        const params = new URLSearchParams(searchParams.toString())
-        params.set("page", "settings")
-        params.delete("settings")
-        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-        return
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("page", "settings");
+        params.delete("settings");
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        return;
       }
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete("settings")
-      params.set("page", lastContentPageRef.current)
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("settings");
+      params.set("page", lastContentPageRef.current);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [pathname, router, searchParams],
-  )
+  );
 
-  const Page = PAGES[contentPage] ?? DefaultPage
-  const label = t(PAGE_KEYS[contentPage] ?? "dashboard.home")
+  const Page = PAGES[contentPage] ?? DefaultPage;
+  const label = t(PAGE_KEYS[contentPage] ?? "dashboard.home");
 
   return (
     <SidebarProvider>
@@ -152,7 +155,7 @@ function DashboardContent() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
 
 function DashboardFallback() {
@@ -160,7 +163,7 @@ function DashboardFallback() {
     <div className="flex min-h-svh items-center justify-center bg-background text-muted-foreground">
       <span className="text-sm">Loading…</span>
     </div>
-  )
+  );
 }
 
 export default function Dashboard() {
@@ -168,5 +171,5 @@ export default function Dashboard() {
     <Suspense fallback={<DashboardFallback />}>
       <DashboardContent />
     </Suspense>
-  )
+  );
 }

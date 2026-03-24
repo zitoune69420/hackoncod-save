@@ -1,22 +1,28 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { NavMain } from "@/app/components/sidebar/nav-main"
-import { NavUser } from "@/app/components/sidebar/nav-user"
-import { AppSidebarTitle } from "@/app/components/sidebar/app-sidebar-title"
+import * as React from "react";
+import { NavMain } from "@/app/components/sidebar/nav-main";
+import { NavUser } from "@/app/components/sidebar/nav-user";
+import { AppSidebarTitle } from "@/app/components/sidebar/app-sidebar-title";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { UserGroup02Icon, ChevronDoubleCloseIcon, ShoppingBag01Icon } from "@hugeicons/core-free-icons"
-import { useTranslations } from "@/app/components/i18n-provider"
+} from "@/components/ui/sidebar";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UserGroup02Icon,
+  ChevronDoubleCloseIcon,
+  ShoppingBag01Icon,
+  DashboardCircleAddIcon,
+  Diamond02Icon,
+} from "@hugeicons/core-free-icons";
+import { useTranslations } from "@/app/components/i18n-provider";
 
 function useNavData() {
-  const { t } = useTranslations()
+  const { t } = useTranslations();
   return React.useMemo(
     () => ({
       navMain: [
@@ -52,16 +58,28 @@ function useNavData() {
           ],
         },
       ],
+      NavSecondary: [
+        {
+          id: "exclusive",
+          title: t("sidebar.content"),
+          icon: <HugeiconsIcon icon={Diamond02Icon} strokeWidth={2} />,
+          items: [
+            { title: t("sidebar.vip"), pageId: "vip-cheats" },
+            { title: t("sidebar.semivip"), pageId: "semivip-cheats" },
+            { title: t("sidebar.partners"), pageId: "partners" },
+          ],
+        },
+      ],
     }),
-    [t]
-  )
+    [t],
+  );
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  currentPage?: string
-  onSelectPage?: (pageId: string) => void
-  settingsOpen?: boolean
-  onSettingsOpenChange?: (open: boolean) => void
+  currentPage?: string;
+  onSelectPage?: (pageId: string) => void;
+  settingsOpen?: boolean;
+  onSettingsOpenChange?: (open: boolean) => void;
 }
 
 export function AppSidebar({
@@ -71,19 +89,34 @@ export function AppSidebar({
   onSettingsOpenChange,
   ...props
 }: AppSidebarProps) {
-  const data = useNavData()
+  const data = useNavData();
+  const { t } = useTranslations();
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <AppSidebarTitle />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} currentPage={currentPage} onSelectPage={onSelectPage} />
+        <NavMain
+          items={data.navMain}
+          currentPage={currentPage}
+          onSelectPage={onSelectPage}
+          label={t("sidebar.platform")}
+        />
+        <NavMain
+          items={data.NavSecondary}
+          currentPage={currentPage}
+          onSelectPage={onSelectPage}
+          label={t("sidebar.exclusive")}
+        />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser settingsOpen={settingsOpen} onSettingsOpenChange={onSettingsOpenChange} />
+        <NavUser
+          settingsOpen={settingsOpen}
+          onSettingsOpenChange={onSettingsOpenChange}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

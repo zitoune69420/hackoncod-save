@@ -5,7 +5,7 @@
  * - `settings=open` : alias pour ouvrir les paramètres
  */
 
-export const DASHBOARD_DEFAULT_PAGE = "cheats" as const
+export const DASHBOARD_DEFAULT_PAGE = "cheats" as const;
 
 export const DASHBOARD_PAGE_IDS = [
   "default",
@@ -15,17 +15,25 @@ export const DASHBOARD_PAGE_IDS = [
   "videos",
   "reviews",
   "misc",
-] as const
+  "vip-cheats",
+] as const;
 
-export type DashboardPageId = (typeof DASHBOARD_PAGE_IDS)[number]
+export type DashboardPageId = (typeof DASHBOARD_PAGE_IDS)[number];
 
-export function isValidDashboardPageId(value: string | null): value is DashboardPageId {
-  return value != null && (DASHBOARD_PAGE_IDS as readonly string[]).includes(value)
+export function isValidDashboardPageId(
+  value: string | null,
+): value is DashboardPageId {
+  return (
+    value != null && (DASHBOARD_PAGE_IDS as readonly string[]).includes(value)
+  );
 }
 
 /** La modale paramètres doit-elle être ouverte selon l’URL ? */
-export function isDashboardSettingsOpen(searchParams: URLSearchParams): boolean {
+export function isDashboardSettingsOpen(
+  searchParams: URLSearchParams,
+): boolean {
   return (
-    searchParams.get("page") === "settings" || searchParams.get("settings") === "open"
-  )
+    searchParams.get("page") === "settings" ||
+    searchParams.get("settings") === "open"
+  );
 }

@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useTranslations } from "@/app/components/i18n-provider"
-import { prefetchReviews } from "@/app/components/pages/client/reviews"
+import { useTranslations } from "@/app/components/i18n-provider";
+import { prefetchReviews } from "@/app/components/pages/client/reviews";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,31 +16,33 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/components/ui/sidebar"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
+} from "@/components/ui/sidebar";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 export function NavMain({
   items,
   currentPage,
   onSelectPage,
+  label,
 }: {
   items: {
-    id?: string
-    title: string
-    icon?: React.ReactNode
+    id?: string;
+    title: string;
+    icon?: React.ReactNode;
     items?: {
-      title: string
-      pageId: string
-    }[]
-  }[]
-  currentPage?: string
-  onSelectPage?: (pageId: string) => void
+      title: string;
+      pageId: string;
+    }[];
+  }[];
+  currentPage?: string;
+  onSelectPage?: (pageId: string) => void;
+  label?: string;
 }) {
-  const { t } = useTranslations()
+  const { t } = useTranslations();
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{t("sidebar.platform")}</SidebarGroupLabel>
+      <SidebarGroupLabel>{label ?? t("sidebar.platform")}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
@@ -54,7 +56,11 @@ export function NavMain({
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon}
                   <span>{item.title}</span>
-                  <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    strokeWidth={2}
+                    className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                  />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -64,7 +70,9 @@ export function NavMain({
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}
                         onClick={() => onSelectPage?.(subItem.pageId)}
-                        onMouseEnter={() => subItem.pageId === "reviews" && prefetchReviews()}
+                        onMouseEnter={() =>
+                          subItem.pageId === "reviews" && prefetchReviews()
+                        }
                       >
                         <span>{subItem.title}</span>
                       </SidebarMenuSubButton>
@@ -77,5 +85,5 @@ export function NavMain({
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

@@ -179,7 +179,7 @@
     "exclusive": "Exclusif",
     "vip": "V.I.P",
     "partners": "Partenaires",
-    "semiVip": "Semi-VIP",
+    "semivip": "Semi-VIP",
     "loginWith": "Se connecter avec",
     "user": "Anonyme",
     "myAccount": "Mon compte",
@@ -641,7 +641,7 @@
       "cacheCleared": "Cache vidé et données actualisées"
     }
   },
-  "semiVip": {
+  "semivip": {
     "title": "Cheats Semi-VIP",
     "description": "Cheats disponibles pour les membres Semi-VIP",
     "accessRequired": "Accès Semi-VIP requis",
@@ -743,7 +743,7 @@
       "crack": "Crack",
       "client": "Client",
       "vip": "VIP",
-      "semiVip": "Semi-VIP",
+      "semivip": "Semi-VIP",
       "link": "Lien",
       "linkPlaceholder": "Entrer le lien",
       "cancel": "Annuler",
@@ -759,7 +759,7 @@
       "crack": "Crack",
       "client": "Client",
       "vip": "VIP",
-      "semiVip": "Semi-VIP",
+      "semivip": "Semi-VIP",
       "link": "Lien",
       "actions": "Actions"
     },
@@ -1718,4 +1718,3 @@
     "no": "Non"
   }
 }
-
