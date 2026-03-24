@@ -1,13 +1,13 @@
-import Link from "next/link"
-import { Caveat } from "next/font/google"
-import { Avatar, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import Link from "next/link";
+import { Caveat } from "next/font/google";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const caveat = Caveat({
   subsets: ["latin"],
   weight: ["400", "600"],
-})
+});
 
 const AVATAR_SRC = [
   "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-1.webp",
@@ -16,7 +16,7 @@ const AVATAR_SRC = [
   "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-4.webp",
   "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-5.webp",
   "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-6.webp",
-] as const
+] as const;
 
 function CtaArrow() {
   return (
@@ -38,12 +38,12 @@ function CtaArrow() {
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }
 
 type CtaSectionProps = {
-  titleFontClassName?: string
-}
+  titleFontClassName?: string;
+};
 
 export function CtaSection({ titleFontClassName }: CtaSectionProps) {
   return (
@@ -75,8 +75,8 @@ export function CtaSection({ titleFontClassName }: CtaSectionProps) {
             Where strong teams start
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-center text-lg text-zinc-400 md:text-2xl">
-            Strong teams thrive on trust, collaboration, and shared vision. Together, we can turn
-            ambitious goals into remarkable achievements.
+            Strong teams thrive on trust, collaboration, and shared vision.
+            Together, we can turn ambitious goals into remarkable achievements.
           </p>
         </header>
 
@@ -103,5 +103,5 @@ export function CtaSection({ titleFontClassName }: CtaSectionProps) {
         </div>
       </div>
     </section>
-  )
+  );
 }

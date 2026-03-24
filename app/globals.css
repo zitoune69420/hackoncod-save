@@ -228,3 +228,23 @@
   width: 0;
   height: 0;
 }
+
+/* Scrollbar modales : piste transparente, pouce gris uniquement */
+.scrollbar-dialog {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  scrollbar-gutter: stable;
+}
+.scrollbar-dialog::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-dialog::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-dialog::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: var(--border);
+}
+.scrollbar-dialog::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}

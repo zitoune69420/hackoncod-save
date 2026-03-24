@@ -599,6 +599,23 @@
     }
   },
   "vip": {
+    "howTo": {
+      "menuLabel": "Become VIP",
+      "title": "How to become VIP",
+      "subtitle": "VIP status is earned by boosting our Discord server. Follow these steps.",
+      "step1Title": "Join the server",
+      "step1Description": "Join our Discord community so you can boost the server.",
+      "step2Title": "Get Discord Nitro",
+      "step2Description": "A Nitro (or Nitro Classic) subscription is required to use server boosts.",
+      "step3Title": "Boost the server",
+      "step3Description": "Apply your server boost to the Hack on COD server to unlock the VIP role.",
+      "step4Title": "Sign out / sign back in",
+      "step4Description": "If your VIP role doesn’t show on the site, sign out and sign in again with Discord to refresh permissions.",
+      "step1ImageAlt": "Step: join the Discord server",
+      "step2ImageAlt": "Step: Discord Nitro",
+      "step3ImageAlt": "Step: boost the server",
+      "openDiscord": "Join the server"
+    },
     "title": "VIP Cheats",
     "description": "Exclusive cheats available only for VIP members",
     "accessRequired": "VIP Access Required",

@@ -34,8 +34,10 @@ import {
   LogoutIcon,
   DiscordIcon,
   Setting07Icon,
+  CrownIcon,
 } from "@hugeicons/core-free-icons"
 import { SettingsModal } from "@/app/components/dialogs/settings"
+import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip"
 import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url"
 import Link from "next/link"
 
@@ -65,6 +67,7 @@ export function NavUser({
   const { t } = useTranslations()
   const { isMobile } = useSidebar()
   const [settingsOpenUncontrolled, setSettingsOpenUncontrolled] = React.useState(false)
+  const [howToVipOpen, setHowToVipOpen] = React.useState(false)
   const settingsOpen = settingsOpenControlled ?? settingsOpenUncontrolled
   const setSettingsOpen = (open: boolean) => {
     onSettingsOpenChange?.(open)
@@ -115,6 +118,7 @@ export function NavUser({
           <span>{t("sidebar.settings")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
+      <HowToVipDialog open={howToVipOpen} onOpenChange={setHowToVipOpen} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {sessionPending ? (
@@ -173,9 +177,9 @@ export function NavUser({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <HugeiconsIcon icon={SparklesIcon} strokeWidth={2} />
-                  {t("navUser.upgradeToPro")}
+                <DropdownMenuItem onClick={() => setHowToVipOpen(true)}>
+                  <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
+                  {t("vip.howTo.menuLabel")}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
