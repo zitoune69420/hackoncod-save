@@ -82,6 +82,6 @@ export function useUserRole() {
     isAuthenticated: Boolean(session?.user),
     isLoading:
       sessionPending ||
-      (Boolean(session?.user) && state.resolvedUserId !== session.user.id),
+      (!!session?.user && state.resolvedUserId !== session?.user?.id),
   };
 }
