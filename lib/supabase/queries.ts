@@ -4,6 +4,30 @@ import type { Game } from "./types";
 import type { Video } from "./types";
 import type { Review } from "./types";
 
+export async function getSemiVipCheats(): Promise<CheatWithGame[]> {
+  const supabase = createAdminClient();
+  console.log("[queries] getSemiVipCheats");
+
+  const { data, error } = await supabase
+    .from("cheat")
+    .select(
+      `
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      game(title)
+    `,
+    )
+    .eq("semi_vip", true)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[queries] getSemiVipCheats error:", error);
+    return [];
+  }
+
+  console.log("[queries] getSemiVipCheats result count:", data?.length ?? 0);
+  return (data ?? []) as unknown as CheatWithGame[];
+}
+
 export async function getVipCheats(): Promise<CheatWithGame[]> {
   const supabase = createAdminClient();
   console.log("[queries] getVipCheats");

@@ -75,7 +75,13 @@ export function invalidateCache(key: string): void {
 }
 
 export function cacheKey(
-  type: "cheats" | "games" | "videos" | "reviews" | "vip-cheats",
+  type:
+    | "cheats"
+    | "games"
+    | "videos"
+    | "reviews"
+    | "vip-cheats"
+    | "semivip-cheats",
   gameTitle?: string,
 ): string {
   if (type === "cheats" && gameTitle) return `cheats:${gameTitle}`;
@@ -83,5 +89,6 @@ export function cacheKey(
   if (type === "videos") return "videos";
   if (type === "reviews") return "reviews";
   if (type === "vip-cheats") return "vip-cheats";
+  if (type === "semivip-cheats") return "semivip-cheats";
   throw new Error("Invalid cache key: cheats requires gameTitle");
 }

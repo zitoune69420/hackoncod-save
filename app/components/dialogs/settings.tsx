@@ -41,31 +41,91 @@ import {
 } from "@/lib/theme";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { getStoredLanguage, setStoredLanguage, type Locale } from "@/lib/i18n";
-import { showToast } from "@/components/commons/toasts"
+import { showToast } from "@/components/commons/toasts";
 
 const COLOR_THEMES = [
-  { value: "purple", labelKey: "settings.colorThemes.purple", color: "bg-[#8B5CF6]" },
-  { value: "green", labelKey: "settings.colorThemes.green", color: "bg-emerald-500" },
-  { value: "blue", labelKey: "settings.colorThemes.blue", color: "bg-blue-500" },
+  {
+    value: "purple",
+    labelKey: "settings.colorThemes.purple",
+    color: "bg-[#8B5CF6]",
+  },
+  {
+    value: "green",
+    labelKey: "settings.colorThemes.green",
+    color: "bg-emerald-500",
+  },
+  {
+    value: "blue",
+    labelKey: "settings.colorThemes.blue",
+    color: "bg-blue-500",
+  },
   { value: "red", labelKey: "settings.colorThemes.red", color: "bg-red-500" },
-  { value: "orange", labelKey: "settings.colorThemes.orange", color: "bg-orange-500" },
-  { value: "pink", labelKey: "settings.colorThemes.pink", color: "bg-pink-500" },
-  { value: "cyan", labelKey: "settings.colorThemes.cyan", color: "bg-cyan-500" },
+  {
+    value: "orange",
+    labelKey: "settings.colorThemes.orange",
+    color: "bg-orange-500",
+  },
+  {
+    value: "pink",
+    labelKey: "settings.colorThemes.pink",
+    color: "bg-pink-500",
+  },
+  {
+    value: "cyan",
+    labelKey: "settings.colorThemes.cyan",
+    color: "bg-cyan-500",
+  },
 ];
 
 const BACKGROUND_OPTIONS = [
-  { value: "default", labelKey: "settings.backgroundOptions.default", descKey: "settings.backgroundOptions.defaultDesc" },
-  { value: "dark", labelKey: "settings.backgroundOptions.dark", descKey: "settings.backgroundOptions.darkDesc" },
-  { value: "darker", labelKey: "settings.backgroundOptions.darker", descKey: "settings.backgroundOptions.darkerDesc" },
-  { value: "darkest", labelKey: "settings.backgroundOptions.darkest", descKey: "settings.backgroundOptions.darkestDesc" },
-  { value: "amoled", labelKey: "settings.backgroundOptions.amoled", descKey: "settings.backgroundOptions.amoledDesc" },
-  { value: "light", labelKey: "settings.backgroundOptions.light", descKey: "settings.backgroundOptions.lightDesc" },
-  { value: "lighter", labelKey: "settings.backgroundOptions.lighter", descKey: "settings.backgroundOptions.lighterDesc" },
+  {
+    value: "default",
+    labelKey: "settings.backgroundOptions.default",
+    descKey: "settings.backgroundOptions.defaultDesc",
+  },
+  {
+    value: "dark",
+    labelKey: "settings.backgroundOptions.dark",
+    descKey: "settings.backgroundOptions.darkDesc",
+  },
+  {
+    value: "darker",
+    labelKey: "settings.backgroundOptions.darker",
+    descKey: "settings.backgroundOptions.darkerDesc",
+  },
+  {
+    value: "darkest",
+    labelKey: "settings.backgroundOptions.darkest",
+    descKey: "settings.backgroundOptions.darkestDesc",
+  },
+  {
+    value: "amoled",
+    labelKey: "settings.backgroundOptions.amoled",
+    descKey: "settings.backgroundOptions.amoledDesc",
+  },
+  {
+    value: "light",
+    labelKey: "settings.backgroundOptions.light",
+    descKey: "settings.backgroundOptions.lightDesc",
+  },
+  {
+    value: "lighter",
+    labelKey: "settings.backgroundOptions.lighter",
+    descKey: "settings.backgroundOptions.lighterDesc",
+  },
 ];
 
 const LANGUAGES: { value: Locale; labelKey: string; flag: string }[] = [
-  { value: "fr", labelKey: "settings.language.french", flag: "/flags/france.png" },
-  { value: "en", labelKey: "settings.language.english", flag: "/flags/united-kingdom.png" },
+  {
+    value: "fr",
+    labelKey: "settings.language.french",
+    flag: "/flags/france.png",
+  },
+  {
+    value: "en",
+    labelKey: "settings.language.english",
+    flag: "/flags/united-kingdom.png",
+  },
 ];
 
 interface SettingsModalProps {
@@ -97,7 +157,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       const bg = getStoredBackground();
       const lang = getStoredLanguage();
       const toast = getStoredToast();
-      initialConfig.current = { colorTheme: theme, backgroundColor: bg, language: lang, toastEnabled: toast };
+      initialConfig.current = {
+        colorTheme: theme,
+        backgroundColor: bg,
+        language: lang,
+        toastEnabled: toast,
+      };
       setColorTheme(theme);
       setBackgroundColor(bg);
       setLanguage(lang);
@@ -138,7 +203,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       text: t("settings.language.saved"),
       variant: "success",
       force: true,
-    })
+    });
     onOpenChange(false);
   };
 
@@ -173,7 +238,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               className="size-5"
               strokeWidth={2}
             />
-            <h3 className="text-base font-semibold leading-none">{t("settings.appearance.title")}</h3>
+            <h3 className="text-base font-semibold leading-none">
+              {t("settings.appearance.title")}
+            </h3>
           </div>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {t("settings.appearance.description")}
@@ -182,8 +249,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
         <div className="grid gap-4 py-2">
           <div className="grid gap-2">
-            <Label htmlFor="color-theme">{t("settings.appearance.colorTheme")}</Label>
-            <Select value={colorTheme} onValueChange={(v) => handleColorThemeChange(v as ThemeColor)}>
+            <Label htmlFor="color-theme">
+              {t("settings.appearance.colorTheme")}
+            </Label>
+            <Select
+              value={colorTheme}
+              onValueChange={(v) => handleColorThemeChange(v as ThemeColor)}
+            >
               <SelectTrigger id="color-theme" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -195,11 +267,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         )}
                       />
                     )}
-                    {currentTheme ? t(currentTheme.labelKey) : t("settings.colorThemes.purple")}
+                    {currentTheme
+                      ? t(currentTheme.labelKey)
+                      : t("settings.colorThemes.purple")}
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="min-w-[var(--radix-select-trigger-width)] p-1">
+              <SelectContent className="`min-w-(--radix-select-trigger-width) p-1">
                 {COLOR_THEMES.map((theme) => (
                   <SelectItem key={theme.value} value={theme.value}>
                     <span className="flex items-center gap-2">
@@ -218,8 +292,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="background">{t("settings.appearance.backgroundColor")}</Label>
-            <Select value={backgroundColor} onValueChange={(v) => handleBackgroundChange(v as BackgroundColor)}>
+            <Label htmlFor="background">
+              {t("settings.appearance.backgroundColor")}
+            </Label>
+            <Select
+              value={backgroundColor}
+              onValueChange={(v) =>
+                handleBackgroundChange(v as BackgroundColor)
+              }
+            >
               <SelectTrigger id="background" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -229,12 +310,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       strokeWidth={2}
                     />
                     {BACKGROUND_OPTIONS.find((b) => b.value === backgroundColor)
-                      ? t(BACKGROUND_OPTIONS.find((b) => b.value === backgroundColor)!.labelKey)
+                      ? t(
+                          BACKGROUND_OPTIONS.find(
+                            (b) => b.value === backgroundColor,
+                          )!.labelKey,
+                        )
                       : t("settings.backgroundOptions.darker")}
                   </span>
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent className="max-h-[var(--radix-select-content-available-height)] p-1">
+              <SelectContent className="`max-h-(--radix-select-content-available-height p-1">
                 {BACKGROUND_OPTIONS.map((opt) => (
                   <SelectItem
                     key={opt.value}
@@ -255,7 +340,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
           <div className="grid gap-2">
             <Label htmlFor="language">{t("settings.language.title")}</Label>
-            <Select value={language} onValueChange={(v) => handleLanguageChange(v as Locale)}>
+            <Select
+              value={language}
+              onValueChange={(v) => handleLanguageChange(v as Locale)}
+            >
               <SelectTrigger id="language" className="w-full">
                 <SelectValue>
                   <span className="flex items-center gap-2">
@@ -264,7 +352,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       className="size-4 text-muted-foreground"
                       strokeWidth={2}
                     />
-                    {t(LANGUAGES.find((l) => l.value === language)?.labelKey ?? "settings.language.french")}
+                    {t(
+                      LANGUAGES.find((l) => l.value === language)?.labelKey ??
+                        "settings.language.french",
+                    )}
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -309,7 +400,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
           <div className="space-y-4">
             <div>
-              <h4 className="mb-2 text-sm font-medium">{t("settings.notifications.toastNotifications")}</h4>
+              <h4 className="mb-2 text-sm font-medium">
+                {t("settings.notifications.toastNotifications")}
+              </h4>
               <div className="flex items-center justify-between gap-4 rounded-lg border border-input bg-muted/30 p-3">
                 <Label
                   htmlFor="toast-notifications"
@@ -331,7 +424,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               {t("common.cancel")}
             </Button>
             <Button onClick={handleSave}>
-              <HugeiconsIcon icon={SaveIcon} className="size-4" strokeWidth={2} />
+              <HugeiconsIcon
+                icon={SaveIcon}
+                className="size-4"
+                strokeWidth={2}
+              />
               {t("common.save")}
             </Button>
           </DialogFooter>

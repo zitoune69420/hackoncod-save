@@ -1,0 +1,21 @@
+import { getSemiVipCheats } from "@/lib/supabase/queries"
+import { NextResponse } from "next/server"
+
+export async function GET() {
+  const cheats = await getSemiVipCheats()
+
+  const tableData = cheats.map((c) => ({
+    id: c.id,
+    name: c.name,
+    game: Array.isArray(c.game)
+      ? (c.game[0]?.title ?? "")
+      : (c.game?.title ?? ""),
+    mode: c.mode,
+    extension: c.extension,
+    crack: c.crack,
+    client: c.client,
+    link: c.link,
+  }))
+
+  return NextResponse.json(tableData)
+}

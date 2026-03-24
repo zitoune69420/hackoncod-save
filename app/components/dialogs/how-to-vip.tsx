@@ -1,27 +1,30 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Image from "next/image"
+import * as React from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { useTranslations } from "@/app/components/i18n-provider"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/app/components/i18n-provider";
+import { cn } from "@/lib/utils";
 
-const DISCORD_INVITE = "https://discord.gg/cod-fr"
+const DISCORD_INVITE = "https://discord.gg/cod-fr";
 
 type HowToVipDialogProps = {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+  open: boolean;
+  onOpenChangeAction: (open: boolean) => void;
+};
 
-export function HowToVipDialog({ open, onOpenChange }: HowToVipDialogProps) {
-  const { t } = useTranslations()
+export function HowToVipDialog({
+  open,
+  onOpenChangeAction,
+}: HowToVipDialogProps) {
+  const { t } = useTranslations();
 
   const steps = [
     {
@@ -42,14 +45,14 @@ export function HowToVipDialog({ open, onOpenChange }: HowToVipDialogProps) {
       descKey: "vip.howTo.step3Description",
       altKey: "vip.howTo.step3ImageAlt",
     },
-  ] as const
+  ] as const;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChangeAction}>
       <DialogContent
         className={cn(
           "flex max-h-[min(90vh,720px)] w-full max-w-[min(100%,32rem)] flex-col gap-0 overflow-hidden p-0",
-          "sm:max-w-[min(100%,32rem)]"
+          "sm:max-w-[min(100%,32rem)]",
         )}
       >
         <div className="flex min-h-0 flex-1 flex-col px-5 pt-4 sm:px-6 sm:pt-5">
@@ -65,7 +68,7 @@ export function HowToVipDialog({ open, onOpenChange }: HowToVipDialogProps) {
           <div
             className={cn(
               "scrollbar-dialog mt-6 min-h-0 flex-1 overflow-y-auto overflow-x-hidden pr-2",
-              "-mr-px"
+              "-mr-px",
             )}
           >
             <ol className="space-y-5 pb-1">
@@ -99,7 +102,12 @@ export function HowToVipDialog({ open, onOpenChange }: HowToVipDialogProps) {
                   </div>
                   {index === 0 ? (
                     <div className="mt-2 flex justify-end">
-                      <Button variant="secondary" size="sm" className="h-8 text-xs" asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs"
+                        asChild
+                      >
                         <a
                           href={DISCORD_INVITE}
                           target="_blank"
@@ -136,11 +144,16 @@ export function HowToVipDialog({ open, onOpenChange }: HowToVipDialogProps) {
         </div>
 
         <div className="flex shrink-0 justify-end px-5 pb-4 pt-2 sm:px-6 sm:pb-5">
-          <Button type="button" size="sm" variant="default" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="default"
+            onClick={() => onOpenChangeAction(false)}
+          >
             {t("common.close")}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

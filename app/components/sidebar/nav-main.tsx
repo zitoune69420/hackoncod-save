@@ -23,7 +23,7 @@ import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 export function NavMain({
   items,
   currentPage,
-  onSelectPage,
+  onSelectPageAction,
   label,
 }: {
   items: {
@@ -36,7 +36,7 @@ export function NavMain({
     }[];
   }[];
   currentPage?: string;
-  onSelectPage?: (pageId: string) => void;
+  onSelectPageAction?: (pageId: string) => void;
   label?: string;
 }) {
   const { t } = useTranslations();
@@ -69,7 +69,7 @@ export function NavMain({
                     <SidebarMenuSubItem key={`${item.id ?? item.title}-${idx}`}>
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}
-                        onClick={() => onSelectPage?.(subItem.pageId)}
+                        onClick={() => onSelectPageAction?.(subItem.pageId)}
                         onMouseEnter={() =>
                           subItem.pageId === "reviews" && prefetchReviews()
                         }

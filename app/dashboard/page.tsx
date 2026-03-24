@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { AppSidebar } from "@/app/components/sidebar/app-sidebar";
@@ -26,9 +26,9 @@ import {
   ReviewsPage,
   MiscPage,
   VipCheatsPage,
+  SemiVipCheatsPage,
 } from "@/app/components/pages";
 import { prefetchReviews } from "@/app/components/pages/client/reviews";
-import { useEffect } from "react";
 import {
   DASHBOARD_DEFAULT_PAGE,
   isDashboardSettingsOpen,
@@ -47,6 +47,7 @@ const PAGE_KEYS: Record<string, string> = {
   reviews: "sidebar.reviews",
   misc: "sidebar.misc",
   "vip-cheats": "sidebar.vip",
+  "semivip-cheats": "sidebar.semivip",
 };
 
 const PAGES: Record<string, React.ComponentType<PageProps>> = {
@@ -58,6 +59,7 @@ const PAGES: Record<string, React.ComponentType<PageProps>> = {
   reviews: ReviewsPage as React.ComponentType<PageProps>,
   misc: MiscPage as React.ComponentType<PageProps>,
   "vip-cheats": VipCheatsPage as React.ComponentType<PageProps>,
+  "semivip-cheats": SemiVipCheatsPage as React.ComponentType<PageProps>,
 };
 
 function DashboardContent() {
@@ -66,23 +68,19 @@ function DashboardContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  /** Dernière page de contenu quand `page=settings` (ou URL invalide / vide). */
-  const lastContentPageRef = useRef<DashboardPageId>(DASHBOARD_DEFAULT_PAGE);
-
   const pageParam = searchParams.get("page");
-
-  const contentPage = useMemo((): DashboardPageId => {
-    if (isDashboardSettingsOpen(searchParams)) {
-      return lastContentPageRef.current;
-    }
-    if (isValidDashboardPageId(pageParam)) {
-      lastContentPageRef.current = pageParam;
-      return pageParam;
-    }
-    return lastContentPageRef.current;
-  }, [pageParam, searchParams]);
-
+  const fromParam = searchParams.get("from");
   const settingsOpen = isDashboardSettingsOpen(searchParams);
+
+  // Pure URL-driven: no state, no ref.
+  // When settings is open we show the page stored in ?from=, otherwise the ?page=.
+  const contentPage: DashboardPageId = settingsOpen
+    ? isValidDashboardPageId(fromParam)
+      ? fromParam
+      : DASHBOARD_DEFAULT_PAGE
+    : isValidDashboardPageId(pageParam)
+      ? pageParam
+      : DASHBOARD_DEFAULT_PAGE;
 
   useEffect(() => {
     prefetchReviews();
@@ -91,10 +89,10 @@ function DashboardContent() {
   const onSelectPage = useCallback(
     (pageId: string) => {
       if (!isValidDashboardPageId(pageId)) return;
-      lastContentPageRef.current = pageId;
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", pageId);
       params.delete("settings");
+      params.delete("from");
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
@@ -104,18 +102,28 @@ function DashboardContent() {
   const onSettingsOpenChange = useCallback(
     (open: boolean) => {
       if (open) {
+        // Snapshot the current content page into ?from= so we can restore it on close.
+        const current = isValidDashboardPageId(pageParam)
+          ? pageParam
+          : DASHBOARD_DEFAULT_PAGE;
         const params = new URLSearchParams(searchParams.toString());
         params.set("page", "settings");
+        params.set("from", current);
         params.delete("settings");
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
         return;
       }
+      // Restore the page that was active before settings opened.
+      const restoreTo = isValidDashboardPageId(fromParam)
+        ? fromParam
+        : DASHBOARD_DEFAULT_PAGE;
       const params = new URLSearchParams(searchParams.toString());
       params.delete("settings");
-      params.set("page", lastContentPageRef.current);
+      params.delete("from");
+      params.set("page", restoreTo);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, pageParam, fromParam],
   );
 
   const Page = PAGES[contentPage] ?? DefaultPage;

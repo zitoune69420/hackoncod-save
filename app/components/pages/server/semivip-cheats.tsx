@@ -5,32 +5,30 @@ import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import {
-  VipCheatsTable,
-  type VipCheatRow,
-} from "@/app/components/pages/client/vip-cheats";
+  SemiVipCheatsTable,
+  type SemiVipCheatRow,
+} from "@/app/components/pages/client/semivip-cheats";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Refresh01Icon, CrownIcon } from "@hugeicons/core-free-icons";
+import { Refresh01Icon, Diamond02Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { authClient } from "@/lib/auth-client";
-import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
 
-function fetchVipCheats(): Promise<VipCheatRow[]> {
-  return fetch("/api/vip-cheats").then((res) => res.json());
+function fetchSemiVipCheats(): Promise<SemiVipCheatRow[]> {
+  return fetch("/api/semivip-cheats").then((res) => res.json());
 }
 
-export function VipCheatsPage() {
+export function SemiVipCheatsPage() {
   const { t } = useTranslations();
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const user = session?.user;
 
-  const [data, setData] = useState<VipCheatRow[]>([]);
+  const [data, setData] = useState<SemiVipCheatRow[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const [howToVipOpen, setHowToVipOpen] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshRef = useRef(false);
 
@@ -51,10 +49,11 @@ export function VipCheatsPage() {
     let cancelled = false;
     const isRefresh = refreshRef.current;
     refreshRef.current = false;
+
     (async () => {
-      const key = cacheKey("vip-cheats");
+      const key = cacheKey("semivip-cheats");
       if (!isRefresh) {
-        const cached = getCached<VipCheatRow[]>(key);
+        const cached = getCached<SemiVipCheatRow[]>(key);
         if (cached) {
           if (!cancelled) {
             setData(cached);
@@ -69,7 +68,7 @@ export function VipCheatsPage() {
         setProgress(0);
       }
       try {
-        const json = await fetchVipCheats();
+        const json = await fetchSemiVipCheats();
         if (!cancelled) {
           setCached(key, json);
           setData(json);
@@ -78,7 +77,10 @@ export function VipCheatsPage() {
       } catch {
         if (!cancelled) {
           setProgress(0);
-          showToast({ text: t("vip.toasts.errorLoading"), variant: "error" });
+          showToast({
+            text: t("semivip.toasts.errorLoading"),
+            variant: "error",
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -101,7 +103,7 @@ export function VipCheatsPage() {
   const handleRefresh = useCallback(() => {
     refreshRef.current = true;
     setRefreshTick((k) => k + 1);
-    showToast({ text: t("vip.toasts.cacheCleared"), variant: "success" });
+    showToast({ text: t("semivip.toasts.cacheCleared"), variant: "success" });
   }, [t]);
 
   if (sessionPending) {
@@ -114,63 +116,55 @@ export function VipCheatsPage() {
 
   if (!user) {
     return (
-      <>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t("vip.description")}
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("semivip.title")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t("semivip.description")}
+          </p>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-4">
+          <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+            <HugeiconsIcon
+              icon={Diamond02Icon}
+              className="size-8 text-primary"
+              strokeWidth={2}
+            />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold">
+              {t("semivip.accessRequired")}
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-sm">
+              {t("semivip.accessRequiredDescription")}
+            </p>
+            <p className="text-xs text-muted-foreground max-w-sm">
+              {t("semivip.accessRequiredNote")}
             </p>
           </div>
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-              <HugeiconsIcon
-                icon={CrownIcon}
-                className="size-8 text-primary"
-                strokeWidth={2}
-              />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">
-                {t("vip.accessRequired")}
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                {t("vip.accessRequiredDescription")}
-              </p>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                {t("vip.accessRequiredNote")}
-              </p>
-            </div>
-            <Button onClick={() => setHowToVipOpen(true)}>
-              <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
-              {t("vip.howTo.menuLabel")}
-            </Button>
-          </div>
         </div>
-        <HowToVipDialog
-          open={howToVipOpen}
-          onOpenChangeAction={setHowToVipOpen}
-        />
-      </>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("vip.description")}</p>
+        <h1 className="text-2xl font-semibold">{t("semivip.title")}</h1>
+        <p className="text-sm text-muted-foreground">
+          {t("semivip.description")}
+        </p>
       </div>
       <div className="flex justify-between">
         <SearchBar
           value={search}
           onChange={setSearch}
           onSearch={() => setSearchQuery(search)}
-          placeholder={t("vip.searchPlaceholder")}
+          placeholder={t("semivip.searchPlaceholder")}
         />
         <Button variant="outline" onClick={handleRefresh} className="ml-2">
           <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          {t("vip.refresh")}
+          {t("semivip.refresh")}
         </Button>
       </div>
       {loading ? (
@@ -178,7 +172,7 @@ export function VipCheatsPage() {
           <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : (
-        <VipCheatsTable data={filteredData} />
+        <SemiVipCheatsTable data={filteredData} />
       )}
     </div>
   );

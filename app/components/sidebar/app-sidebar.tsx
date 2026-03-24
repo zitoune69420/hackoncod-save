@@ -16,7 +16,6 @@ import {
   UserGroup02Icon,
   ChevronDoubleCloseIcon,
   ShoppingBag01Icon,
-  DashboardCircleAddIcon,
   Diamond02Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
@@ -100,20 +99,20 @@ export function AppSidebar({
         <NavMain
           items={data.navMain}
           currentPage={currentPage}
-          onSelectPage={onSelectPage}
+          onSelectPageAction={onSelectPage}
           label={t("sidebar.platform")}
         />
         <NavMain
           items={data.NavSecondary}
           currentPage={currentPage}
-          onSelectPage={onSelectPage}
+          onSelectPageAction={onSelectPage}
           label={t("sidebar.exclusive")}
         />
       </SidebarContent>
       <SidebarFooter>
         <NavUser
           settingsOpen={settingsOpen}
-          onSettingsOpenChange={onSettingsOpenChange}
+          onSettingsOpenChangeAction={onSettingsOpenChange}
         />
       </SidebarFooter>
       <SidebarRail />
