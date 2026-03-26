@@ -7,16 +7,43 @@ import {
   CardHeader,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowDown01Icon, StarIcon, UserIcon } from "@hugeicons/core-free-icons"
+import {
+  Add01Icon,
+  ArrowDown01Icon,
+  DiscordIcon,
+  StarIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons"
 import { useTranslations } from "@/app/components/i18n-provider"
-import type { Review } from "@/lib/supabase/types"
-import { cacheKey, getCached, setCached } from "@/lib/cache"
+import type { ReviewWithAuthor } from "@/lib/supabase/types"
+import { authClient } from "@/lib/auth-client"
+import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache"
 import { showToast } from "@/components/commons/toasts"
 
 const PAGE_SIZE = 12
 
-async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
+async function fetchReviews(
+  offset: number,
+  limit: number,
+): Promise<ReviewWithAuthor[]> {
   const res = await fetch(`/api/reviews?offset=${offset}&limit=${limit}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data?.error ?? "Error")
@@ -25,7 +52,7 @@ async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
 
 export function prefetchReviews(): void {
   const key = cacheKey("reviews")
-  if (getCached<Review[]>(key)) return
+  if (getCached<ReviewWithAuthor[]>(key)) return
   fetchReviews(0, PAGE_SIZE).then((data) => setCached(key, data))
 }
 
@@ -46,6 +73,209 @@ function StarRating({ note }: { note: number }) {
 }
 
 const LOCALE_MAP: Record<string, string> = { fr: "fr-FR", en: "en-US" }
+
+const REVIEWS_SIGNIN_CALLBACK = "/dashboard?page=reviews"
+
+function AddReviewDialog({ onSuccess }: { onSuccess: () => void }) {
+  const { t } = useTranslations()
+  const [open, setOpen] = useState(false)
+  const { data: session, isPending: sessionPending } = authClient.useSession()
+  const [message, setMessage] = useState("")
+  const [note, setNote] = useState("5")
+  const [submitting, setSubmitting] = useState(false)
+  const [signingIn, setSigningIn] = useState(false)
+
+  const resetForm = () => {
+    setMessage("")
+    setNote("5")
+  }
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) resetForm()
+  }
+
+  const signInWithDiscord = async () => {
+    try {
+      setSigningIn(true)
+      await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: REVIEWS_SIGNIN_CALLBACK,
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSigningIn(false)
+    }
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!session?.user) {
+      showToast({ text: t("reviews.toasts.mustBeLoggedIn"), variant: "error" })
+      return
+    }
+    const trimmed = message.trim()
+    if (trimmed.length < 3) return
+    const n = Number.parseInt(note, 10)
+    if (!Number.isInteger(n) || n < 1 || n > 5) return
+
+    setSubmitting(true)
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed, note: n }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        throw new Error(
+          typeof data?.error === "string"
+            ? data.error
+            : t("reviews.toasts.errorAdding"),
+        )
+      }
+      invalidateCache(cacheKey("reviews"))
+      showToast({ text: t("reviews.toasts.reviewAdded"), variant: "success" })
+      handleOpenChange(false)
+      onSuccess()
+    } catch (err) {
+      showToast({
+        text:
+          err instanceof Error ? err.message : t("reviews.toasts.errorAdding"),
+        variant: "error",
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const loggedIn = Boolean(session?.user)
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="default"
+        size="default"
+        className="shrink-0 gap-2"
+        onClick={() => setOpen(true)}
+      >
+        <HugeiconsIcon icon={Add01Icon} className="size-4" strokeWidth={2} />
+        <span>{t("reviews.addReview")}</span>
+      </Button>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          {sessionPending ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t("reviews.form.title")}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+            </>
+          ) : !loggedIn ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{t("reviews.loginDialog.title")}</DialogTitle>
+                <DialogDescription>
+                  {t("reviews.loginDialog.description")}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-stretch">
+                <Button
+                  type="button"
+                  className="w-full gap-2 sm:w-auto"
+                  onClick={signInWithDiscord}
+                  disabled={signingIn}
+                >
+                  <HugeiconsIcon
+                    icon={DiscordIcon}
+                    className="size-4"
+                    strokeWidth={2}
+                  />
+                  {signingIn ? t("navUser.signingIn") : t("navUser.signIn")}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <form onSubmit={submit}>
+              <DialogHeader className="mb-2">
+                <DialogTitle>{t("reviews.form.title")}</DialogTitle>
+                <DialogDescription>
+                  {t("reviews.form.description")}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="review-message">
+                    {t("reviews.form.messageLabel")}
+                  </Label>
+                  <Textarea
+                    id="review-message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder={t("reviews.form.messagePlaceholder")}
+                    rows={4}
+                    maxLength={4000}
+                    required
+                    minLength={3}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="review-note">{t("reviews.form.noteLabel")}</Label>
+                  <Select value={note} onValueChange={setNote}>
+                    <SelectTrigger id="review-note" className="w-full" size="default">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="p-2">
+                      {[5, 4, 3, 2, 1].map((v) => (
+                        <SelectItem
+                          key={v}
+                          value={String(v)}
+                          className="py-2 pl-2 pr-8"
+                        >
+                          {t(`reviews.form.note${v}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                >
+                  {t("reviews.form.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitting || message.trim().length < 3}
+                >
+                  {submitting ? t("common.loading") : t("reviews.form.publish")}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+function ReviewsPageHeader({ onReviewAdded }: { onReviewAdded: () => void }) {
+  const { t } = useTranslations()
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
+      </div>
+      <AddReviewDialog onSuccess={onReviewAdded} />
+    </div>
+  )
+}
 
 function formatDate(iso: string, locale: string) {
   if (!iso) return "—"
@@ -71,7 +301,13 @@ export function ReviewDate({ iso }: { iso: string }) {
   )
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({ review }: { review: ReviewWithAuthor }) {
+  const { t } = useTranslations()
+  const rawId = review.user_id?.trim()
+  const authorLabel = !rawId
+    ? t("reviews.anonymous")
+    : review.author_name?.trim() || t("reviews.authorFallback")
+
   return (
     <Card className="flex h-full flex-col overflow-hidden">
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
@@ -79,8 +315,8 @@ function ReviewCard({ review }: { review: Review }) {
           <HugeiconsIcon icon={UserIcon} className="size-4 text-muted-foreground" strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-muted-foreground">
-            {review.user_id ? `${String(review.user_id).slice(0, 8)}...` : "Anonymous"}
+          <p className="truncate text-sm font-medium text-foreground">
+            {authorLabel}
           </p>
           <StarRating note={review.note ?? 0} />
         </div>
@@ -95,14 +331,14 @@ function ReviewCard({ review }: { review: Review }) {
 
 export function ReviewsPage() {
   const { t } = useTranslations()
-  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviews, setReviews] = useState<ReviewWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadData = useCallback((skipCache = false) => {
     const key = cacheKey("reviews")
     if (!skipCache) {
-      const cached = getCached<Review[]>(key)
+      const cached = getCached<ReviewWithAuthor[]>(key)
       if (cached) {
         setReviews(cached)
         setLoading(false)
@@ -121,7 +357,7 @@ export function ReviewsPage() {
         showToast({ text: t("reviews.toasts.errorLoading"), variant: "error" })
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [t])
 
   useEffect(() => {
     loadData()
@@ -130,10 +366,7 @@ export function ReviewsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
-        </div>
+        <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
@@ -161,10 +394,7 @@ export function ReviewsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
-        </div>
+        <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
@@ -175,10 +405,7 @@ export function ReviewsPage() {
   if (reviews.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
-        </div>
+        <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
         <div className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
           {t("reviews.noReviews")}
         </div>
@@ -188,20 +415,26 @@ export function ReviewsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
-      </div>
+      <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
       <ReviewsLoadMore initialReviews={reviews} />
     </div>
   )
 }
 
-export function ReviewsLoadMore({ initialReviews }: { initialReviews: Review[] }) {
+export function ReviewsLoadMore({
+  initialReviews,
+}: {
+  initialReviews: ReviewWithAuthor[]
+}) {
   const { t } = useTranslations()
-  const [extraReviews, setExtraReviews] = useState<Review[]>([])
+  const [extraReviews, setExtraReviews] = useState<ReviewWithAuthor[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialReviews.length >= PAGE_SIZE)
+
+  useEffect(() => {
+    setExtraReviews([])
+    setHasMore(initialReviews.length >= PAGE_SIZE)
+  }, [initialReviews])
 
   const allReviews = [...initialReviews, ...extraReviews]
 

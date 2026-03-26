@@ -47,6 +47,11 @@ export type Review = {
   user_id: string
   message: string
   note: number
+  /** Renseigné à la création (session / OAuth) — évite l’API bot pour l’affichage. */
+  author_name?: string | null
   created_at: string
   updated_at: string
 }
+
+/** Avis enrichis pour l’UI (même forme que l’API `/api/reviews`). */
+export type ReviewWithAuthor = Review

@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { CommonTable } from "@/components/commons/table/table"
 import { useTranslations } from "@/app/components/i18n-provider"
+import { showToast } from "@/components/commons/toasts"
 
 export type GameRow = {
   id: string
@@ -44,7 +45,16 @@ function getGamesColumns(t: (key: string) => string) {
         )}
         {row.link ? (
           <Button variant="default" asChild>
-            <a href={row.link} target="_blank" rel="noopener noreferrer">
+            <a
+              href={row.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                showToast({
+                  text: t("common.leaveReviewAfterDownload"),
+                })
+              }
+            >
               {t("games.download")}
             </a>
           </Button>

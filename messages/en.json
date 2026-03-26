@@ -76,7 +76,8 @@
     "confirm": "Confirm",
     "close": "Close",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "leaveReviewAfterDownload": "Feel free to leave a review!"
   },
   "settings": {
     "title": "Settings",
@@ -389,12 +390,23 @@
     "noReviews": "No reviews at the moment",
     "loadMore": "Load more",
     "addReview": "Add a review",
+    "anonymous": "Anonymous",
+    "authorFallback": "Discord member",
+    "loginDialog": {
+      "title": "Sign in required",
+      "description": "Please sign in to add a review."
+    },
     "form": {
       "title": "Add a review",
       "description": "Share your experience with our community",
       "messageLabel": "Your message",
       "messagePlaceholder": "Describe your experience...",
       "noteLabel": "Note:",
+      "note5": "5 - Perfect",
+      "note4": "4 - Very good",
+      "note3": "3 - Good",
+      "note2": "2 - Fair",
+      "note1": "1 - Poor",
       "imageLabel": "Image (optional)",
       "imagePreview": "Image preview",
       "currentImage": "Current image",

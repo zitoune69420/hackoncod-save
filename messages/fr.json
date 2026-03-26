@@ -67,7 +67,8 @@
     "confirm": "Confirmer",
     "close": "Fermer",
     "next": "Suivant",
-    "previous": "Précédent"
+    "previous": "Précédent",
+    "leaveReviewAfterDownload": "N'hésitez pas à laisser un avis !"
   },
   "navUser": {
     "upgradeToPro": "Passer en Pro",
@@ -389,12 +390,23 @@
     "noReviews": "Aucun avis pour le moment",
     "loadMore": "Charger plus",
     "addReview": "Ajouter un avis",
+    "anonymous": "Anonyme",
+    "authorFallback": "Membre Discord",
+    "loginDialog": {
+      "title": "Connexion requise",
+      "description": "Veuillez vous connecter pour ajouter un avis."
+    },
     "form": {
       "title": "Ajouter un avis",
       "description": "Partagez votre expérience avec notre communauté",
       "messageLabel": "Votre message",
       "messagePlaceholder": "Décrivez votre expérience...",
       "noteLabel": "Note :",
+      "note5": "5 - Parfait",
+      "note4": "4 - Très bien",
+      "note3": "3 - Bien",
+      "note2": "2 - Passable",
+      "note1": "1 - Insatisfaisant",
       "imageLabel": "Image (optionnel)",
       "imagePreview": "Aperçu de l'image",
       "currentImage": "Image actuelle",

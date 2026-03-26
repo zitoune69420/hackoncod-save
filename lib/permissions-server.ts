@@ -150,7 +150,8 @@ async function fetchDiscordGuildMember(
   }
 }
 
-async function resolveDiscordUserIdForAppUser(
+/** ID Discord (snowflake) lié au compte Better Auth — pour stockage métier (`review.user_id`, etc.). */
+export async function getDiscordUserIdForAuthUser(
   appUserId: string,
   image: string | null | undefined,
 ): Promise<string | null> {
@@ -301,7 +302,7 @@ async function resolveDiscordRoleForUser(
     return "user";
   }
 
-  const discordUserId = await resolveDiscordUserIdForAppUser(appUserId, image);
+  const discordUserId = await getDiscordUserIdForAuthUser(appUserId, image);
   if (!discordUserId) {
     return "user";
   }
@@ -361,7 +362,7 @@ export async function getDiscordRoleResolutionDebug(
     };
   }
 
-  const discordUserId = await resolveDiscordUserIdForAppUser(appUserId, user?.image);
+  const discordUserId = await getDiscordUserIdForAuthUser(appUserId, user?.image);
   if (!discordUserId) {
     return {
       guildIdOk: true,

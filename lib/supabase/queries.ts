@@ -137,7 +137,7 @@ export async function getReviews(
 
   const { data, error } = await supabase
     .from("review")
-    .select("id, user_id, message, note, created_at, updated_at")
+    .select("id, user_id, message, note, author_name, created_at, updated_at")
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

@@ -79,7 +79,16 @@ function getSemiVipCheatsColumns(t: (key: string) => string) {
         <div className="flex gap-2">
           {row.link ? (
             <Button size="sm" variant="default" asChild>
-              <a href={row.link} target="_blank">
+              <a
+                href={row.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  showToast({
+                    text: t("common.leaveReviewAfterDownload"),
+                  })
+                }
+              >
                 {t("semivip.download")}
               </a>
             </Button>

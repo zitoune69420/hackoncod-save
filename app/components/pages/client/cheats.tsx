@@ -12,6 +12,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import { useTranslations } from "@/app/components/i18n-provider";
+import { showToast } from "@/components/commons/toasts";
 
 export type CheatRow = {
   id: string;
@@ -72,7 +73,16 @@ function getCheatsColumns(t: (key: string) => string) {
         <div className="flex gap-2">
           {row.link ? (
             <Button variant="default" asChild>
-              <a href={row.link} target="_blank">
+              <a
+                href={row.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() =>
+                  showToast({
+                    text: t("common.leaveReviewAfterDownload"),
+                  })
+                }
+              >
                 {t("cheats.download")}
               </a>
             </Button>
