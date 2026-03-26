@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { Search01Icon } from "@hugeicons/core-free-icons"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 
 export function SearchBar({
   value,
@@ -11,10 +11,10 @@ export function SearchBar({
   onSearch,
   placeholder = "Search...",
 }: {
-  value: string
-  onChange: (value: string) => void
-  onSearch: () => void
-  placeholder?: string
+  value: string;
+  onChange: (value: string) => void;
+  onSearch: () => void;
+  placeholder?: string;
 }) {
   return (
     <div className="flex gap-2">
@@ -28,5 +28,5 @@ export function SearchBar({
         <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
       </Button>
     </div>
-  )
+  );
 }

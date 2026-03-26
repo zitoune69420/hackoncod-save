@@ -30,6 +30,7 @@ import {
   PartnersPage,
 } from "@/app/components/pages";
 import { prefetchReviews } from "@/app/components/pages/client/reviews";
+import { UserRoleProvider } from "@/hooks/use-user-role";
 import {
   DASHBOARD_DEFAULT_PAGE,
   isDashboardSettingsOpen,
@@ -133,39 +134,41 @@ function DashboardContent() {
   const label = t(PAGE_KEYS[contentPage] ?? "dashboard.home");
 
   return (
-    <SidebarProvider>
-      <AppSidebar
-        currentPage={contentPage}
-        onSelectPage={onSelectPage}
-        settingsOpen={settingsOpen}
-        onSettingsOpenChange={onSettingsOpenChange}
-      />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 mt-1.5 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{label}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+    <UserRoleProvider>
+      <SidebarProvider>
+        <AppSidebar
+          currentPage={contentPage}
+          onSelectPage={onSelectPage}
+          settingsOpen={settingsOpen}
+          onSettingsOpenChange={onSettingsOpenChange}
+        />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator
+                orientation="vertical"
+                className="mr-2 mt-1.5 data-[orientation=vertical]:h-4"
+              />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{label}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <Page onSelectPage={onSelectPage} />
           </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <Page onSelectPage={onSelectPage} />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </UserRoleProvider>
   );
 }
 

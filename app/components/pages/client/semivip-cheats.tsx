@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
-import { hasPermissions, type UserRole } from "@/lib/permissions";
+import { hasMinimumRole, type UserRole } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export type SemiVipCheatRow = {
@@ -110,21 +110,25 @@ export function SemiVipCheatsTable({
 }
 
 async function fetchSemiVipCheats(): Promise<SemiVipCheatRow[]> {
-  return fetch("/api/semivip-cheats").then((res) => res.json());
+  const res = await fetch("/api/semivip-cheats");
+
+  if (!res.ok) {
+    throw new Error(`SemiVIP API ${res.status}`);
+  }
+
+  return (await res.json()) as SemiVipCheatRow[];
 }
 
 type SemiVipCheatsPageProps = {
   initialData?: SemiVipCheatRow[];
   initialDataLoaded?: boolean;
   isAuthenticated?: boolean;
-  userRole?: UserRole;
 };
 
 export function SemiVipCheatsPage({
   initialData = [],
   initialDataLoaded = false,
   isAuthenticated = false,
-  userRole,
 }: SemiVipCheatsPageProps) {
   const { t } = useTranslations();
   const {
@@ -133,8 +137,9 @@ export function SemiVipCheatsPage({
     isLoading: roleLoading,
   } = useUserRole();
   const effectiveIsAuthenticated = isAuthenticated || resolvedIsAuthenticated;
-  const effectiveRole = userRole ?? resolvedRole;
-  const canAccess = hasPermissions(effectiveRole, ["semivip"]);
+  /** Même logique que VIP : source de vérité = client après résolution Discord. */
+  const effectiveRole: UserRole = roleLoading ? "user" : resolvedRole;
+  const canAccess = hasMinimumRole(effectiveRole, "semivip");
   const [data, setData] = useState<SemiVipCheatRow[]>(initialData);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -227,7 +232,7 @@ export function SemiVipCheatsPage({
     showToast({ text: t("semivip.toasts.cacheCleared"), variant: "success" });
   }, [t]);
 
-  if (!isAuthenticated && roleLoading) {
+  if (effectiveIsAuthenticated && roleLoading) {
     return (
       <div className="flex min-h-16 items-center justify-center">
         <Progress value={progress} className="h-1 w-48" />

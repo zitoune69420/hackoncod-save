@@ -16,7 +16,7 @@ import { SearchBar } from "@/components/commons/search-bar";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
-import { hasPermissions, type UserRole } from "@/lib/permissions";
+import { canAccessVipCheats, type UserRole } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
 
 export type VipCheatRow = {
@@ -103,21 +103,25 @@ export function VipCheatsTable({ data = [] }: { data?: VipCheatRow[] }) {
 }
 
 async function fetchVipCheats(): Promise<VipCheatRow[]> {
-  return fetch("/api/vip-cheats").then((res) => res.json());
+  const res = await fetch("/api/vip-cheats");
+
+  if (!res.ok) {
+    throw new Error(`VIP API ${res.status}`);
+  }
+
+  return (await res.json()) as VipCheatRow[];
 }
 
 type VipCheatsClientPageProps = {
   initialData?: VipCheatRow[];
   initialDataLoaded?: boolean;
   isAuthenticated?: boolean;
-  userRole?: UserRole;
 };
 
 export function VipCheatsPage({
   initialData = [],
   initialDataLoaded = false,
   isAuthenticated = false,
-  userRole,
 }: VipCheatsClientPageProps) {
   const { t } = useTranslations();
   const {
@@ -126,8 +130,9 @@ export function VipCheatsPage({
     isLoading: roleLoading,
   } = useUserRole();
   const effectiveIsAuthenticated = isAuthenticated || resolvedIsAuthenticated;
-  const effectiveRole = userRole ?? resolvedRole;
-  const canAccess = hasPermissions(effectiveRole, ["vip"]);
+  /** Le rôle RSC (`userRole`) ne doit pas écraser `/api/discord/me` : c’est la source du bug d’accès (hydratation figée). */
+  const effectiveRole: UserRole = roleLoading ? "user" : resolvedRole;
+  const canAccess = canAccessVipCheats(effectiveRole);
   const [data, setData] = useState<VipCheatRow[]>(initialData);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -218,7 +223,7 @@ export function VipCheatsPage({
     showToast({ text: t("vip.toasts.cacheCleared"), variant: "success" });
   }, [t]);
 
-  if (!isAuthenticated && roleLoading) {
+  if (effectiveIsAuthenticated && roleLoading) {
     return (
       <div className="flex min-h-16 items-center justify-center">
         <Progress value={progress} className="h-1 w-48" />

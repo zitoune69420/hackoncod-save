@@ -1,7 +1,5 @@
-import { auth } from "@/app/auth";
-import { hasPermissions } from "@/lib/permissions";
-import { resolveUserRoleForUserId } from "@/lib/permissions-server";
-import { headers } from "next/headers";
+import { canAccessPartnerTools } from "@/lib/permissions";
+import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { NextResponse } from "next/server";
 import {
   executeDiscordWebhook,
@@ -38,17 +36,12 @@ type SendEmbedBody = {
 };
 
 export async function POST(req: Request) {
-  // Auth check
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) {
+  const access = await getCurrentUserAccess({ source: "live" });
+  if (!access.isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (
-    !hasPermissions(
-      await resolveUserRoleForUserId(session.user.id, session.user),
-      ["partner"],
-    )
-  ) {
+
+  if (!canAccessPartnerTools(access.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

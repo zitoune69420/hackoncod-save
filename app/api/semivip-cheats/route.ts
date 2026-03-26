@@ -1,23 +1,16 @@
-import { auth } from "@/app/auth";
-import { hasPermissions } from "@/lib/permissions";
-import { resolveUserRoleForUserId } from "@/lib/permissions-server";
+import { hasMinimumRole } from "@/lib/permissions";
+import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { getSemiVipCheats } from "@/lib/supabase/queries";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const access = await getCurrentUserAccess({ source: "live" });
 
-  if (!session?.user) {
+  if (!access.isAuthenticated) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (
-    !hasPermissions(
-      await resolveUserRoleForUserId(session.user.id, session.user),
-      ["semivip"],
-    )
-  ) {
+  if (!hasMinimumRole(access.role, "semivip")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

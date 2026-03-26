@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "@/app/components/i18n-provider";
-import { hasPermissions } from "@/lib/permissions";
+import { canAccessPartnerTools } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
 import { showToast } from "@/components/commons/toasts";
 import { Button } from "@/components/ui/button";
@@ -284,7 +284,8 @@ function HistoryList({ history }: { history: MessageHistory[] }) {
 export function PartnersPage() {
   const { t } = useTranslations();
   const { isAuthenticated, isLoading, role } = useUserRole();
-  const canAccess = hasPermissions(role, ["partner"]);
+  const effectiveRole = isLoading ? "user" : role;
+  const canAccess = canAccessPartnerTools(effectiveRole);
 
   const [embed, setEmbed] = useState<DiscordEmbed>(EMPTY_EMBED);
   const [mentionEveryone, setMentionEveryone] = useState(false);
