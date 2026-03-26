@@ -1,10 +1,11 @@
 /**
- * Supabase client with service_role key.
- * Bypasses RLS - use ONLY server-side (API routes, Server Components).
+ * Supabase client with service_role key (JWT legacy ou clé secrète `sb_secret_`).
+ * Bypasses RLS — use ONLY server-side (API routes, Server Components).
  * Never expose SUPABASE_SERVICE_ROLE_KEY to the client.
  *
- * Erreur « row-level security » sur insert/upsert = quasi toujours la clé **anon**
- * dans `SUPABASE_SERVICE_ROLE_KEY` (le JWT contient `"role":"anon"`).
+ * Erreur RLS sur `public.users` en prod : presque toujours une mauvaise variable
+ * d’environnement — clé **anon** / **publishable** au lieu de **service_role** / **secret**.
+ * Sur Vercel : vérifier l’environnement **Production** (pas seulement Preview / Development).
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
@@ -25,6 +26,39 @@ function jwtRoleFromSupabaseKey(key: string): string | undefined {
   }
 }
 
+/** Clés plateforme Supabase (non-JWT) — https://supabase.com/docs/guides/api/api-keys */
+function assertElevatedSupabaseKey(key: string): void {
+  const k = key.trim()
+  if (k.startsWith("sb_publishable_")) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY : clé **publishable** (sb_publishable_…). " +
+        "Il faut la clé **secret** (sb_secret_…) ou l’ancienne **service_role** (JWT). " +
+        "Dashboard → Settings → API keys.",
+    )
+  }
+  if (k.startsWith("sb_secret_")) {
+    return
+  }
+
+  const jwtRole = jwtRoleFromSupabaseKey(k)
+  if (jwtRole === "anon" || jwtRole === "authenticated") {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY : clé **anon** / JWT utilisateur. " +
+        "Mets **service_role** (Legacy API keys) ou **sb_secret_** (Secret). " +
+        "Sinon PostgREST applique le RLS.",
+    )
+  }
+  if (jwtRole === "service_role") {
+    return
+  }
+  if (jwtRole != null) {
+    throw new Error(
+      `SUPABASE_SERVICE_ROLE_KEY : JWT avec role « ${jwtRole} ». ` +
+        "Utilise service_role ou sb_secret_ du **même** projet que NEXT_PUBLIC_SUPABASE_URL.",
+    )
+  }
+}
+
 export function createAdminClient(): SupabaseClient {
   if (adminClient) return adminClient
 
@@ -33,19 +67,13 @@ export function createAdminClient(): SupabaseClient {
 
   if (!url || !key) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY missing in .env.local. " +
-        "Get it from Supabase > Project Settings > API > service_role (secret)."
+      "SUPABASE_SERVICE_ROLE_KEY manquante. " +
+        "Supabase → Settings → API : **service_role** (legacy) ou **Secret** (sb_secret_…). " +
+        "Vercel : ajouter pour l’environnement **Production**.",
     )
   }
 
-  const jwtRole = jwtRoleFromSupabaseKey(key)
-  if (jwtRole === "anon" || jwtRole === "authenticated") {
-    throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY : tu as mis la clé anon/authenticated. " +
-        "Mets la clé **service_role** (onglet API Supabase, section « Project API keys », secret long). " +
-        "La clé anon ne contourne pas le RLS → erreur sur public.users.",
-    )
-  }
+  assertElevatedSupabaseKey(key)
 
   adminClient = createClient(url, key, {
     auth: {

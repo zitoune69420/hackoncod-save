@@ -41,6 +41,18 @@ function logSupabaseError(ctx: string, err: { message?: string; code?: string; d
   );
 }
 
+/** PostgREST n’applique le RLS qu’avec une clé « basse » (anon / publishable). */
+function hintForRlsWriteFailure(message: string): string {
+  if (!/row-level security|violates row-level security/i.test(message)) {
+    return message;
+  }
+  return (
+    message +
+    " — Côté Vercel (Production) : SUPABASE_SERVICE_ROLE_KEY doit être la clé **Secret** sb_secret_… " +
+    "ou l’ancienne **service_role** (JWT), jamais la clé anon/publishable ni NEXT_PUBLIC_*."
+  );
+}
+
 export type AppUserRow = {
   id: string;
   name: string | null;
@@ -137,7 +149,7 @@ export async function upsertAppUserFromSession(
         .maybeSingle();
       if (selErr) {
         logSupabaseError("upsert.select.id", selErr);
-        return { ok: false, message: selErr.message };
+        return { ok: false, message: hintForRlsWriteFailure(selErr.message ?? "") };
       }
 
       if (existing?.id) {
@@ -147,7 +159,7 @@ export async function upsertAppUserFromSession(
           .eq("id", authUserId);
         if (error) {
           logSupabaseError("upsert.update.id", error);
-          return { ok: false, message: error.message };
+          return { ok: false, message: hintForRlsWriteFailure(error.message ?? "") };
         }
         return { ok: true };
       }
@@ -164,7 +176,7 @@ export async function upsertAppUserFromSession(
       const { error } = await supabase.from(TABLE).insert(insertRow);
       if (error) {
         logSupabaseError("upsert.insert.id", error);
-        return { ok: false, message: error.message };
+        return { ok: false, message: hintForRlsWriteFailure(error.message ?? "") };
       }
       return { ok: true };
     }
@@ -191,7 +203,7 @@ export async function upsertAppUserFromSession(
         return { ok: false, message: msg };
       }
       logSupabaseError("upsert.select.auth_user_id", sel2);
-      return { ok: false, message: sel2.message };
+      return { ok: false, message: hintForRlsWriteFailure(sel2.message ?? "") };
     }
 
     if (existing2?.id) {
@@ -201,7 +213,7 @@ export async function upsertAppUserFromSession(
         .eq("auth_user_id", authUserId);
       if (error) {
         logSupabaseError("upsert.update.auth_user_id", error);
-        return { ok: false, message: error.message };
+        return { ok: false, message: hintForRlsWriteFailure(error.message ?? "") };
       }
       return { ok: true };
     }
@@ -213,12 +225,12 @@ export async function upsertAppUserFromSession(
     });
     if (insErr) {
       logSupabaseError("upsert.insert.auth_user_id", insErr);
-      return { ok: false, message: insErr.message };
+      return { ok: false, message: hintForRlsWriteFailure(insErr.message ?? "") };
     }
     return { ok: true };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[app-users] upsertAppUserFromSession", e);
-    return { ok: false, message: msg };
+    return { ok: false, message: hintForRlsWriteFailure(msg) };
   }
 }
