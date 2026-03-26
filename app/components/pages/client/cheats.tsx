@@ -71,17 +71,17 @@ function getCheatsColumns(t: (key: string) => string) {
       render: (row: CheatRow) => (
         <div className="flex gap-2">
           {row.link ? (
-            <Button size="sm" variant="default" asChild>
+            <Button variant="default" asChild>
               <a href={row.link} target="_blank">
                 {t("cheats.download")}
               </a>
             </Button>
           ) : (
-            <Button size="sm" variant="default" disabled>
+            <Button variant="default" disabled>
               {t("cheats.download")}
             </Button>
           )}
-          <Button size="sm" variant="outline">
+          <Button variant="outline">
             {t("cheats.report")}
           </Button>
         </div>
@@ -182,6 +182,8 @@ export function CheatsToolbar({
           key={game.value}
           variant={selectedGame === game.label ? "default" : "outline"}
           onClick={() => onSelectGameAction(game.label)}
+          className="px-3 gap-2"
+          size="lg"
         >
           <Image
             src={`/games/icons/${game.icon}`}
@@ -195,9 +197,9 @@ export function CheatsToolbar({
       ))}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">...</Button>
+          <Button variant="outline" className="px-3 gap-2" size="lg">...</Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="max-h-80 w-68 overflow-y-auto">
+        <DropdownMenuContent className="max-h-80 w-72 overflow-y-auto">
           {others.map((game) => (
             <DropdownMenuItem
               key={game.value}
@@ -206,8 +208,8 @@ export function CheatsToolbar({
               <Image
                 src={`/games/icons/${game.icon}`}
                 alt={game.label}
-                width={20}
-                height={20}
+                width={24}
+                height={24}
                 className="mr-2 rounded-[5px]"
               />
               {game.label}

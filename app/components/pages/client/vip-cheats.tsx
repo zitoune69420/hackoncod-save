@@ -287,7 +287,7 @@ export function VipCheatsPage({
           onSearch={() => setSearchQuery(search)}
           placeholder={t("vip.searchPlaceholder")}
         />
-        <Button variant="outline" onClick={handleRefresh} className="ml-2">
+        <Button size="lg" variant="outline" onClick={handleRefresh} className="ml-2 px-3 gap-2">
           <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
           {t("vip.refresh")}
         </Button>

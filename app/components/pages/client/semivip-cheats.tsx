@@ -288,7 +288,7 @@ export function SemiVipCheatsPage({
           onSearch={() => setSearchQuery(search)}
           placeholder={t("semivip.searchPlaceholder")}
         />
-        <Button variant="outline" onClick={handleRefresh} className="ml-2">
+        <Button size="lg" variant="outline" onClick={handleRefresh} className="ml-2 px-3 gap-2">
           <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
           {t("semivip.refresh")}
         </Button>

@@ -177,7 +177,7 @@ export function VideosPage() {
             onSearch={() => setSearchQuery(search)}
             placeholder={t("videos.searchPlaceholder")}
           />
-          <Button variant="outline" onClick={handleRefresh}>
+          <Button size="lg" variant="outline" onClick={handleRefresh} className="px-3 gap-2">
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("videos.refresh")}
           </Button>

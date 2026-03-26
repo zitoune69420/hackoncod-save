@@ -19,12 +19,13 @@ export function SearchBar({
   return (
     <div className="flex gap-2">
       <Input
+        className="h-9 min-w-72 flex-1 px-3 text-base md:min-w-80 md:text-base"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSearch()}
       />
-      <Button size="icon" onClick={onSearch}>
+      <Button size="icon-lg" className="shrink-0" onClick={onSearch}>
         <HugeiconsIcon icon={Search01Icon} strokeWidth={2} />
       </Button>
     </div>

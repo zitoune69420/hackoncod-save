@@ -32,35 +32,35 @@ function getGamesColumns(t: (key: string) => string) {
     render: (row: GameRow) => (
       <div className="flex gap-2">
         {row.steam ? (
-          <Button size="sm" variant="outline" asChild>
+          <Button variant="outline" asChild>
             <a href={row.steam} target="_blank" rel="noopener noreferrer">
               {t("games.steam")}
             </a>
           </Button>
         ) : (
-          <Button size="sm" variant="outline" disabled>
+          <Button variant="outline" disabled>
             {t("games.steam")}
           </Button>
         )}
         {row.link ? (
-          <Button size="sm" variant="default" asChild>
+          <Button variant="default" asChild>
             <a href={row.link} target="_blank" rel="noopener noreferrer">
               {t("games.download")}
             </a>
           </Button>
         ) : (
-          <Button size="sm" variant="default" disabled>
+          <Button variant="default" disabled>
             {t("games.download")}
           </Button>
         )}
         {row.client ? (
-          <Button size="sm" variant="outline" asChild>
+          <Button variant="outline" asChild>
             <a href={row.client} target="_blank" rel="noopener noreferrer">
               {t("games.client")}
             </a>
           </Button>
         ) : (
-          <Button size="sm" variant="outline" disabled>
+          <Button variant="outline" disabled>
             {t("games.client")}
           </Button>
         )}

@@ -119,7 +119,7 @@ export function CheatsPage() {
           onSelectGameAction={setSelectedGame}
         />
         <div className="flex">
-          <Button variant="outline" onClick={handleRefresh} className="mr-2">
+          <Button size="lg" variant="outline" onClick={handleRefresh} className="mr-2 px-3 gap-2">
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("cheats.refresh")}
           </Button>
