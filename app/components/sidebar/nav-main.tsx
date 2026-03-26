@@ -32,6 +32,8 @@ export function NavMain({
     id?: string;
     title: string;
     icon?: React.ReactNode;
+    /** Si défini, toute la section (Server, Shop, etc.) n’est visible que pour ce rôle. */
+    requiredRole?: UserRole;
     items?: {
       title: string;
       pageId: string;
@@ -45,6 +47,11 @@ export function NavMain({
   const { t } = useTranslations();
   const { role } = useUserRole();
   const filteredItems = items
+    .filter((item) =>
+      item.requiredRole
+        ? canSeeExclusiveNavItem(role, item.requiredRole)
+        : true,
+    )
     .map((item) => ({
       ...item,
       items: item.items?.filter((subItem) =>
@@ -84,8 +91,10 @@ export function NavMain({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem, idx) => (
-                    <SidebarMenuSubItem key={`${item.id ?? item.title}-${idx}`}>
+                  {item.items?.map((subItem) => (
+                    <SidebarMenuSubItem
+                      key={`${item.id ?? item.title}-${subItem.pageId}`}
+                    >
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}
                         onClick={() => onSelectPageAction?.(subItem.pageId)}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,7 @@ import { ThemeProvider } from "@/app/components/theme-provider";
 import { I18nProvider } from "@/app/components/i18n-provider";
 import { ThemeInitScript } from "@/app/theme-init-script";
 import { Toaster } from "@/components/ui/sonner";
+import { PageViewTracker } from "@/app/components/analytics/page-view-tracker";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -46,6 +48,9 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <TooltipProvider>
+              <Suspense fallback={null}>
+                <PageViewTracker />
+              </Suspense>
               {children}
               <Toaster />
             </TooltipProvider>

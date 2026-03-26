@@ -17,6 +17,8 @@ import {
   ChevronDoubleCloseIcon,
   ShoppingBag01Icon,
   Diamond02Icon,
+  ServerStack01Icon,
+  Analytics01Icon,
 } from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
 
@@ -54,6 +56,44 @@ function useNavData() {
             { title: t("sidebar.services"), pageId: "content" },
             { title: t("sidebar.accounts"), pageId: "content" },
             { title: t("sidebar.reviews"), pageId: "content" },
+          ],
+        },
+      ],
+      navAdministration: [
+        {
+          id: "admin-server",
+          title: "Server",
+          requiredRole: "founder" as const,
+          icon: <HugeiconsIcon icon={ServerStack01Icon} strokeWidth={2} />,
+          items: [
+            { title: "Cheats", pageId: "admin-server-cheats" },
+            { title: "Games", pageId: "admin-server-games" },
+            { title: "Videos", pageId: "admin-server-videos" },
+            { title: "Reviews", pageId: "admin-server-reviews" },
+            { title: "Blacklist", pageId: "admin-server-blacklist" },
+          ],
+        },
+        {
+          id: "admin-shop",
+          title: "Shop",
+          requiredRole: "founder" as const,
+          icon: <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />,
+          items: [
+            { title: "Cheats", pageId: "admin-shop-cheats" },
+            { title: "Services", pageId: "admin-shop-services" },
+            { title: "Accounts", pageId: "admin-shop-accounts" },
+            { title: "Reviews", pageId: "admin-shop-reviews" },
+          ],
+        },
+        {
+          id: "admin-stats",
+          title: "Stats",
+          requiredRole: "founder" as const,
+          icon: <HugeiconsIcon icon={Analytics01Icon} strokeWidth={2} />,
+          items: [
+            { title: "Users", pageId: "admin-stats-users" },
+            { title: "Performance", pageId: "admin-stats-performance" },
+            { title: "Security", pageId: "admin-stats-security" },
           ],
         },
       ],
@@ -119,6 +159,12 @@ export function AppSidebar({
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
           label={t("sidebar.exclusive")}
+        />
+        <NavMain
+          items={data.navAdministration}
+          currentPage={currentPage}
+          onSelectPageAction={onSelectPage}
+          label="Administration"
         />
       </SidebarContent>
       <SidebarFooter>

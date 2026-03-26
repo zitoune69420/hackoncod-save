@@ -39,6 +39,20 @@
       "fri": "Fri",
       "sat": "Sat",
       "sun": "Sun"
+    },
+    "admin": {
+      "serverCheats": "Administration · Server · Cheats",
+      "serverGames": "Administration · Server · Games",
+      "serverVideos": "Administration · Server · Videos",
+      "serverReviews": "Administration · Server · Reviews",
+      "serverBlacklist": "Administration · Server · Blacklist",
+      "shopCheats": "Administration · Shop · Cheats",
+      "shopServices": "Administration · Shop · Services",
+      "shopAccounts": "Administration · Shop · Accounts",
+      "shopReviews": "Administration · Shop · Reviews",
+      "statsUsers": "Administration · Stats · Users",
+      "statsPerformance": "Administration · Stats · Performance",
+      "statsSecurity": "Administration · Stats · Security"
     }
   },
   "navUser": {
