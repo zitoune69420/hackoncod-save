@@ -29,7 +29,7 @@ function getPaginationItems(
   page: number,
   totalPages: number,
 ): (number | "ellipsis")[] {
-  if (totalPages <= 7) {
+  if (totalPages <= 5) {
     return Array.from({ length: totalPages }, (_, i) => i + 1)
   }
   const set = new Set<number>([1, 2, totalPages])
