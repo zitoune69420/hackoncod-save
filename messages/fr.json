@@ -47,6 +47,7 @@
       "serverReviews": "Administration · Server · Reviews",
       "serverBlacklist": "Administration · Server · Blacklist",
       "shopCheats": "Administration · Shop · Cheats",
+      "shopGames": "Administration · Shop · Games",
       "shopServices": "Administration · Shop · Services",
       "shopAccounts": "Administration · Shop · Accounts",
       "shopReviews": "Administration · Shop · Reviews",
@@ -60,6 +61,9 @@
         "searchPlaceholder": "Jeu, nom, mode, plateforme, extension, statut…",
         "refresh": "Actualiser",
         "accessDenied": "Accès réservé aux fondateurs.",
+        "confirmDelete": "Supprimer le cheat « {{name}} » ? Action irréversible.",
+        "deleteSuccess": "Cheat supprimé.",
+        "deleteError": "Impossible de supprimer le cheat.",
         "errorLoading": "Erreur lors du chargement des cheats.",
         "totalCount": "{{count}} cheats",
         "addCheat": "Ajouter un cheat",
@@ -100,6 +104,48 @@
           "semivip": "Semi-VIP",
           "statut": "Statut",
           "action": "Action"
+        }
+      },
+      "allGames": {
+        "serverTitle": "Jeux (serveur)",
+        "shopTitle": "Jeux (boutique)",
+        "description": "Gère les jeux affichés sur le site — titres, liens et visibilité.",
+        "searchPlaceholder": "Titre, description, client, Steam, lien…",
+        "refresh": "Actualiser",
+        "accessDenied": "Accès réservé aux fondateurs.",
+        "confirmDelete": "Supprimer le jeu « {{name}} » ? Irréversible. Des cheats liés peuvent empêcher la suppression.",
+        "deleteSuccess": "Jeu supprimé.",
+        "deleteError": "Impossible de supprimer le jeu.",
+        "errorLoading": "Erreur lors du chargement des jeux.",
+        "addGame": "Ajouter un jeu",
+        "dialog": {
+          "createTitle": "Nouveau jeu",
+          "editTitle": "Modifier le jeu",
+          "description": "Renseigne les métadonnées. « Affiché sur le site » contrôle la visibilité dans les listes publiques.",
+          "title": "Titre",
+          "descriptionField": "Description",
+          "image": "URL de l’image",
+          "steam": "URL Steam",
+          "link": "Lien",
+          "client": "Client",
+          "displayed": "Affiché sur le site",
+          "create": "Créer",
+          "save": "Enregistrer",
+          "success": "Jeu enregistré.",
+          "errorSave": "Impossible d’enregistrer le jeu.",
+          "validationTitle": "Saisis un titre."
+        },
+        "table": {
+          "title": "Titre",
+          "description": "Description",
+          "image": "Image",
+          "steam": "Steam",
+          "link": "Lien",
+          "client": "Client",
+          "displayed": "Affiché",
+          "action": "Action",
+          "openLink": "Ouvrir",
+          "openSteam": "Steam"
         }
       }
     }

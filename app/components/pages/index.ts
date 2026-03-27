@@ -9,3 +9,5 @@ export { SemiVipCheatsPage } from "./client/semivip-cheats";
 export { PartnersPage } from "./server/partners";
 export { AdminServerCheatsPage } from "./server/admin-server-cheats";
 export { AdminShopCheatsPage } from "./server/admin-shop-cheats";
+export { AdminServerGamesPage } from "./server/admin-server-games";
+export { AdminShopGamesPage } from "./server/admin-shop-games";

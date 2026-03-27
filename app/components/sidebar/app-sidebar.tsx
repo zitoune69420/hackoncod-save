@@ -80,6 +80,7 @@ function useNavData() {
           icon: <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />,
           items: [
             { title: "Cheats", pageId: "admin-shop-cheats" },
+            { title: "Games", pageId: "admin-shop-games" },
             { title: "Services", pageId: "admin-shop-services" },
             { title: "Accounts", pageId: "admin-shop-accounts" },
             { title: "Reviews", pageId: "admin-shop-reviews" },

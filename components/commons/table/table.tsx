@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/pagination"
 import { useTranslations } from "@/app/components/i18n-provider"
 import { parsePaginationQueryParam } from "@/lib/pagination-url"
+import { cn } from "@/lib/utils"
 import type { CommonTableProps } from "./types"
 
 /** Au-delà de 7 pages : 1, 2, …, page courante (si besoin), …, dernière page. */
@@ -133,7 +134,10 @@ function CommonTableInner<T>({ columns, data, pageSize = 10 }: CommonTableProps<
           {paginatedData.map((row, i) => (
             <TableRow key={(row as { id?: string }).id ?? i}>
               {columns.map((col) => (
-                <TableCell key={String(col.key)}>
+                <TableCell
+                  key={String(col.key)}
+                  className={cn(col.cellClassName)}
+                >
                   {col.render ? col.render(row) : (row[col.key] as React.ReactNode)}
                 </TableCell>
               ))}

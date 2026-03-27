@@ -14,6 +14,8 @@ import {
   PartnersPage,
   AdminServerCheatsPage,
   AdminShopCheatsPage,
+  AdminServerGamesPage,
+  AdminShopGamesPage,
 } from "@/app/components/pages";
 import {
   DASHBOARD_DEFAULT_PAGE,
@@ -39,8 +41,9 @@ const PAGES: Record<string, ComponentType<PageProps>> = {
 const ADMIN_PAGE_FALLBACK = DefaultPage;
 PAGES["admin-server-cheats"] = AdminServerCheatsPage as ComponentType<PageProps>;
 PAGES["admin-shop-cheats"] = AdminShopCheatsPage as ComponentType<PageProps>;
+PAGES["admin-server-games"] = AdminServerGamesPage as ComponentType<PageProps>;
+PAGES["admin-shop-games"] = AdminShopGamesPage as ComponentType<PageProps>;
 for (const id of [
-  "admin-server-games",
   "admin-server-videos",
   "admin-server-reviews",
   "admin-server-blacklist",

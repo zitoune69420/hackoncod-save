@@ -116,15 +116,15 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
   return (data ?? []) as unknown as CheatWithGame[];
 }
 
-/** Tous les jeux (admin) — pour listes déroulantes sans filtre `displayed`. */
-export async function getAllGamesForAdmin(): Promise<
-  Pick<Game, "id" | "title">[]
-> {
+/** Tous les jeux (admin) — tableau + listes (id/titre dérivables côté client). */
+export async function getAllGamesForAdmin(): Promise<Game[]> {
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("game")
-    .select("id, title")
+    .select(
+      "id, title, description, image, steam, link, client, displayed, created_at, updated_at",
+    )
     .order("title");
 
   if (error) {
@@ -132,7 +132,59 @@ export async function getAllGamesForAdmin(): Promise<
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
 
-  return (data ?? []) as Pick<Game, "id" | "title">[];
+  return (data ?? []) as Game[];
+}
+
+export type GameUpsertRow = {
+  title: string;
+  description: string | null;
+  image: string | null;
+  steam: string | null;
+  link: string | null;
+  client: string | null;
+  displayed: boolean;
+};
+
+export async function insertGame(row: GameUpsertRow): Promise<{ id: string }> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("game")
+    .insert(row)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[queries] insertGame error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return { id: (data as { id: string }).id };
+}
+
+export async function updateGame(
+  id: string,
+  row: Partial<GameUpsertRow>,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("game").update(row).eq("id", id);
+
+  if (error) {
+    console.error("[queries] updateGame error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteGame(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("game").delete().eq("id", id);
+
+  if (error) {
+    console.error("[queries] deleteGame error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
 }
 
 export type CheatInsertRow = {
@@ -176,6 +228,17 @@ export async function updateCheat(
 
   if (error) {
     console.error("[queries] updateCheat error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteCheat(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("cheat").delete().eq("id", id);
+
+  if (error) {
+    console.error("[queries] deleteCheat error:", error);
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
 }

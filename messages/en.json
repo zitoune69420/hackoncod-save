@@ -47,6 +47,7 @@
       "serverReviews": "Administration · Server · Reviews",
       "serverBlacklist": "Administration · Server · Blacklist",
       "shopCheats": "Administration · Shop · Cheats",
+      "shopGames": "Administration · Shop · Games",
       "shopServices": "Administration · Shop · Services",
       "shopAccounts": "Administration · Shop · Accounts",
       "shopReviews": "Administration · Shop · Reviews",
@@ -60,6 +61,9 @@
         "searchPlaceholder": "Game, name, mode, platform, extension, status…",
         "refresh": "Refresh",
         "accessDenied": "Founders only.",
+        "confirmDelete": "Delete cheat « {{name}} »? This cannot be undone.",
+        "deleteSuccess": "Cheat deleted.",
+        "deleteError": "Could not delete cheat.",
         "errorLoading": "Could not load cheats.",
         "totalCount": "{{count}} cheats",
         "addCheat": "Add cheat",
@@ -100,6 +104,48 @@
           "semivip": "Semi-VIP",
           "statut": "Status",
           "action": "Action"
+        }
+      },
+      "allGames": {
+        "serverTitle": "Administration · All Games",
+        "shopTitle": "Administration · All Games",
+        "description": "Manage games shown on the site — titles, links, and visibility.",
+        "searchPlaceholder": "Title, description, client, Steam, link…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "confirmDelete": "Delete game « {{name}} »? This cannot be undone. Cheats linked to this game may block deletion.",
+        "deleteSuccess": "Game deleted.",
+        "deleteError": "Could not delete game.",
+        "errorLoading": "Could not load games.",
+        "addGame": "Add game",
+        "dialog": {
+          "createTitle": "New game",
+          "editTitle": "Edit game",
+          "description": "Fill in the game metadata. Toggle « Displayed » to show or hide it on public listings.",
+          "title": "Title",
+          "descriptionField": "Description",
+          "image": "Image URL",
+          "steam": "Steam URL",
+          "link": "Link",
+          "client": "Client",
+          "displayed": "Displayed on site",
+          "create": "Create",
+          "save": "Save",
+          "success": "Game saved.",
+          "errorSave": "Could not save game.",
+          "validationTitle": "Enter a title."
+        },
+        "table": {
+          "title": "Title",
+          "description": "Description",
+          "image": "Image",
+          "steam": "Steam",
+          "link": "Link",
+          "client": "Client",
+          "displayed": "Displayed",
+          "action": "Action",
+          "openLink": "Open",
+          "openSteam": "Steam"
         }
       }
     }

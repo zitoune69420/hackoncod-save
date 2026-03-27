@@ -1,5 +1,9 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
-import { getAllGamesForAdmin } from "@/lib/supabase/queries";
+import {
+  getAllGamesForAdmin,
+  insertGame,
+  type GameUpsertRow,
+} from "@/lib/supabase/queries";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -16,6 +20,58 @@ export async function GET() {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[api/admin/games]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
+  }
+}
+
+function nullIfEmpty(s: unknown): string | null {
+  if (typeof s !== "string") return null;
+  const t = s.trim();
+  return t === "" ? null : t;
+}
+
+function normalizeGameBody(raw: unknown): GameUpsertRow | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const title = typeof o.title === "string" ? o.title.trim() : "";
+  if (!title) return null;
+
+  return {
+    title,
+    description: nullIfEmpty(o.description),
+    image: nullIfEmpty(o.image),
+    steam: nullIfEmpty(o.steam),
+    link: nullIfEmpty(o.link),
+    client: nullIfEmpty(o.client),
+    displayed: Boolean(o.displayed),
+  };
+}
+
+export async function POST(req: Request) {
+  try {
+    const access = await getCurrentUserAccess({ source: "db" });
+    if (!access.isAuthenticated || access.role !== "founder") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await req.json().catch(() => null);
+    const row = normalizeGameBody(body);
+    if (!row) {
+      return NextResponse.json(
+        { error: "Invalid body (title required)" },
+        { status: 400 },
+      );
+    }
+
+    const { id } = await insertGame(row);
+    return NextResponse.json({ id }, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[api/admin/games POST]", message);
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }

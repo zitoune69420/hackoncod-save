@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button"
 import { CommonTable } from "@/components/commons/table/table"
 import { useTranslations } from "@/app/components/i18n-provider"
 import { showToast } from "@/components/commons/toasts"
+import { truncateText } from "@/lib/truncate-text"
+
+const DESCRIPTION_MAX_CHARS = 100
 
 export type GameRow = {
   id: string
@@ -21,11 +24,16 @@ function getGamesColumns(t: (key: string) => string) {
     {
       key: "description" as const,
       label: t("games.tableHeaders.description"),
+      cellClassName:
+        "min-w-0 max-w-[11rem] sm:max-w-[15rem] md:max-w-[18rem] whitespace-normal align-top",
       render: (row: GameRow) => (
-      <span className="line-clamp-2 max-w-md" title={row.description}>
-        {row.description}
-      </span>
-    ),
+        <span
+          className="block w-full min-w-0 wrap-break-word"
+          title={row.description}
+        >
+          {truncateText(row.description, DESCRIPTION_MAX_CHARS)}
+        </span>
+      ),
   },
   {
     key: "action" as const,

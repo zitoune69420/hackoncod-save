@@ -50,6 +50,7 @@ const PAGE_KEYS: Record<string, string> = {
   "admin-server-reviews": "dashboard.admin.serverReviews",
   "admin-server-blacklist": "dashboard.admin.serverBlacklist",
   "admin-shop-cheats": "dashboard.admin.shopCheats",
+  "admin-shop-games": "dashboard.admin.shopGames",
   "admin-shop-services": "dashboard.admin.shopServices",
   "admin-shop-accounts": "dashboard.admin.shopAccounts",
   "admin-shop-reviews": "dashboard.admin.shopReviews",

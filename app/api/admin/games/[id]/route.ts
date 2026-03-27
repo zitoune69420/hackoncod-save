@@ -1,28 +1,36 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { isUuid } from "@/lib/security/is-uuid";
 import {
-  type CheatInsertRow,
-  deleteCheat,
-  updateCheat,
+  deleteGame,
+  type GameUpsertRow,
+  updateGame,
 } from "@/lib/supabase/queries";
 import { NextResponse } from "next/server";
 
-function normalizeBody(raw: unknown): Partial<CheatInsertRow> | null {
+function nullIfEmpty(s: unknown): string | null | undefined {
+  if (s === undefined) return undefined;
+  if (s === null) return null;
+  if (typeof s !== "string") return undefined;
+  const t = s.trim();
+  return t === "" ? null : t;
+}
+
+function normalizePatchBody(raw: unknown): Partial<GameUpsertRow> | null {
   if (raw == null || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
-  const out: Partial<CheatInsertRow> = {};
+  const out: Partial<GameUpsertRow> = {};
 
-  if (typeof o.game_id === "string") out.game_id = o.game_id.trim();
-  if (typeof o.name === "string") out.name = o.name.trim();
-  if (typeof o.mode === "string") out.mode = o.mode;
-  if (typeof o.platform === "string") out.platform = o.platform;
-  if (typeof o.extension === "string") out.extension = o.extension;
-  if (typeof o.crack === "boolean") out.crack = o.crack;
-  if (typeof o.client === "string") out.client = o.client;
-  if (typeof o.link === "string") out.link = o.link;
-  if (typeof o.statut === "string") out.statut = o.statut;
-  if (typeof o.vip === "boolean") out.vip = o.vip;
-  if (typeof o.semi_vip === "boolean") out.semi_vip = o.semi_vip;
+  if (typeof o.title === "string") {
+    const t = o.title.trim();
+    if (!t) return null;
+    out.title = t;
+  }
+  if ("description" in o) out.description = nullIfEmpty(o.description) ?? null;
+  if ("image" in o) out.image = nullIfEmpty(o.image) ?? null;
+  if ("steam" in o) out.steam = nullIfEmpty(o.steam) ?? null;
+  if ("link" in o) out.link = nullIfEmpty(o.link) ?? null;
+  if ("client" in o) out.client = nullIfEmpty(o.client) ?? null;
+  if (typeof o.displayed === "boolean") out.displayed = o.displayed;
 
   return Object.keys(out).length ? out : null;
 }
@@ -44,23 +52,16 @@ export async function PATCH(
     }
 
     const body = await req.json().catch(() => null);
-    const row = normalizeBody(body);
+    const row = normalizePatchBody(body);
     if (!row) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
 
-    if (row.name !== undefined && !row.name.trim()) {
-      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
-    }
-    if (row.game_id !== undefined && !row.game_id.trim()) {
-      return NextResponse.json({ error: "game_id cannot be empty" }, { status: 400 });
-    }
-
-    await updateCheat(idTrim, row);
+    await updateGame(idTrim, row);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[api/admin/cheats PATCH]", message);
+    console.error("[api/admin/games PATCH]", message);
     const safeMessage =
       process.env.NODE_ENV === "production" ? "Request failed" : message;
     return NextResponse.json({ error: safeMessage }, { status: 500 });
@@ -83,11 +84,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
-    await deleteCheat(idTrim);
+    await deleteGame(idTrim);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[api/admin/cheats DELETE]", message);
+    console.error("[api/admin/games DELETE]", message);
     const safeMessage =
       process.env.NODE_ENV === "production" ? "Request failed" : message;
     return NextResponse.json({ error: safeMessage }, { status: 500 });
