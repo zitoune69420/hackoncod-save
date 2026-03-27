@@ -11,6 +11,8 @@ import { insertAnalyticsPageView } from "@/lib/supabase/analytics";
 export const runtime = "nodejs";
 
 const MAX_BODY = 12_000;
+const MAX_VISITOR_ID_LEN = 128;
+const MAX_SESSION_ID_LEN = 128;
 
 function shouldSkipPath(pathname: string): boolean {
   if (pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
@@ -40,9 +42,14 @@ export async function POST(req: NextRequest) {
   const b = body as Record<string, unknown>;
   const path = typeof b.path === "string" ? b.path.trim() : "";
   const href = typeof b.href === "string" ? b.href.trim() : "";
-  const visitor_id = typeof b.visitorId === "string" ? b.visitorId.trim() : "";
+  const visitor_id =
+    typeof b.visitorId === "string"
+      ? b.visitorId.trim().slice(0, MAX_VISITOR_ID_LEN)
+      : "";
   const session_id =
-    typeof b.sessionId === "string" ? b.sessionId.trim() : "";
+    typeof b.sessionId === "string"
+      ? b.sessionId.trim().slice(0, MAX_SESSION_ID_LEN)
+      : "";
   const referrer =
     typeof b.referrer === "string" ? b.referrer.trim().slice(0, 2000) : null;
 

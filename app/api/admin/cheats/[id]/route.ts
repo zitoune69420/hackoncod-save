@@ -1,4 +1,5 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { isUuid } from "@/lib/security/is-uuid";
 import {
   type CheatInsertRow,
   updateCheat,
@@ -36,8 +37,9 @@ export async function PATCH(
     }
 
     const { id } = await ctx.params;
-    if (!id?.trim()) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    const idTrim = id?.trim() ?? "";
+    if (!idTrim || !isUuid(idTrim)) {
+      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
     const body = await req.json().catch(() => null);
@@ -53,7 +55,7 @@ export async function PATCH(
       return NextResponse.json({ error: "game_id cannot be empty" }, { status: 400 });
     }
 
-    await updateCheat(id.trim(), row);
+    await updateCheat(idTrim, row);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

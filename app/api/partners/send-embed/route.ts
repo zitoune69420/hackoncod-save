@@ -13,6 +13,21 @@ const PARTNER_WEBHOOKS: Record<string, string | undefined> = {
   nolove: process.env.DISCORD_WEBHOOK_PARTNER_NOLOVE,
 };
 
+const PARTNER_KEYS = Object.keys(PARTNER_WEBHOOKS);
+
+const DISCORD_MAX_FIELDS = 25;
+const DISCORD_FIELD_NAME_LEN = 256;
+const DISCORD_FIELD_VALUE_LEN = 1024;
+
+function parseEmbedColor(hex: string | undefined): number {
+  if (!hex || typeof hex !== "string") return 0x5865f2;
+  const cleaned = hex.trim().replace(/^#/, "");
+  if (!/^[0-9a-fA-F]{1,6}$/.test(cleaned)) return 0x5865f2;
+  const n = parseInt(cleaned, 16);
+  if (!Number.isFinite(n) || n < 0 || n > 0xffffff) return 0x5865f2;
+  return n;
+}
+
 type SendEmbedBody = {
   partner?: string;
   mentionEveryone?: boolean;
@@ -53,23 +68,51 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Resolve webhook URL
-  const partnerKey = body.partner ?? "infarcted";
+  if (!body.embed || typeof body.embed !== "object") {
+    return NextResponse.json({ error: "embed required" }, { status: 400 });
+  }
+
+  // Resolve webhook URL (clé strictement allowlistée)
+  const partnerKey =
+    typeof body.partner === "string" && body.partner.trim()
+      ? body.partner.trim()
+      : "infarcted";
+  if (!PARTNER_KEYS.includes(partnerKey)) {
+    return NextResponse.json({ error: "Invalid partner" }, { status: 400 });
+  }
   const webhookUrl = PARTNER_WEBHOOKS[partnerKey];
   if (!webhookUrl?.trim()) {
     return NextResponse.json(
-      {
-        error: `No webhook configured for partner "${partnerKey}". Set DISCORD_WEBHOOK_PARTNER_${partnerKey.toUpperCase()} in your env.`,
-      },
+      { error: "Partner webhook not configured" },
       { status: 503 },
     );
   }
 
+  // @everyone : fondateurs uniquement (évite l’abus par un compte partenaire)
+  const mentionEveryone =
+    Boolean(body.mentionEveryone) && access.role === "founder";
+
   // Build Discord embed
   const raw = body.embed;
-  const colorInt = raw.color
-    ? parseInt(raw.color.replace("#", ""), 16)
-    : 0x5865f2;
+  const colorInt = parseEmbedColor(
+    typeof raw.color === "string" ? raw.color : undefined,
+  );
+
+  const fieldsRaw = Array.isArray(raw.fields)
+    ? raw.fields.slice(0, DISCORD_MAX_FIELDS)
+    : undefined;
+  const fields =
+    fieldsRaw
+      ?.map((f) => {
+        if (!f || typeof f.name !== "string" || typeof f.value !== "string") {
+          return null;
+        }
+        const name = f.name.slice(0, DISCORD_FIELD_NAME_LEN).trim();
+        const value = f.value.slice(0, DISCORD_FIELD_VALUE_LEN).trim();
+        if (!name || !value) return null;
+        return { name, value, inline: Boolean(f.inline) };
+      })
+      .filter((f): f is NonNullable<typeof f> => f != null) ?? undefined;
 
   const embed: DiscordApiEmbed = {
     title: raw.title || undefined,
@@ -80,7 +123,7 @@ export async function POST(req: Request) {
       : undefined,
     image: raw.image?.trim() ? { url: raw.image.trim() } : undefined,
     footer: raw.footer?.trim() ? { text: raw.footer.trim() } : undefined,
-    fields: raw.fields?.filter((f) => f.name && f.value) ?? undefined,
+    fields: fields?.length ? fields : undefined,
   };
 
   if (raw.author?.name?.trim()) {
@@ -93,13 +136,15 @@ export async function POST(req: Request) {
   // Send
   try {
     await executeDiscordWebhook(webhookUrl, {
-      content: body.mentionEveryone ? "@everyone" : undefined,
+      content: mentionEveryone ? "@everyone" : undefined,
       embeds: [embed],
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     console.error("[partners/send-embed]", e);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Webhook request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }

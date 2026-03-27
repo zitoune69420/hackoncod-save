@@ -3,6 +3,7 @@ import type { DiscordApiEmbed } from "@/lib/discord/webhook"
 import { executeDiscordWebhook } from "@/lib/discord/webhook"
 import { sendDirectMessageEmbed } from "@/lib/discord/dm"
 import { buildLoginConnectionEmbed } from "@/lib/discord/login-embed"
+import { isAllowedDiscordWebhookUrl } from "@/lib/security/discord-webhook-url"
 
 export const runtime = "nodejs"
 
@@ -67,6 +68,12 @@ export async function POST(req: Request) {
         if (!url) {
           return NextResponse.json({ error: "DISCORD_WEBHOOK_LOGIN_URL not set" }, { status: 503 })
         }
+        if (!isAllowedDiscordWebhookUrl(url)) {
+          return NextResponse.json(
+            { error: "DISCORD_WEBHOOK_LOGIN_URL must be a valid Discord webhook URL" },
+            { status: 503 },
+          )
+        }
         const connectedAt = new Date(body.payload.request.connectedAt)
         const embed = buildLoginConnectionEmbed(
           body.payload.user,
@@ -86,6 +93,12 @@ export async function POST(req: Request) {
       const webhookUrl = raw.webhookUrl
       if (!webhookUrl?.trim()) {
         return NextResponse.json({ error: "webhookUrl required" }, { status: 400 })
+      }
+      if (!isAllowedDiscordWebhookUrl(webhookUrl)) {
+        return NextResponse.json(
+          { error: "webhookUrl must be a https://discord.com/api/webhooks/… URL" },
+          { status: 400 },
+        )
       }
       if (!raw.embeds?.length) {
         return NextResponse.json({ error: "embeds required" }, { status: 400 })
@@ -112,6 +125,8 @@ export async function POST(req: Request) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error"
     console.error("[messenger]", e)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message
+    return NextResponse.json({ error: safeMessage }, { status: 500 })
   }
 }

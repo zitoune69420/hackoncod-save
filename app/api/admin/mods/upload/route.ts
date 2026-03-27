@@ -43,7 +43,11 @@ export async function POST(req: Request) {
 
     if (error) {
       console.error("[api/admin/mods/upload]", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      const safeMessage =
+        process.env.NODE_ENV === "production"
+          ? "Upload failed"
+          : error.message;
+      return NextResponse.json({ error: safeMessage }, { status: 500 });
     }
 
     const { data: pub } = supabase.storage.from(MODS_BUCKET).getPublicUrl(objectPath);
@@ -55,6 +59,8 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[api/admin/mods/upload]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Upload failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }
