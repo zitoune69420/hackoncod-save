@@ -1,34 +1,25 @@
 "use client";
 
-import type * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CommonTable } from "@/components/commons/table/table";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon, Refresh01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  Cancel01Icon,
+  Refresh01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { useUserRole } from "@/hooks/use-user-role";
+import { AdminCheatFormDialog } from "@/app/components/pages/client/admin-cheat-form-dialog";
+import type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
 
-export type AdminCheatRow = {
-  id: string;
-  game: string;
-  name: string;
-  mode: string;
-  platform: string;
-  extension: string;
-  crack: boolean;
-  client: string;
-  vip: boolean;
-  semi_vip: boolean;
-  statut: string;
-  link: string;
-  /** Clé factice pour la colonne actions du tableau. */
-  action?: React.ReactNode;
-};
+export type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
 
 async function fetchAdminCheats(): Promise<AdminCheatRow[]> {
   const res = await fetch("/api/admin/cheats");
@@ -54,6 +45,7 @@ function hasClientStr(s: string): boolean {
 
 function getAdminCheatsColumns(
   t: (key: string, params?: Record<string, string | number>) => string,
+  onEdit: (row: AdminCheatRow) => void,
 ) {
   return [
     {
@@ -99,6 +91,14 @@ function getAdminCheatsColumns(
       label: t("dashboard.admin.allCheats.table.action"),
       render: (row: AdminCheatRow) => (
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(row)}
+          >
+            {t("common.edit")}
+          </Button>
           {row.link ? (
             <Button variant="default" size="sm" asChild>
               <a
@@ -125,15 +125,19 @@ function getAdminCheatsColumns(
   ];
 }
 
-function AdminCheatsTable({ data = [] }: { data?: AdminCheatRow[] }) {
+function AdminCheatsTable({
+  data = [],
+  onEdit,
+}: {
+  data?: AdminCheatRow[];
+  onEdit: (row: AdminCheatRow) => void;
+}) {
   const { t } = useTranslations();
-  return (
-    <CommonTable
-      columns={getAdminCheatsColumns(t)}
-      data={data}
-      pageSize={12}
-    />
+  const columns = useMemo(
+    () => getAdminCheatsColumns(t, onEdit),
+    [t, onEdit],
   );
+  return <CommonTable columns={columns} data={data} pageSize={12} />;
 }
 
 export type AdminAllCheatsScope = "server" | "shop";
@@ -150,6 +154,9 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
   const [progress, setProgress] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshRef = useRef(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<AdminCheatRow | null>(null);
+  const [games, setGames] = useState<{ id: string; title: string }[]>([]);
 
   const titleKey =
     scope === "server"
@@ -237,6 +244,38 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
     setRefreshTick((k) => k + 1);
   }, []);
 
+  const openCreateCheat = useCallback(() => {
+    setEditingRow(null);
+    setFormOpen(true);
+  }, []);
+
+  const onEditCheat = useCallback((row: AdminCheatRow) => {
+    setEditingRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const handleCheatSaved = useCallback(() => {
+    invalidateCache(cacheKey("admin-all-cheats"));
+    refreshRef.current = true;
+    setRefreshTick((k) => k + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!isFounder) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/admin/games");
+      if (!res.ok || cancelled) return;
+      const json: unknown = await res.json().catch(() => null);
+      if (!cancelled && Array.isArray(json)) {
+        setGames(json as { id: string; title: string }[]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isFounder]);
+
   if (roleLoading) {
     return (
       <div className="flex min-h-32 items-center justify-center">
@@ -255,39 +294,56 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t(titleKey)}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("dashboard.admin.allCheats.description")}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("dashboard.admin.allCheats.totalCount", { count: filteredData.length })}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={handleRefresh}
-          className="gap-2 px-3 sm:mr-2"
-          disabled={loading}
-        >
-          <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          {t("dashboard.admin.allCheats.refresh")}
-        </Button>
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={() => setSearchQuery(search)}
-          placeholder={t("dashboard.admin.allCheats.searchPlaceholder")}
-        />
+      <AdminCheatFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        editingRow={editingRow}
+        games={games}
+        onSaved={handleCheatSaved}
+      />
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
+        <div className="min-w-0 shrink">
+          <h1 className="text-2xl font-semibold">{t(titleKey)}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("dashboard.admin.allCheats.description")}
+          </p>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end md:max-w-xl lg:max-w-2xl">
+          <Button
+            size="lg"
+            variant="default"
+            onClick={openCreateCheat}
+            className="shrink-0 gap-2 px-3"
+          >
+            <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
+            {t("dashboard.admin.allCheats.addCheat")}
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleRefresh}
+            className="shrink-0 gap-2 px-3"
+            disabled={loading}
+          >
+            <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
+            {t("dashboard.admin.allCheats.refresh")}
+          </Button>
+          <div className="min-w-0 w-full sm:flex-1">
+            <SearchBar
+              value={search}
+              onChange={setSearch}
+              onSearch={() => setSearchQuery(search)}
+              placeholder={t("dashboard.admin.allCheats.searchPlaceholder")}
+            />
+          </div>
+        </div>
       </div>
       {loading ? (
         <div className="flex min-h-16 items-center justify-center">
           <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : (
-        <AdminCheatsTable data={filteredData} />
+        <AdminCheatsTable data={filteredData} onEdit={onEditCheat} />
       )}
     </div>
   );

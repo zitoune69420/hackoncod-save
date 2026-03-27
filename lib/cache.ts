@@ -91,6 +91,6 @@ export function cacheKey(
   if (type === "reviews") return "reviews";
   if (type === "vip-cheats") return "vip-cheats";
   if (type === "semivip-cheats") return "semivip-cheats";
-  if (type === "admin-all-cheats") return "admin-all-cheats";
+  if (type === "admin-all-cheats") return "admin-all-cheats-v2";
   throw new Error("Invalid cache key: cheats requires gameTitle");
 }

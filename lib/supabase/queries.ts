@@ -116,6 +116,70 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
   return (data ?? []) as unknown as CheatWithGame[];
 }
 
+/** Tous les jeux (admin) — pour listes déroulantes sans filtre `displayed`. */
+export async function getAllGamesForAdmin(): Promise<
+  Pick<Game, "id" | "title">[]
+> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("game")
+    .select("id, title")
+    .order("title");
+
+  if (error) {
+    console.error("[queries] getAllGamesForAdmin error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return (data ?? []) as Pick<Game, "id" | "title">[];
+}
+
+export type CheatInsertRow = {
+  game_id: string;
+  name: string;
+  mode: string;
+  platform: string;
+  extension: string;
+  crack: boolean;
+  client: string;
+  link: string;
+  statut: string;
+  vip: boolean;
+  semi_vip: boolean;
+};
+
+export async function insertCheat(row: CheatInsertRow): Promise<{ id: string }> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("cheat")
+    .insert(row)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[queries] insertCheat error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return { id: (data as { id: string }).id };
+}
+
+export async function updateCheat(
+  id: string,
+  row: Partial<CheatInsertRow>,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("cheat").update(row).eq("id", id);
+
+  if (error) {
+    console.error("[queries] updateCheat error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
 export async function getDisplayedGames(): Promise<Game[]> {
   const supabase = createAdminClient();
 
