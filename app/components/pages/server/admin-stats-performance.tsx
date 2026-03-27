@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { resolvePerformanceModel } from "@/lib/performance/resolve-performance-model";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { StatsPerformanceToolbar } from "@/app/components/pages/admin/stats-perf
 import { StatsPerformanceScoreChart } from "@/app/components/pages/admin/stats-performance-score-chart";
 import { StatsPerformanceRoutes } from "@/app/components/pages/admin/stats-performance-routes";
 import { StatsPerformanceCountries } from "@/app/components/pages/admin/stats-performance-countries";
+import { AdminStatsPerformanceBodyFallback } from "@/app/components/pages/server/admin-stats-fallbacks";
 import type {
   PerfDevice,
   PerfEnv,
@@ -115,35 +117,11 @@ type Props = {
   days: 7 | 30;
 };
 
-export async function AdminStatsPerformanceServer({
-  device,
-  env,
-  days,
-}: Props) {
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated || access.role !== "founder") {
-    return (
-      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        Access denied. Founder role required.
-      </div>
-    );
-  }
-
+async function AdminStatsPerformanceData({ device, env, days }: Props) {
   const model = await resolvePerformanceModel(device, env, days);
 
   return (
-    <div className="mx-auto w-full max-w-[min(100%,92rem)] space-y-8 px-1 sm:px-2">
-      <header className="space-y-1 border-b border-border/40 pb-6">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-[1.75rem]">
-          Performance stats
-        </h1>
-        <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
-          Core Web Vitals et score Lighthouse — données live via l’API PageSpeed
-          Insights quand la clé et l’URL cible sont configurées ; cartes et
-          tendances d’exemple en complément.
-        </p>
-      </header>
-
+    <>
       {model.sourceNote ? (
         <div
           role="status"
@@ -160,8 +138,6 @@ export async function AdminStatsPerformanceServer({
           ) : null}
         </div>
       ) : null}
-
-      <StatsPerformanceToolbar device={device} env={env} days={days} />
 
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         <PerformanceSidebar model={model} />
@@ -212,6 +188,42 @@ export async function AdminStatsPerformanceServer({
           />
         </div>
       </div>
+    </>
+  );
+}
+
+export async function AdminStatsPerformanceServer({
+  device,
+  env,
+  days,
+}: Props) {
+  const access = await getCurrentUserAccess({ source: "db" });
+  if (!access.isAuthenticated || access.role !== "founder") {
+    return (
+      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
+        Access denied. Founder role required.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-[min(100%,92rem)] space-y-8 px-1 sm:px-2">
+      <header className="space-y-1 border-b border-border/40 pb-6">
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-[1.75rem]">
+          Performance stats
+        </h1>
+        <p className="text-muted-foreground max-w-2xl text-sm leading-relaxed">
+          Core Web Vitals et score Lighthouse — données live via l’API PageSpeed
+          Insights quand la clé et l’URL cible sont configurées ; cartes et
+          tendances d’exemple en complément.
+        </p>
+      </header>
+
+      <StatsPerformanceToolbar device={device} env={env} days={days} />
+
+      <Suspense fallback={<AdminStatsPerformanceBodyFallback />}>
+        <AdminStatsPerformanceData device={device} env={env} days={days} />
+      </Suspense>
     </div>
   );
 }

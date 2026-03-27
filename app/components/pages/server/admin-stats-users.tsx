@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { buildAdminStatsModel } from "@/lib/analytics/build-admin-stats-model";
 import { formatEnInt } from "@/lib/format/numbers";
@@ -5,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { StatsUsersChart } from "@/app/components/pages/admin/stats-users-chart";
 import { StatsUsersRange } from "@/app/components/pages/admin/stats-users-range";
 import { StatsUsersPanels } from "@/app/components/pages/admin/stats-users-panels";
+import { AdminStatsUsersBodyFallback } from "@/app/components/pages/server/admin-stats-fallbacks";
 
 function DeltaBadge({
   pct,
@@ -65,37 +67,15 @@ function StatTile({
   );
 }
 
-type Props = { days: 7 | 30 };
+type DaysProp = { days: 7 | 30 };
 
-export async function AdminStatsUsersServer({ days }: Props) {
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated || access.role !== "founder") {
-    return (
-      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        Access denied. Founder role required.
-      </div>
-    );
-  }
-
+async function AdminStatsUsersData({ days }: DaysProp) {
   const data = await buildAdminStatsModel(days);
   const cur = data.current;
   const deltas = data.deltas;
 
   return (
-    <div className="mx-auto w-full max-w-[min(100%,88rem)] space-y-8 px-1 sm:px-2">
-      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border/40 pb-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-[1.75rem]">
-            User analytics
-          </h1>
-          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Traffic and engagement for your product — compared to the previous
-            period of equal length.
-          </p>
-        </div>
-        <StatsUsersRange days={days} />
-      </header>
-
+    <>
       {data.hint ? (
         <div
           role="status"
@@ -126,6 +106,38 @@ export async function AdminStatsUsersServer({ days }: Props) {
 
       <StatsUsersChart series={cur.series} />
       <StatsUsersPanels current={cur} />
+    </>
+  );
+}
+
+export async function AdminStatsUsersServer({ days }: DaysProp) {
+  const access = await getCurrentUserAccess({ source: "db" });
+  if (!access.isAuthenticated || access.role !== "founder") {
+    return (
+      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
+        Access denied. Founder role required.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-[min(100%,88rem)] space-y-8 px-1 sm:px-2">
+      <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border/40 pb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-[1.75rem]">
+            User analytics
+          </h1>
+          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+            Traffic and engagement for your product — compared to the previous
+            period of equal length.
+          </p>
+        </div>
+        <StatsUsersRange days={days} />
+      </header>
+
+      <Suspense fallback={<AdminStatsUsersBodyFallback />}>
+        <AdminStatsUsersData days={days} />
+      </Suspense>
     </div>
   );
 }

@@ -79,13 +79,12 @@ function CountryList({ rows }: { rows: CountryPerfRow[] }) {
   );
 }
 
-type Props = Pick<PerformanceViewModel, "countries" | "dataPoints">;
+type Props = {
+  countries: CountryPerfRow[];
+  dataPoints: number;
+};
 
 export function StatsPerformanceCountries({ countries, dataPoints }: Props) {
-  const poor = countries.filter((c) => c.score < 50);
-  const ni = countries.filter((c) => c.score >= 50 && c.score < 90);
-  const great = countries.filter((c) => c.score >= 90);
-
   return (
     <Card className="overflow-hidden rounded-xl border-border/70 shadow-sm">
       <CardHeader className="border-b border-border/50 pb-4">
@@ -134,13 +133,13 @@ export function StatsPerformanceCountries({ countries, dataPoints }: Props) {
                   <span className="size-2 rounded-full bg-rose-500" />
                   Poor (under 50)
                   <span className="text-muted-foreground text-xs font-normal tabular-nums">
-                    ({poor.length})
+                    ({countries.filter((c) => c.score < 50).length})
                   </span>
                 </span>
                 <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent className="data-[state=open]:animate-in mt-2 rounded-lg border border-border/40 bg-card px-2 py-1">
-                <CountryList rows={poor} />
+                <CountryList rows={countries.filter((c) => c.score < 50)} />
               </CollapsibleContent>
             </Collapsible>
 
@@ -150,13 +149,13 @@ export function StatsPerformanceCountries({ countries, dataPoints }: Props) {
                   <span className="size-2 rounded-full bg-amber-500" />
                   Needs improvement (50 – 90)
                   <span className="text-muted-foreground text-xs font-normal tabular-nums">
-                    ({ni.length})
+                    ({countries.filter((c) => c.score >= 50 && c.score < 90).length})
                   </span>
                 </span>
                 <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent className="data-[state=open]:animate-in mt-2 max-h-[min(24rem,45vh)] overflow-y-auto rounded-lg border border-border/40 bg-card px-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <CountryList rows={ni} />
+                <CountryList rows={countries.filter((c) => c.score >= 50 && c.score < 90)} />
               </CollapsibleContent>
             </Collapsible>
 
@@ -166,13 +165,13 @@ export function StatsPerformanceCountries({ countries, dataPoints }: Props) {
                   <span className="size-2 rounded-full bg-emerald-500" />
                   Great (above 90)
                   <span className="text-muted-foreground text-xs font-normal tabular-nums">
-                    ({great.length})
+                    ({countries.filter((c) => c.score >= 90).length})
                   </span>
                 </span>
                 <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=open]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent className="data-[state=open]:animate-in mt-2 rounded-lg border border-border/40 bg-card px-2 py-1">
-                <CountryList rows={great} />
+                <CountryList rows={countries.filter((c) => c.score >= 90)} />
               </CollapsibleContent>
             </Collapsible>
           </div>

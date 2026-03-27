@@ -3,6 +3,8 @@
 import {
   useCallback,
   useEffect,
+  useState,
+  useTransition,
   type ReactNode,
 } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -62,6 +64,10 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { role, status } = useUserRole();
+  const [isNavPending, startNavTransition] = useTransition();
+  const [pendingStatsPageId, setPendingStatsPageId] = useState<string | null>(
+    null,
+  );
 
   const pageParam = searchParams.get("page");
   const fromParam = searchParams.get("from");
@@ -97,17 +103,31 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [contentPage, pathname, router, role, searchParams, status]);
 
+  useEffect(() => {
+    if (pendingStatsPageId && contentPage === pendingStatsPageId) {
+      setPendingStatsPageId(null);
+    }
+  }, [contentPage, pendingStatsPageId]);
+
   const onSelectPage = useCallback(
     (pageId: string) => {
       if (!isValidDashboardPageId(pageId)) return;
+      if (pageId.startsWith("admin-stats-")) {
+        setPendingStatsPageId(pageId);
+      } else {
+        setPendingStatsPageId(null);
+      }
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", pageId);
       params.delete("settings");
       params.delete("from");
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      startNavTransition(() => {
+        router.replace(url, { scroll: false });
+      });
     },
-    [pathname, router, searchParams],
+    [pathname, router, searchParams, startNavTransition],
   );
 
   const onSettingsOpenChange = useCallback(
@@ -142,6 +162,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       <AppSidebar
         currentPage={contentPage}
         onSelectPage={onSelectPage}
+        pendingStatsPageId={pendingStatsPageId}
+        statsNavPending={isNavPending && pendingStatsPageId != null}
         settingsOpen={settingsOpen}
         onSettingsOpenChange={onSettingsOpenChange}
       />

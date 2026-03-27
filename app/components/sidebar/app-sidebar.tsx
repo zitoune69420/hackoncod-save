@@ -129,6 +129,9 @@ function useNavData() {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentPage?: string;
   onSelectPage?: (pageId: string) => void;
+  /** Sous-page Stats cliquée pendant la transition router (spinner dans la sidebar). */
+  pendingStatsPageId?: string | null;
+  statsNavPending?: boolean;
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
 }
@@ -136,6 +139,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({
   currentPage,
   onSelectPage,
+  pendingStatsPageId,
+  statsNavPending,
   settingsOpen,
   onSettingsOpenChange,
   ...props
@@ -164,6 +169,8 @@ export function AppSidebar({
           items={data.navAdministration}
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
+          pendingStatsPageId={pendingStatsPageId}
+          statsNavPending={statsNavPending}
           label="Administration"
         />
       </SidebarContent>
