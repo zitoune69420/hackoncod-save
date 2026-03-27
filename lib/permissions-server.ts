@@ -57,6 +57,26 @@ const DISCORD_ROLE_ENV_KEYS: Record<Permission, string> = {
   founder: "DISCORD_ROLE_FOUNDER",
 };
 
+/** IDs Discord associés à un rôle app (VIP peut avoir `DISCORD_ROLE_VIP` + alias `DISCORD_ROLE_VIP2`). */
+function getDiscordIdsForAppPermission(permission: Permission): string[] {
+  const envKey = DISCORD_ROLE_ENV_KEYS[permission];
+  const primary = normalizeDiscordSnowflake(process.env[envKey]);
+  const out: string[] = [];
+  if (primary) out.push(primary);
+  if (permission === "vip") {
+    const v2 = normalizeDiscordSnowflake(process.env.DISCORD_ROLE_VIP2);
+    if (v2 && !out.includes(v2)) out.push(v2);
+  }
+  return out;
+}
+
+function memberDiscordRoleMatchesAppPermission(
+  discordRoleId: string,
+  permission: Permission,
+): boolean {
+  return getDiscordIdsForAppPermission(permission).includes(discordRoleId);
+}
+
 function getDiscordGuildId(): string | null {
   const guildId = normalizeDiscordSnowflake(process.env.DISCORD_GUILD_ID);
   return guildId || null;
@@ -85,19 +105,23 @@ function getConfiguredDiscordRoleIds(): Partial<Record<Permission, string>> {
 
   if (!loggedDuplicateEnvIds && process.env.NODE_ENV !== "test") {
     loggedDuplicateEnvIds = true;
-    const byId = new Map<string, Permission[]>();
+    const byId = new Map<string, Set<Permission>>();
     for (const r of ACCESS_ROLES) {
       const id = configured[r];
       if (!id) continue;
-      const list = byId.get(id) ?? [];
-      list.push(r);
-      byId.set(id, list);
+      if (!byId.has(id)) byId.set(id, new Set());
+      byId.get(id)!.add(r);
+    }
+    const vip2Id = normalizeDiscordSnowflake(process.env.DISCORD_ROLE_VIP2);
+    if (vip2Id) {
+      if (!byId.has(vip2Id)) byId.set(vip2Id, new Set());
+      byId.get(vip2Id)!.add("vip");
     }
     for (const [id, perms] of byId) {
-      if (perms.length > 1) {
+      if (perms.size > 1) {
         console.warn(
           "[roles] Plusieurs DISCORD_ROLE_* pointent vers le même ID Discord → rôle effet « le plus bas » par membre, mais vérifie ton .env :",
-          perms.join(", "),
+          [...perms].join(", "),
           "…" + id.slice(-8),
         );
       }
@@ -231,8 +255,8 @@ function resolveRoleFromDiscordRoleIds(roleIds: readonly unknown[]): UserRole {
     .filter((id): id is string => id != null);
 
   for (const discordRoleId of normalizedMemberRoles) {
-    const appRoles = ACCESS_ROLES.filter(
-      (r) => configuredRoleIds[r] === discordRoleId,
+    const appRoles = ACCESS_ROLES.filter((r) =>
+      memberDiscordRoleMatchesAppPermission(discordRoleId, r),
     );
     if (appRoles.length === 0) continue;
     if (appRoles.length > 1) {
@@ -255,14 +279,17 @@ function resolveRoleFromDiscordRoleIds(roleIds: readonly unknown[]): UserRole {
   const highest = getHighestRole(uniqueMatched);
 
   if (discordRolesDebugEnabled()) {
+    const envRoleDump: Record<string, string> = Object.fromEntries(
+      ACCESS_ROLES.map((r) => [
+        DISCORD_ROLE_ENV_KEYS[r],
+        configuredRoleIds[r] ?? "(non défini)",
+      ]),
+    );
+    const vip2Env = normalizeDiscordSnowflake(process.env.DISCORD_ROLE_VIP2);
+    if (vip2Env) envRoleDump.DISCORD_ROLE_VIP2 = vip2Env;
     console.log(
       "[discord-roles-debug] DISCORD_ROLE_* (env) → id Discord :",
-      Object.fromEntries(
-        ACCESS_ROLES.map((r) => [
-          DISCORD_ROLE_ENV_KEYS[r],
-          configuredRoleIds[r] ?? "(non défini)",
-        ]),
-      ),
+      envRoleDump,
     );
     console.log(
       "[discord-roles-debug] role_ids sur le membre (normalisés) :",
@@ -270,7 +297,7 @@ function resolveRoleFromDiscordRoleIds(roleIds: readonly unknown[]): UserRole {
     );
     const unmatched = normalizedMemberRoles.filter(
       (rid) =>
-        !ACCESS_ROLES.some((r) => configuredRoleIds[r] === rid),
+        !ACCESS_ROLES.some((r) => memberDiscordRoleMatchesAppPermission(rid, r)),
     );
     if (unmatched.length > 0) {
       console.log(
@@ -343,9 +370,10 @@ export async function getDiscordRoleResolutionDebug(
   const envRoleConfigured: Partial<Record<Permission, boolean>> = {};
   const envIdSuffixes: Partial<Record<Permission, string>> = {};
   for (const r of ACCESS_ROLES) {
-    const id = configured[r];
-    envRoleConfigured[r] = Boolean(id);
-    if (id) envIdSuffixes[r] = "…" + id.slice(-8);
+    const ids = getDiscordIdsForAppPermission(r);
+    envRoleConfigured[r] = ids.length > 0;
+    const id0 = ids[0];
+    if (id0) envIdSuffixes[r] = "…" + id0.slice(-8);
   }
 
   if (!guildId || !botTokenOk) {
@@ -387,8 +415,8 @@ export async function getDiscordRoleResolutionDebug(
   const matched: UserRole[] = [];
 
   for (const discordRoleId of normalizedMemberRoles) {
-    const appRoles = ACCESS_ROLES.filter(
-      (r) => configured[r] === discordRoleId,
+    const appRoles = ACCESS_ROLES.filter((r) =>
+      memberDiscordRoleMatchesAppPermission(discordRoleId, r),
     );
     if (appRoles.length === 0) continue;
     const kept: Permission =

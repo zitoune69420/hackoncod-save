@@ -24,6 +24,30 @@ import { useTranslations } from "@/app/components/i18n-provider"
 import { parsePaginationQueryParam } from "@/lib/pagination-url"
 import type { CommonTableProps } from "./types"
 
+/** Au-delà de 7 pages : 1, 2, …, page courante (si besoin), …, dernière page. */
+function getPaginationItems(
+  page: number,
+  totalPages: number,
+): (number | "ellipsis")[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+  const set = new Set<number>([1, 2, totalPages])
+  if (page > 2 && page < totalPages) {
+    set.add(page)
+  }
+  const sorted = [...set].sort((a, b) => a - b)
+  const out: (number | "ellipsis")[] = []
+  for (let i = 0; i < sorted.length; i++) {
+    const n = sorted[i]!
+    if (i > 0 && n - sorted[i - 1]! > 1) {
+      out.push("ellipsis")
+    }
+    out.push(n)
+  }
+  return out
+}
+
 function CommonTableFallback() {
   return (
     <div
@@ -132,40 +156,26 @@ function CommonTableInner<T>({ columns, data, pageSize = 10 }: CommonTableProps<
                 className={page <= 1 ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
-            {(() => {
-              const getPageNumbers = () => {
-                if (totalPages <= 7) {
-                  return Array.from({ length: totalPages }, (_, i) => i + 1)
-                }
-                const pages: (number | "ellipsis")[] = []
-                if (page > 3) pages.push(1, "ellipsis")
-                const start = Math.max(1, page - 2)
-                const end = Math.min(totalPages, page + 2)
-                for (let p = start; p <= end; p++) pages.push(p)
-                if (page < totalPages - 2) pages.push("ellipsis", totalPages)
-                return pages
-              }
-              return getPageNumbers().map((p, i) =>
-                p === "ellipsis" ? (
-                  <PaginationItem key={`e-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <PaginationLink
-                      href="#"
-                      isActive={page === p}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setPageAndUrl(p)
-                      }}
-                    >
-                      {p}
-                    </PaginationLink>
-                  </PaginationItem>
-                ),
-              )
-            })()}
+            {getPaginationItems(page, totalPages).map((p, i) =>
+              p === "ellipsis" ? (
+                <PaginationItem key={`e-${i}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              ) : (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href="#"
+                    isActive={page === p}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setPageAndUrl(p)
+                    }}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ),
+            )}
             <PaginationItem>
               <PaginationNext
                 href="#"

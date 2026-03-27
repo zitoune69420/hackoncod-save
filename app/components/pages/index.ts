@@ -7,3 +7,5 @@ export { MiscPage } from "./server/misc";
 export { VipCheatsPage } from "./client/vip-cheats";
 export { SemiVipCheatsPage } from "./client/semivip-cheats";
 export { PartnersPage } from "./server/partners";
+export { AdminServerCheatsPage } from "./server/admin-server-cheats";
+export { AdminShopCheatsPage } from "./server/admin-shop-cheats";

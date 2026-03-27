@@ -52,7 +52,30 @@
       "shopReviews": "Administration · Shop · Reviews",
       "statsUsers": "Administration · Stats · Users",
       "statsPerformance": "Administration · Stats · Performance",
-      "statsSecurity": "Administration · Stats · Security"
+      "statsSecurity": "Administration · Stats · Security",
+      "allCheats": {
+        "serverTitle": "Cheats (server)",
+        "shopTitle": "Cheats (shop)",
+        "description": "All cheats across every game — same layout as the public page, without a game filter.",
+        "searchPlaceholder": "Game, name, mode, platform, extension, status…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "errorLoading": "Could not load cheats.",
+        "totalCount": "{{count}} cheats",
+        "table": {
+          "game": "Game",
+          "name": "Name",
+          "mode": "Mode",
+          "platform": "Platform",
+          "extension": "Extension",
+          "crack": "Cracked",
+          "client": "Client",
+          "vip": "VIP",
+          "semivip": "Semi-VIP",
+          "statut": "Status",
+          "action": "Action"
+        }
+      }
     }
   },
   "navUser": {

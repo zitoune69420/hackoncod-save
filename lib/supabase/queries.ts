@@ -94,6 +94,28 @@ export async function getCheatsByGameTitle(
   return (data ?? []) as unknown as CheatWithGame[];
 }
 
+/** Tous les cheats (admin) — avec titre du jeu lié. */
+export async function getAllCheats(): Promise<CheatWithGame[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("cheat")
+    .select(
+      `
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      game(title)
+    `,
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[queries] getAllCheats error:", error.message, error.code);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return (data ?? []) as unknown as CheatWithGame[];
+}
+
 export async function getDisplayedGames(): Promise<Game[]> {
   const supabase = createAdminClient();
 
