@@ -3,6 +3,7 @@ import type { CheatWithGame } from "./types";
 import type { Game } from "./types";
 import type { Video } from "./types";
 import type { Review } from "./types";
+import type { BlacklistEntry } from "./types";
 
 export async function getSemiVipCheats(): Promise<CheatWithGame[]> {
   const supabase = createAdminClient();
@@ -276,6 +277,72 @@ export async function getVideos(): Promise<Video[]> {
   return (data ?? []) as Video[];
 }
 
+/** Toutes les vidéos (admin). */
+export async function getAllVideosForAdmin(): Promise<Video[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("video")
+    .select("id, title, description, image, link, created_at, updated_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[queries] getAllVideosForAdmin error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return (data ?? []) as Video[];
+}
+
+export type VideoUpsertRow = {
+  title: string;
+  description: string | null;
+  image: string | null;
+  link: string | null;
+};
+
+export async function insertVideo(row: VideoUpsertRow): Promise<{ id: string }> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("video")
+    .insert(row)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[queries] insertVideo error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return { id: (data as { id: string }).id };
+}
+
+export async function updateVideo(
+  id: string,
+  row: Partial<VideoUpsertRow>,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("video").update(row).eq("id", id);
+
+  if (error) {
+    console.error("[queries] updateVideo error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteVideo(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("video").delete().eq("id", id);
+
+  if (error) {
+    console.error("[queries] deleteVideo error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
 const REVIEWS_PAGE_SIZE = 12;
 
 export async function getReviews(
@@ -301,4 +368,128 @@ export async function getReviews(
   }
 
   return (data ?? []) as Review[];
+}
+
+const ADMIN_REVIEWS_LIMIT = 5000;
+
+/** Tous les avis (admin), du plus récent au plus ancien. */
+export async function getAllReviewsForAdmin(): Promise<Review[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("review")
+    .select("id, user_id, message, note, author_name, created_at, updated_at")
+    .order("created_at", { ascending: false })
+    .limit(ADMIN_REVIEWS_LIMIT);
+
+  if (error) {
+    console.error("[queries] getAllReviewsForAdmin error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return (data ?? []) as Review[];
+}
+
+export type ReviewAdminPatchRow = {
+  message?: string;
+  note?: number;
+  author_name?: string | null;
+};
+
+export async function updateReview(
+  id: string,
+  row: ReviewAdminPatchRow,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("review").update(row).eq("id", id);
+
+  if (error) {
+    console.error("[queries] updateReview error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteReview(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("review").delete().eq("id", id);
+
+  if (error) {
+    console.error("[queries] deleteReview error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+const ADMIN_BLACKLIST_LIMIT = 5000;
+
+/** Toutes les entrées de la table retard (admin), plus récentes en premier. */
+export async function getAllBlacklistForAdmin(): Promise<BlacklistEntry[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("retard")
+    .select(
+      "id, user_id, discord, reason, added_by, created_at, updated_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(ADMIN_BLACKLIST_LIMIT);
+
+  if (error) {
+    console.error("[queries] getAllBlacklistForAdmin error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return (data ?? []) as BlacklistEntry[];
+}
+
+export type BlacklistUpsertRow = {
+  user_id: string | null;
+  discord: string | null;
+  reason: string | null;
+  added_by: string | null;
+};
+
+export async function insertBlacklist(
+  row: BlacklistUpsertRow,
+): Promise<{ id: string }> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("retard")
+    .insert(row)
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[queries] insertBlacklist error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+
+  return { id: (data as { id: string }).id };
+}
+
+export async function updateBlacklist(
+  id: string,
+  row: Partial<BlacklistUpsertRow>,
+): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("retard").update(row).eq("id", id);
+
+  if (error) {
+    console.error("[queries] updateBlacklist error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteBlacklist(id: string): Promise<void> {
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.from("retard").delete().eq("id", id);
+
+  if (error) {
+    console.error("[queries] deleteBlacklist error:", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
 }

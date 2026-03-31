@@ -147,6 +147,112 @@
           "openLink": "Ouvrir",
           "openSteam": "Steam"
         }
+      },
+      "allVideos": {
+        "title": "Vidéos (serveur)",
+        "description": "Gère les vidéos tutoriels — titre, image de miniature et lien de visionnage.",
+        "searchPlaceholder": "Titre, description, URL image, lien…",
+        "refresh": "Actualiser",
+        "accessDenied": "Accès réservé aux fondateurs.",
+        "confirmDelete": "Supprimer la vidéo « {{name}} » ? Irréversible.",
+        "deleteSuccess": "Vidéo supprimée.",
+        "deleteError": "Impossible de supprimer la vidéo.",
+        "errorLoading": "Erreur lors du chargement des vidéos.",
+        "addVideo": "Ajouter une vidéo",
+        "dialog": {
+          "createTitle": "Nouvelle vidéo",
+          "editTitle": "Modifier la vidéo",
+          "description": "Renseigne le titre, la description optionnelle, l’URL de la miniature et le lien (ex. YouTube ou fichier).",
+          "title": "Titre",
+          "descriptionField": "Description",
+          "image": "URL de l’image",
+          "link": "Lien",
+          "create": "Créer",
+          "save": "Enregistrer",
+          "success": "Vidéo enregistrée.",
+          "errorSave": "Impossible d’enregistrer la vidéo.",
+          "validationTitle": "Saisis un titre."
+        },
+        "table": {
+          "title": "Titre",
+          "description": "Description",
+          "image": "Image",
+          "link": "Lien",
+          "action": "Action",
+          "openLink": "Ouvrir"
+        }
+      },
+      "allBlacklist": {
+        "title": "Blacklist (serveur)",
+        "description": "Liste des bannissements du serveur Discord (API bans) fusionnée avec la table retard. Tu peux enrichir ou supprimer une ligne uniquement si elle est en base.",
+        "discordBansLoadErrorGeneric": "Les bannissements Discord n’ont pas pu être chargés. Vérifie que le bot a la permission « Bannir des membres » (BAN_MEMBERS) et que DISCORD_GUILD_ID est défini.",
+        "deleteNeedsDbRow": "Cette ligne n’est pas en base : suppression impossible depuis cet écran.",
+        "searchPlaceholder": "Pseudo, id, motif, ajouté par…",
+        "refresh": "Actualiser",
+        "accessDenied": "Accès réservé aux fondateurs.",
+        "deleteSuccess": "Entrée retirée de la blacklist.",
+        "deleteError": "Impossible de supprimer l’entrée.",
+        "errorLoading": "Erreur lors du chargement de la blacklist.",
+        "addEntry": "Ajouter à la blacklist",
+        "dialog": {
+          "createTitle": "Nouvelle entrée",
+          "editTitle": "Modifier l’entrée",
+          "description": "Au moins un des champs « Id utilisateur » ou « Discord » doit être renseigné.",
+          "userId": "Id utilisateur (Discord)",
+          "discord": "Discord (pseudo, tag ou id)",
+          "reason": "Motif",
+          "addedBy": "Ajouté par",
+          "create": "Créer",
+          "save": "Enregistrer",
+          "success": "Entrée enregistrée.",
+          "errorSave": "Impossible d’enregistrer.",
+          "validationIdentifier": "Renseigne au moins un id utilisateur ou un identifiant Discord.",
+          "saveToDbTitle": "Enregistrer en base",
+          "saveToDb": "Enregistrer"
+        },
+        "table": {
+          "userId": "Id utilisateur",
+          "discordName": "Nom Discord",
+          "reason": "Motif",
+          "addedBy": "Ajouté par",
+          "date": "Date",
+          "action": "Action"
+        }
+      },
+      "allReviews": {
+        "serverTitle": "Avis (serveur)",
+        "shopTitle": "Avis (boutique)",
+        "description": "Modère les avis — texte, note ou nom affiché, ou suppression. Les nouveaux avis sont ajoutés depuis la page publique Avis.",
+        "searchPlaceholder": "Message, auteur, id utilisateur Discord…",
+        "refresh": "Actualiser",
+        "accessDenied": "Accès réservé aux fondateurs.",
+        "confirmDelete": "Supprimer cet avis ? Extrait : « {{preview}} ». Irréversible.",
+        "deleteSuccess": "Avis supprimé.",
+        "deleteError": "Impossible de supprimer l’avis.",
+        "errorLoading": "Erreur lors du chargement des avis.",
+        "dialog": {
+          "editTitle": "Modifier l’avis",
+          "description": "Les changements sont enregistrés tout de suite. Le message doit faire entre 3 et 4000 caractères.",
+          "userId": "Id Discord (lecture seule)",
+          "authorNameLabel": "Nom affiché",
+          "authorNamePlaceholder": "Nom affiché (optionnel)",
+          "messageLabel": "Message",
+          "noteLabel": "Note",
+          "save": "Enregistrer",
+          "success": "Avis mis à jour.",
+          "errorSave": "Impossible d’enregistrer l’avis.",
+          "validationMessage": "Le message doit contenir au moins 3 caractères.",
+          "validationMessageMax": "Message trop long (4000 caractères max).",
+          "validationNote": "La note doit être entre 1 et 5."
+        },
+        "table": {
+          "author": "Auteur",
+          "userId": "Id utilisateur",
+          "message": "Message",
+          "note": "Note",
+          "date": "Date",
+          "action": "Action"
+        }
       }
     }
   },
@@ -163,7 +269,10 @@
     "close": "Fermer",
     "next": "Suivant",
     "previous": "Précédent",
-    "leaveReviewAfterDownload": "N'hésitez pas à laisser un avis !"
+    "leaveReviewAfterDownload": "N'hésitez pas à laisser un avis !",
+    "pendingDeleteCountdown": "Suppression dans",
+    "pendingDeleteApplying": "Suppression…",
+    "pendingDeleteCancel": "Annuler"
   },
   "navUser": {
     "upgradeToPro": "Passer en Pro",

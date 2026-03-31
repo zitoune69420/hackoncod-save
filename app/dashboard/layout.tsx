@@ -5,7 +5,7 @@ export const metadata: Metadata = {
 
   title: {
     default: "Hack on COD",
-    template: "%s | Hack on COD",
+    template: "%s | Dashboard",
   },
 
   description:
@@ -177,7 +177,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "https://i.imgur.com/Uf4wFTq.png",
+        url: "/header-image.png",
         width: 1200,
         height: 630,
         alt: "Hack on COD",
@@ -190,7 +190,7 @@ export const metadata: Metadata = {
     title: "Hack on COD | Call of Duty Tools Platform",
     description:
       "Organized access to Call of Duty tools, resources, updates, and support.",
-    images: ["https://i.imgur.com/Uf4wFTq.png"],
+    images: ["/header-image.png"],
     creator: "@hackoncod",
   },
 

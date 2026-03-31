@@ -55,3 +55,26 @@ export type Review = {
 
 /** Avis enrichis pour l’UI (même forme que l’API `/api/reviews`). */
 export type ReviewWithAuthor = Review
+
+/** Entrées de la table `retard` (membres bannis du serveur Discord). */
+export type BlacklistEntry = {
+  id: string
+  user_id: string | null
+  discord: string | null
+  reason: string | null
+  added_by: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+/** Réponse GET `/api/admin/blacklist` : champs ajoutés par résolution bot Discord. */
+export type BlacklistEntryWithDisplay = BlacklistEntry & {
+  discord_display: string | null
+  discord_avatar_url: string | null
+  added_by_display: string | null
+  added_by_avatar_url: string | null
+  /** UUID dans `retard` si la ligne existe en base ; null si ban Discord seulement. */
+  db_row_id: string | null
+  /** Présent dans `GET /guilds/.../bans`. */
+  discord_ban: boolean
+}

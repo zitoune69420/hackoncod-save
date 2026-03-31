@@ -200,7 +200,10 @@ export function AdminCheatFormDialog({
         return;
       }
 
-      showToast({ text: t("dashboard.admin.allCheats.dialog.success") });
+      showToast({
+        text: t("dashboard.admin.allCheats.dialog.success"),
+        variant: "success",
+      });
       onSaved();
       onOpenChange(false);
     } finally {

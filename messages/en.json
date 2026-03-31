@@ -147,6 +147,112 @@
           "openLink": "Open",
           "openSteam": "Steam"
         }
+      },
+      "allVideos": {
+        "title": "Administration · All Videos",
+        "description": "Manage tutorial videos — titles, thumbnail image, and watch link.",
+        "searchPlaceholder": "Title, description, image URL, link…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "confirmDelete": "Delete video « {{name}} »? This cannot be undone.",
+        "deleteSuccess": "Video deleted.",
+        "deleteError": "Could not delete video.",
+        "errorLoading": "Could not load videos.",
+        "addVideo": "Add video",
+        "dialog": {
+          "createTitle": "New video",
+          "editTitle": "Edit video",
+          "description": "Set the title, optional description, thumbnail URL, and link to the video (e.g. YouTube or direct file).",
+          "title": "Title",
+          "descriptionField": "Description",
+          "image": "Image URL",
+          "link": "Link",
+          "create": "Create",
+          "save": "Save",
+          "success": "Video saved.",
+          "errorSave": "Could not save video.",
+          "validationTitle": "Enter a title."
+        },
+        "table": {
+          "title": "Title",
+          "description": "Description",
+          "image": "Image",
+          "link": "Link",
+          "action": "Action",
+          "openLink": "Open"
+        }
+      },
+      "allBlacklist": {
+        "title": "Server · Blacklist",
+        "description": "Server ban list from Discord (Guild Bans API) merged with the retard table. Edit or delete only applies to rows stored in the database.",
+        "discordBansLoadErrorGeneric": "Could not load Discord bans. Ensure the bot has BAN_MEMBERS and DISCORD_GUILD_ID is set.",
+        "deleteNeedsDbRow": "This row is not in the database — it cannot be deleted here.",
+        "searchPlaceholder": "Display name, user id, reason, added by…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "deleteSuccess": "Blacklist entry removed.",
+        "deleteError": "Could not delete entry.",
+        "errorLoading": "Could not load blacklist.",
+        "addEntry": "Add to blacklist",
+        "dialog": {
+          "createTitle": "New entry",
+          "editTitle": "Edit entry",
+          "description": "Fill at least one of « User id » or « Discord ».",
+          "userId": "User id (Discord)",
+          "discord": "Discord (username, tag, or id)",
+          "reason": "Reason",
+          "addedBy": "Added by",
+          "create": "Create",
+          "save": "Save",
+          "success": "Entry saved.",
+          "errorSave": "Could not save.",
+          "validationIdentifier": "Enter at least a user id or a Discord identifier.",
+          "saveToDbTitle": "Save to database",
+          "saveToDb": "Save"
+        },
+        "table": {
+          "userId": "User id",
+          "discordName": "Discord name",
+          "reason": "Reason",
+          "addedBy": "Added by",
+          "date": "Date",
+          "action": "Action"
+        }
+      },
+      "allReviews": {
+        "serverTitle": "Administration · Server · Reviews",
+        "shopTitle": "Administration · Shop · Reviews",
+        "description": "Moderate community reviews — edit text, rating, or display name, or remove abusive entries. New reviews are added from the public Reviews page.",
+        "searchPlaceholder": "Message, author, Discord user id…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "confirmDelete": "Delete this review? Preview: « {{preview}} ». This cannot be undone.",
+        "deleteSuccess": "Review deleted.",
+        "deleteError": "Could not delete review.",
+        "errorLoading": "Could not load reviews.",
+        "dialog": {
+          "editTitle": "Edit review",
+          "description": "Changes are saved to the database immediately. Message length must stay between 3 and 4000 characters.",
+          "userId": "Discord user id (read-only)",
+          "authorNameLabel": "Display name",
+          "authorNamePlaceholder": "Shown name (optional)",
+          "messageLabel": "Message",
+          "noteLabel": "Rating",
+          "save": "Save",
+          "success": "Review updated.",
+          "errorSave": "Could not save review.",
+          "validationMessage": "Message must be at least 3 characters.",
+          "validationMessageMax": "Message is too long (max 4000 characters).",
+          "validationNote": "Rating must be between 1 and 5."
+        },
+        "table": {
+          "author": "Author",
+          "userId": "User id",
+          "message": "Message",
+          "note": "Rating",
+          "date": "Date",
+          "action": "Action"
+        }
       }
     }
   },
@@ -172,7 +278,10 @@
     "close": "Close",
     "next": "Next",
     "previous": "Previous",
-    "leaveReviewAfterDownload": "Feel free to leave a review!"
+    "leaveReviewAfterDownload": "Feel free to leave a review!",
+    "pendingDeleteCountdown": "Deleting in",
+    "pendingDeleteApplying": "Deleting…",
+    "pendingDeleteCancel": "Cancel"
   },
   "settings": {
     "title": "Settings",
