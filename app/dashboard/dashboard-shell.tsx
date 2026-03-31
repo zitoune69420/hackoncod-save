@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useState,
@@ -34,6 +35,114 @@ import {
   type DashboardPageId,
 } from "@/lib/dashboard-url";
 
+/** Fil d’Ariane admin : [section → première page], libellé de la page courante. */
+const ADMIN_BREADCRUMB: Partial<
+  Record<
+    DashboardPageId,
+    { section: "server" | "shop" | "stats"; sectionFirst: DashboardPageId; pageLabel: string }
+  >
+> = {
+  "admin-server-cheats": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.cheats",
+  },
+  "admin-server-games": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.games",
+  },
+  "admin-server-videos": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.videos",
+  },
+  "admin-server-reviews": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.reviews",
+  },
+  "admin-server-blacklist": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.blacklist",
+  },
+  "admin-shop-cheats": {
+    section: "shop",
+    sectionFirst: "admin-shop-cheats",
+    pageLabel: "sidebar.cheats",
+  },
+  "admin-shop-games": {
+    section: "shop",
+    sectionFirst: "admin-shop-cheats",
+    pageLabel: "sidebar.games",
+  },
+  "admin-shop-services": {
+    section: "shop",
+    sectionFirst: "admin-shop-cheats",
+    pageLabel: "sidebar.services",
+  },
+  "admin-shop-accounts": {
+    section: "shop",
+    sectionFirst: "admin-shop-cheats",
+    pageLabel: "sidebar.accounts",
+  },
+  "admin-shop-reviews": {
+    section: "shop",
+    sectionFirst: "admin-shop-cheats",
+    pageLabel: "sidebar.shopReviews",
+  },
+  "admin-stats-users": {
+    section: "stats",
+    sectionFirst: "admin-stats-users",
+    pageLabel: "dashboard.trail.statsUsers",
+  },
+  "admin-stats-performance": {
+    section: "stats",
+    sectionFirst: "admin-stats-users",
+    pageLabel: "dashboard.trail.statsPerformance",
+  },
+  "admin-stats-security": {
+    section: "stats",
+    sectionFirst: "admin-stats-users",
+    pageLabel: "dashboard.trail.statsSecurity",
+  },
+};
+
+const TRAIL_SECTION_LABEL: Record<"server" | "shop" | "stats", string> = {
+  server: "dashboard.trail.server",
+  shop: "dashboard.trail.shop",
+  stats: "dashboard.trail.stats",
+};
+
+type DashboardBreadcrumbSeg =
+  | { kind: "link"; label: string; pageId: DashboardPageId }
+  | { kind: "current"; label: string };
+
+function getDashboardBreadcrumbSegments(
+  contentPage: DashboardPageId,
+  t: (key: string) => string,
+): DashboardBreadcrumbSeg[] {
+  const rootLabel = t("dashboard.breadcrumb");
+  const admin = ADMIN_BREADCRUMB[contentPage];
+  if (admin) {
+    return [
+      { kind: "link", label: rootLabel, pageId: DASHBOARD_DEFAULT_PAGE },
+      {
+        kind: "link",
+        label: t(TRAIL_SECTION_LABEL[admin.section]),
+        pageId: admin.sectionFirst,
+      },
+      { kind: "current", label: t(admin.pageLabel) },
+    ];
+  }
+  const pageKey = PAGE_KEYS[contentPage] ?? "dashboard.home";
+  return [
+    { kind: "link", label: rootLabel, pageId: DASHBOARD_DEFAULT_PAGE },
+    { kind: "current", label: t(pageKey) },
+  ];
+}
+
 const PAGE_KEYS: Record<string, string> = {
   default: "dashboard.home",
   content: "dashboard.content",
@@ -45,19 +154,6 @@ const PAGE_KEYS: Record<string, string> = {
   "vip-cheats": "sidebar.vip",
   "semivip-cheats": "sidebar.semivip",
   partners: "sidebar.partners",
-  "admin-server-cheats": "dashboard.admin.serverCheats",
-  "admin-server-games": "dashboard.admin.serverGames",
-  "admin-server-videos": "dashboard.admin.serverVideos",
-  "admin-server-reviews": "dashboard.admin.serverReviews",
-  "admin-server-blacklist": "dashboard.admin.serverBlacklist",
-  "admin-shop-cheats": "dashboard.admin.shopCheats",
-  "admin-shop-games": "dashboard.admin.shopGames",
-  "admin-shop-services": "dashboard.admin.shopServices",
-  "admin-shop-accounts": "dashboard.admin.shopAccounts",
-  "admin-shop-reviews": "dashboard.admin.shopReviews",
-  "admin-stats-users": "dashboard.admin.statsUsers",
-  "admin-stats-performance": "dashboard.admin.statsPerformance",
-  "admin-stats-security": "dashboard.admin.statsSecurity",
 };
 
 function DashboardChrome({ children }: { children: ReactNode }) {
@@ -155,7 +251,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     [pathname, router, searchParams, pageParam, fromParam],
   );
 
-  const label = t(PAGE_KEYS[contentPage] ?? "dashboard.home");
+  const breadcrumbSegments = getDashboardBreadcrumbSegments(contentPage, t);
 
   return (
     <SidebarProvider>
@@ -177,13 +273,34 @@ function DashboardChrome({ children }: { children: ReactNode }) {
             />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{label}</BreadcrumbPage>
-                </BreadcrumbItem>
+                {breadcrumbSegments.map((seg, i) => {
+                  const isLast = i === breadcrumbSegments.length - 1;
+                  const hideUntilMd = !isLast;
+                  return (
+                  <Fragment key={`${seg.kind}-${i}-${seg.label}`}>
+                    {i > 0 ? (
+                      <BreadcrumbSeparator className="hidden md:inline-flex" />
+                    ) : null}
+                    <BreadcrumbItem
+                      className={hideUntilMd ? "hidden md:inline-flex" : undefined}
+                    >
+                      {seg.kind === "link" ? (
+                        <BreadcrumbLink asChild>
+                          <button
+                            type="button"
+                            className="cursor-pointer bg-transparent p-0 font-inherit text-inherit"
+                            onClick={() => onSelectPage(seg.pageId)}
+                          >
+                            {seg.label}
+                          </button>
+                        </BreadcrumbLink>
+                      ) : (
+                        <BreadcrumbPage>{seg.label}</BreadcrumbPage>
+                      )}
+                    </BreadcrumbItem>
+                  </Fragment>
+                  );
+                })}
               </BreadcrumbList>
             </Breadcrumb>
           </div>

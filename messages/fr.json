@@ -3,6 +3,14 @@
     "title": "Tableau de bord",
     "description": "Vue d'ensemble de l'activité et accès rapide aux sections",
     "breadcrumb": "Tableau de bord",
+    "trail": {
+      "server": "Serveur",
+      "shop": "Boutique",
+      "stats": "Stats",
+      "statsUsers": "Utilisateurs",
+      "statsPerformance": "Performance",
+      "statsSecurity": "Sécurité"
+    },
     "home": "Accueil",
     "content": "Contenu",
     "quickAccess": "Accès rapide",

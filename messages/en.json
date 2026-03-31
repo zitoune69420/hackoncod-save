@@ -3,6 +3,14 @@
     "title": "Dashboard",
     "description": "Activity overview and quick access to sections",
     "breadcrumb": "Dashboard",
+    "trail": {
+      "server": "Server",
+      "shop": "Shop",
+      "stats": "Stats",
+      "statsUsers": "Users",
+      "statsPerformance": "Performance",
+      "statsSecurity": "Security"
+    },
     "home": "Home",
     "content": "Content",
     "quickAccess": "Quick access",
@@ -55,8 +63,8 @@
       "statsPerformance": "Administration · Stats · Performance",
       "statsSecurity": "Administration · Stats · Security",
       "allCheats": {
-        "serverTitle": "Administration · All Cheats",
-        "shopTitle": "Administration · All Cheats",
+        "serverTitle": "All Cheats",
+        "shopTitle": "All Cheats",
         "description": "All cheats across every game — same layout as the public page, without a game filter.",
         "searchPlaceholder": "Game, name, mode, platform, extension, status…",
         "refresh": "Refresh",
@@ -107,8 +115,8 @@
         }
       },
       "allGames": {
-        "serverTitle": "Administration · All Games",
-        "shopTitle": "Administration · All Games",
+        "serverTitle": "All Games",
+        "shopTitle": "All Games",
         "description": "Manage games shown on the site — titles, links, and visibility.",
         "searchPlaceholder": "Title, description, client, Steam, link…",
         "refresh": "Refresh",
@@ -149,7 +157,7 @@
         }
       },
       "allVideos": {
-        "title": "Administration · All Videos",
+        "title": "All Videos",
         "description": "Manage tutorial videos — titles, thumbnail image, and watch link.",
         "searchPlaceholder": "Title, description, image URL, link…",
         "refresh": "Refresh",
@@ -183,7 +191,7 @@
         }
       },
       "allBlacklist": {
-        "title": "Server · Blacklist",
+        "title": "Blacklist",
         "description": "Server ban list from Discord (Guild Bans API) merged with the retard table. Edit or delete only applies to rows stored in the database.",
         "discordBansLoadErrorGeneric": "Could not load Discord bans. Ensure the bot has BAN_MEMBERS and DISCORD_GUILD_ID is set.",
         "deleteNeedsDbRow": "This row is not in the database — it cannot be deleted here.",
@@ -220,8 +228,8 @@
         }
       },
       "allReviews": {
-        "serverTitle": "Administration · Server · Reviews",
-        "shopTitle": "Administration · Shop · Reviews",
+        "serverTitle": "All Reviews",
+        "shopTitle": "Reviews",
         "description": "Moderate community reviews — edit text, rating, or display name, or remove abusive entries. New reviews are added from the public Reviews page.",
         "searchPlaceholder": "Message, author, Discord user id…",
         "refresh": "Refresh",
