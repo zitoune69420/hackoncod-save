@@ -36,6 +36,30 @@ export const DASHBOARD_PAGE_IDS = [
 
 export type DashboardPageId = (typeof DASHBOARD_PAGE_IDS)[number];
 
+/** Pages « Exclusif » (menu latéral). */
+export const EXCLUSIVE_DASHBOARD_PAGE_IDS = [
+  "vip-cheats",
+  "semivip-cheats",
+  "partners",
+] as const satisfies readonly DashboardPageId[];
+
+export type ExclusiveDashboardPageId =
+  (typeof EXCLUSIVE_DASHBOARD_PAGE_IDS)[number];
+
+export function isExclusiveDashboardPageId(
+  pageId: string,
+): pageId is ExclusiveDashboardPageId {
+  return (EXCLUSIVE_DASHBOARD_PAGE_IDS as readonly string[]).includes(pageId);
+}
+
+/**
+ * Pages dont la navigation affiche un spinner dans la sidebar (sous-menu concerné).
+ * Uniquement les stats admin (contenu RSC lourd) — pas la section Exclusif.
+ */
+export function dashboardPageUsesSidebarNavPending(pageId: string): boolean {
+  return pageId.startsWith("admin-stats-");
+}
+
 export function isValidDashboardPageId(
   value: string | null,
 ): value is DashboardPageId {

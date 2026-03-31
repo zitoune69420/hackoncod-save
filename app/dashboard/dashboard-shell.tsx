@@ -28,6 +28,7 @@ import { prefetchReviews } from "@/app/components/pages/client/reviews";
 import { useUserRole } from "@/hooks/use-user-role";
 import {
   DASHBOARD_DEFAULT_PAGE,
+  dashboardPageUsesSidebarNavPending,
   isDashboardSettingsOpen,
   isValidDashboardPageId,
   type DashboardPageId,
@@ -66,9 +67,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const { role, status } = useUserRole();
   const [isNavPending, startNavTransition] = useTransition();
-  const [pendingStatsPageId, setPendingStatsPageId] = useState<string | null>(
-    null,
-  );
+  const [pendingNavPageId, setPendingNavPageId] = useState<string | null>(null);
 
   const pageParam = searchParams.get("page");
   const fromParam = searchParams.get("from");
@@ -105,18 +104,18 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   }, [contentPage, pathname, router, role, searchParams, status]);
 
   useEffect(() => {
-    if (pendingStatsPageId && contentPage === pendingStatsPageId) {
-      setPendingStatsPageId(null);
+    if (pendingNavPageId && contentPage === pendingNavPageId) {
+      setPendingNavPageId(null);
     }
-  }, [contentPage, pendingStatsPageId]);
+  }, [contentPage, pendingNavPageId]);
 
   const onSelectPage = useCallback(
     (pageId: string) => {
       if (!isValidDashboardPageId(pageId)) return;
-      if (pageId.startsWith("admin-stats-")) {
-        setPendingStatsPageId(pageId);
+      if (dashboardPageUsesSidebarNavPending(pageId)) {
+        setPendingNavPageId(pageId);
       } else {
-        setPendingStatsPageId(null);
+        setPendingNavPageId(null);
       }
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", pageId);
@@ -163,8 +162,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       <AppSidebar
         currentPage={contentPage}
         onSelectPage={onSelectPage}
-        pendingStatsPageId={pendingStatsPageId}
-        statsNavPending={isNavPending && pendingStatsPageId != null}
+        pendingNavPageId={pendingNavPageId}
+        navTransitionPending={isNavPending && pendingNavPageId != null}
         settingsOpen={settingsOpen}
         onSettingsOpenChange={onSettingsOpenChange}
       />

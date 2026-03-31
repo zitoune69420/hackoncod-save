@@ -130,9 +130,9 @@ function useNavData() {
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentPage?: string;
   onSelectPage?: (pageId: string) => void;
-  /** Sous-page Stats cliquée pendant la transition router (spinner dans la sidebar). */
-  pendingStatsPageId?: string | null;
-  statsNavPending?: boolean;
+  /** Sous-page en cours de navigation RSC (stats / exclusif — spinner dans la sidebar). */
+  pendingNavPageId?: string | null;
+  navTransitionPending?: boolean;
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
 }
@@ -140,8 +140,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({
   currentPage,
   onSelectPage,
-  pendingStatsPageId,
-  statsNavPending,
+  pendingNavPageId,
+  navTransitionPending,
   settingsOpen,
   onSettingsOpenChange,
   ...props
@@ -158,20 +158,24 @@ export function AppSidebar({
           items={data.navMain}
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
+          pendingNavPageId={pendingNavPageId}
+          navTransitionPending={navTransitionPending}
           label={t("sidebar.platform")}
         />
         <NavMain
           items={data.NavSecondary}
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
+          pendingNavPageId={pendingNavPageId}
+          navTransitionPending={navTransitionPending}
           label={t("sidebar.exclusive")}
         />
         <NavMain
           items={data.navAdministration}
           currentPage={currentPage}
           onSelectPageAction={onSelectPage}
-          pendingStatsPageId={pendingStatsPageId}
-          statsNavPending={statsNavPending}
+          pendingNavPageId={pendingNavPageId}
+          navTransitionPending={navTransitionPending}
           label="Administration"
         />
       </SidebarContent>

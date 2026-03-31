@@ -6,6 +6,7 @@ import {
   getDashboardSecurityRange,
   getDashboardStatsDays,
 } from "@/lib/dashboard-url";
+import { enforceDashboardPageAccess } from "@/lib/dashboard-access-guard";
 import { AdminStatsUsersServer } from "@/app/components/pages/server/admin-stats-users";
 import { AdminStatsPerformanceServer } from "@/app/components/pages/server/admin-stats-performance";
 import { AdminStatsSecurityServer } from "@/app/components/pages/server/admin-stats-security";
@@ -17,6 +18,7 @@ export async function DashboardMainContent({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const contentPage = getDashboardContentPageFromRaw(searchParams);
+  await enforceDashboardPageAccess(contentPage);
   if (contentPage === "admin-stats-users") {
     const days = getDashboardStatsDays(searchParams);
     return <AdminStatsUsersServer days={days} />;

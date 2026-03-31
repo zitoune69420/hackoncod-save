@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { resolvePerformanceModel } from "@/lib/performance/resolve-performance-model";
 import { cn } from "@/lib/utils";
 import {
@@ -197,7 +197,7 @@ export async function AdminStatsPerformanceServer({
   env,
   days,
 }: Props) {
-  const access = await getCurrentUserAccess({ source: "db" });
+  const access = await getCachedDashboardUserAccess("db");
   if (!access.isAuthenticated || access.role !== "founder") {
     return (
       <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">

@@ -1,4 +1,4 @@
-import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { getSecurityViewModel } from "@/lib/security/demo-model";
 import {
   Card,
@@ -26,7 +26,7 @@ import type { SecurityRange } from "@/lib/security/types";
 type Props = { range: SecurityRange };
 
 export async function AdminStatsSecurityServer({ range }: Props) {
-  const access = await getCurrentUserAccess({ source: "db" });
+  const access = await getCachedDashboardUserAccess("db");
   if (!access.isAuthenticated || access.role !== "founder") {
     return (
       <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">

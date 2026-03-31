@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { buildAdminStatsModel } from "@/lib/analytics/build-admin-stats-model";
 import { formatEnInt } from "@/lib/format/numbers";
 import { cn } from "@/lib/utils";
@@ -111,7 +111,7 @@ async function AdminStatsUsersData({ days }: DaysProp) {
 }
 
 export async function AdminStatsUsersServer({ days }: DaysProp) {
-  const access = await getCurrentUserAccess({ source: "db" });
+  const access = await getCachedDashboardUserAccess("db");
   if (!access.isAuthenticated || access.role !== "founder") {
     return (
       <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">

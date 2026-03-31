@@ -27,8 +27,8 @@ export function NavMain({
   items,
   currentPage,
   onSelectPageAction,
-  pendingStatsPageId,
-  statsNavPending,
+  pendingNavPageId,
+  navTransitionPending,
   label,
 }: {
   items: {
@@ -45,8 +45,8 @@ export function NavMain({
   }[];
   currentPage?: string;
   onSelectPageAction?: (pageId: string) => void;
-  pendingStatsPageId?: string | null;
-  statsNavPending?: boolean;
+  pendingNavPageId?: string | null;
+  navTransitionPending?: boolean;
   label?: string;
 }) {
   const { t } = useTranslations();
@@ -108,9 +108,8 @@ export function NavMain({
                         }
                         className="gap-2"
                       >
-                        {subItem.pageId.startsWith("admin-stats-") &&
-                        statsNavPending &&
-                        pendingStatsPageId === subItem.pageId ? (
+                        {navTransitionPending &&
+                        pendingNavPageId === subItem.pageId ? (
                           <Spinner className="size-3.5 shrink-0 text-muted-foreground" />
                         ) : null}
                         <span>{subItem.title}</span>
