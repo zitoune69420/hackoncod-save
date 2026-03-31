@@ -31,6 +31,7 @@ import {
   DASHBOARD_DEFAULT_PAGE,
   dashboardPageUsesSidebarNavPending,
   isDashboardSettingsOpen,
+  isExclusiveDashboardPageId,
   isValidDashboardPageId,
   type DashboardPageId,
 } from "@/lib/dashboard-url";
@@ -115,6 +116,9 @@ const TRAIL_SECTION_LABEL: Record<"server" | "shop" | "stats", string> = {
   stats: "dashboard.trail.stats",
 };
 
+/** Première entrée du menu Exclusif (même ordre que la sidebar). */
+const EXCLUSIVE_SECTION_FIRST = "vip-cheats" as const satisfies DashboardPageId;
+
 type DashboardBreadcrumbSeg =
   | { kind: "link"; label: string; pageId: DashboardPageId }
   | { kind: "current"; label: string };
@@ -134,6 +138,18 @@ function getDashboardBreadcrumbSegments(
         pageId: admin.sectionFirst,
       },
       { kind: "current", label: t(admin.pageLabel) },
+    ];
+  }
+  if (isExclusiveDashboardPageId(contentPage)) {
+    const pageKey = PAGE_KEYS[contentPage] ?? "dashboard.home";
+    return [
+      { kind: "link", label: rootLabel, pageId: DASHBOARD_DEFAULT_PAGE },
+      {
+        kind: "link",
+        label: t("sidebar.exclusive"),
+        pageId: EXCLUSIVE_SECTION_FIRST,
+      },
+      { kind: "current", label: t(pageKey) },
     ];
   }
   const pageKey = PAGE_KEYS[contentPage] ?? "dashboard.home";
