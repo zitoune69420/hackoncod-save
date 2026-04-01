@@ -22,7 +22,7 @@ import {
 import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
 import type { AdminCheatRow } from "./admin-cheats-types";
-import type { ModsStorageFolder } from "@/lib/mods-storage";
+import type { ModsUploadPrefix } from "@/lib/mods-storage";
 
 type GameOption = { id: string; title: string };
 
@@ -63,8 +63,8 @@ type Props = {
   editingRow: AdminCheatRow | null;
   games: GameOption[];
   onSaved: () => void;
-  /** Dossier dans le bucket `mods` (`cheats` serveur, `shop-cheats` boutique, etc.). */
-  modsFolder?: ModsStorageFolder;
+  /** Préfixe dans le bucket `mods` : `root` pour cheats serveur, `shop-cheats` / etc. pour la boutique. */
+  modsFolder?: ModsUploadPrefix;
 };
 
 export function AdminCheatFormDialog({
@@ -73,7 +73,7 @@ export function AdminCheatFormDialog({
   editingRow,
   games,
   onSaved,
-  modsFolder = "cheats",
+  modsFolder = "root",
 }: Props) {
   const { t } = useTranslations();
 

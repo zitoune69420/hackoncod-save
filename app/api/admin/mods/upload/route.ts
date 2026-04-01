@@ -1,7 +1,7 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import {
   MODS_STORAGE_BUCKET,
-  normalizeModsFolder,
+  normalizeModsUploadPrefix,
 } from "@/lib/mods-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file");
-    const folder = normalizeModsFolder(
+    const prefix = normalizeModsUploadPrefix(
       typeof formData.get("folder") === "string"
         ? (formData.get("folder") as string)
         : undefined,
@@ -40,7 +40,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const objectPath = `${folder}/${crypto.randomUUID()}_${safeFileName(file.name)}`;
+    const filePart = `${crypto.randomUUID()}_${safeFileName(file.name)}`;
+    const objectPath =
+      prefix === "root" ? filePart : `${prefix}/${filePart}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     const supabase = createAdminClient();
 
@@ -67,7 +69,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       url: pub.publicUrl,
       path: objectPath,
-      folder,
+      folder: prefix,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

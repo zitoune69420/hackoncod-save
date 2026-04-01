@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
   Cancel01Icon,
+  FolderSearchIcon,
   Refresh01Icon,
   Tick01Icon,
 } from "@hugeicons/core-free-icons";
@@ -21,6 +22,7 @@ import { AdminCheatFormDialog } from "@/app/components/pages/client/admin-cheat-
 import type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
 import { useRouter } from "next/navigation";
 import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths";
+import { AdminOrphanModsDialog } from "@/app/components/pages/client/admin-orphan-mods-dialog";
 
 export type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
 
@@ -179,6 +181,7 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshRef = useRef(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [orphanDialogOpen, setOrphanDialogOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<AdminCheatRow | null>(null);
   const [games, setGames] = useState<{ id: string; title: string }[]>([]);
 
@@ -363,7 +366,13 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
         editingRow={editingRow}
         games={games}
         onSaved={handleCheatSaved}
-        modsFolder={scope === "shop" ? "shop-cheats" : "cheats"}
+        modsFolder={scope === "shop" ? "shop-cheats" : "root"}
+      />
+      <AdminOrphanModsDialog
+        open={orphanDialogOpen}
+        onOpenChange={setOrphanDialogOpen}
+        scope={scope}
+        onAttached={handleCheatSaved}
       />
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
         <div className="min-w-0 shrink">
@@ -391,6 +400,16 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
           >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("dashboard.admin.allCheats.refresh")}
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setOrphanDialogOpen(true)}
+            className="shrink-0 gap-2 px-3"
+            title={t("dashboard.admin.allCheats.orphans.buttonHint")}
+          >
+            <HugeiconsIcon icon={FolderSearchIcon} strokeWidth={2} />
+            {t("dashboard.admin.allCheats.orphans.button")}
           </Button>
           <div className="min-w-0 w-full sm:flex-1">
             <SearchBar

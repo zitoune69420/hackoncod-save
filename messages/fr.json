@@ -112,6 +112,24 @@
           "semivip": "Semi-VIP",
           "statut": "Statut",
           "action": "Action"
+        },
+        "orphans": {
+          "button": "Bucket ↔ DB",
+          "buttonHint": "Fichiers du bucket non liés à un cheat — rapprochement par nom et liaison manuelle",
+          "title": "Fichiers non liés dans le bucket",
+          "description": "Objets du bucket « mods » sans cheat.link correspondant, classés selon le nom du cheat vs le nom du fichier (le préfixe uuid d’upload est ignoré). Tu peux lier un cheat par fichier.",
+          "scanning": "Analyse du bucket…",
+          "summary": "{{total}} objets dans le bucket, {{linked}} chemins déjà utilisés par des cheats, {{orphan}} fichier(s) orphelin(s) pour cet onglet.",
+          "none": "Aucun fichier orphelin pour ce périmètre.",
+          "noNameMatch": "Aucune correspondance automatique sur le nom — choisis un cheat dans la liste.",
+          "noLink": "sans lien",
+          "selectPlaceholder": "Choisir un cheat…",
+          "pickCheat": "Sélectionne un cheat avant de lier.",
+          "link": "Lier",
+          "linking": "Liaison…",
+          "loadError": "Impossible d’analyser le bucket.",
+          "attachError": "Impossible de mettre à jour le lien du cheat.",
+          "attachSuccess": "Lien du cheat mis à jour."
         }
       },
       "allGames": {

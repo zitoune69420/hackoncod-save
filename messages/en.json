@@ -112,6 +112,24 @@
           "semivip": "Semi-VIP",
           "statut": "Status",
           "action": "Action"
+        },
+        "orphans": {
+          "button": "Bucket ↔ DB",
+          "buttonHint": "Storage files not linked to any cheat — name matching and manual link",
+          "title": "Unlinked files in bucket",
+          "description": "Objects in the « mods » bucket with no cheat.link, ranked by cheat name vs filename (prefix uuid is ignored). Link one cheat per file.",
+          "scanning": "Scanning bucket…",
+          "summary": "{{total}} objects in bucket, {{linked}} paths used by cheats, {{orphan}} orphan file(s) for this tab.",
+          "none": "No orphan files for this scope.",
+          "noNameMatch": "No automatic name match — choose a cheat in the list.",
+          "noLink": "empty link",
+          "selectPlaceholder": "Choose cheat…",
+          "pickCheat": "Select a cheat before linking.",
+          "link": "Link",
+          "linking": "Linking…",
+          "loadError": "Could not scan the bucket.",
+          "attachError": "Could not update cheat link.",
+          "attachSuccess": "Cheat link updated."
         }
       },
       "allGames": {

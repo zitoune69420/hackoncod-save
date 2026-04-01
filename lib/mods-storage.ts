@@ -1,9 +1,8 @@
 /** Bucket Supabase des binaires / fichiers liés aux cheats (même nom que les dossiers existants). */
 export const MODS_STORAGE_BUCKET = "mods" as const;
 
-/** Dossiers racine déjà présents dans le bucket (upload admin). */
+/** Sous-dossiers du bucket pour la boutique (upload admin). Les cheats serveur vont à la racine. */
 export const MODS_STORAGE_FOLDERS = [
-  "cheats",
   "shop-cheats",
   "shop-accounts",
   "shop-services",
@@ -12,12 +11,18 @@ export const MODS_STORAGE_FOLDERS = [
 
 export type ModsStorageFolder = (typeof MODS_STORAGE_FOLDERS)[number];
 
-export function normalizeModsFolder(raw: string | null | undefined): ModsStorageFolder {
+/** Préfixe d’upload : sous-dossier boutique ou `root` (fichier directement à la racine du bucket). */
+export type ModsUploadPrefix = ModsStorageFolder | "root";
+
+export function normalizeModsUploadPrefix(
+  raw: string | null | undefined,
+): ModsUploadPrefix {
   const v = raw?.trim();
+  if (v === "root" || v === "" || v === "cheats") return "root";
   if (v && (MODS_STORAGE_FOLDERS as readonly string[]).includes(v)) {
     return v as ModsStorageFolder;
   }
-  return "cheats";
+  return "root";
 }
 
 /** Chemin objet storage (pas une URL http). */

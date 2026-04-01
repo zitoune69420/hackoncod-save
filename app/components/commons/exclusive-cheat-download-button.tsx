@@ -47,13 +47,8 @@ export function CheatDownloadButton({
   const onClick = async () => {
     if (!trimmed) return;
 
-    if (/^https?:\/\//iu.test(trimmed)) {
-      window.open(trimmed, "_blank", "noopener,noreferrer");
-      reviewToast();
-      return;
-    }
-
     try {
+      /** Toujours via l’API : relit `cheat.link` en base (évite liens obsolètes depuis le cache liste des cheats). */
       const res = await fetch(downloadApiUrl(cheatId, channel));
       const json = (await res.json().catch(() => ({}))) as {
         url?: string;
