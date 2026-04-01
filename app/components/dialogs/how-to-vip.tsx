@@ -100,24 +100,6 @@ export function HowToVipDialog({
                       priority={index === 0}
                     />
                   </div>
-                  {index === 0 ? (
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="h-8 text-xs"
-                        asChild
-                      >
-                        <a
-                          href={DISCORD_INVITE}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {t("vip.howTo.openDiscord")}
-                        </a>
-                      </Button>
-                    </div>
-                  ) : null}
                 </li>
               ))}
 

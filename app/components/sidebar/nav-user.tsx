@@ -33,6 +33,8 @@ import { SettingsModal } from "@/app/components/dialogs/settings";
 import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
 import { AccountInfoDialog } from "@/app/components/dialogs/account-info-dialog";
 import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url";
+import { hasMinimumRole } from "@/lib/permissions";
+import { useUserRole } from "@/hooks/use-user-role";
 import Link from "next/link";
 
 function initialsFromUser(
@@ -77,6 +79,8 @@ export function NavUser({
   const [isSigningIn, setIsSigningIn] = React.useState(false);
   const { data: session, isPending: sessionPending } = authClient.useSession();
   const user = session?.user;
+  const { role } = useUserRole();
+  const showHowToVip = Boolean(user) && !hasMinimumRole(role, "vip");
 
   const signInWithDiscord = async () => {
     try {
@@ -120,10 +124,12 @@ export function NavUser({
           <span>{t("sidebar.settings")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
-      <HowToVipDialog
-        open={howToVipOpen}
-        onOpenChangeAction={setHowToVipOpen}
-      />
+      {showHowToVip ? (
+        <HowToVipDialog
+          open={howToVipOpen}
+          onOpenChangeAction={setHowToVipOpen}
+        />
+      ) : null}
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       {user ? (
         <AccountInfoDialog
@@ -201,13 +207,17 @@ export function NavUser({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => setHowToVipOpen(true)}>
-                  <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
-                  {t("vip.howTo.menuLabel")}
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
+              {showHowToVip ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => setHowToVipOpen(true)}>
+                      <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
+                      {t("vip.howTo.menuLabel")}
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onClick={() => setAccountDialogOpen(true)}
