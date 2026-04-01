@@ -81,6 +81,8 @@ export async function getCheatsByGameTitle(
     `,
     )
     .eq("game_id", game.id)
+    .eq("vip", false)
+    .eq("semi_vip", false)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -262,6 +264,31 @@ export async function deleteCheat(id: string): Promise<void> {
     console.error("[queries] deleteCheat error:", error);
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
+}
+
+/** Pour lien signé bucket `mods` (API download exclusive). */
+export async function getCheatLinkFlagsById(
+  id: string,
+): Promise<{ link: string; vip: boolean; semi_vip: boolean } | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("cheat")
+    .select("link, vip, semi_vip")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[queries] getCheatLinkFlagsById error:", error);
+    return null;
+  }
+  if (!data) return null;
+
+  return {
+    link: String((data as { link?: unknown }).link ?? ""),
+    vip: Boolean((data as { vip?: unknown }).vip),
+    semi_vip: Boolean((data as { semi_vip?: unknown }).semi_vip),
+  };
 }
 
 export async function getDisplayedGames(): Promise<Game[]> {

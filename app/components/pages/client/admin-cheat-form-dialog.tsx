@@ -22,6 +22,7 @@ import {
 import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
 import type { AdminCheatRow } from "./admin-cheats-types";
+import type { ModsStorageFolder } from "@/lib/mods-storage";
 
 type GameOption = { id: string; title: string };
 
@@ -62,6 +63,8 @@ type Props = {
   editingRow: AdminCheatRow | null;
   games: GameOption[];
   onSaved: () => void;
+  /** Dossier dans le bucket `mods` (`cheats` serveur, `shop-cheats` boutique, etc.). */
+  modsFolder?: ModsStorageFolder;
 };
 
 export function AdminCheatFormDialog({
@@ -70,6 +73,7 @@ export function AdminCheatFormDialog({
   editingRow,
   games,
   onSaved,
+  modsFolder = "cheats",
 }: Props) {
   const { t } = useTranslations();
 
@@ -143,9 +147,12 @@ export function AdminCheatFormDialog({
 
     setSaving(true);
     try {
+      let uploadedPath: string | undefined;
+
       if (file) {
         const fd = new FormData();
         fd.append("file", file);
+        fd.append("folder", modsFolder);
         const up = await fetch("/api/admin/mods/upload", {
           method: "POST",
           body: fd,
@@ -161,6 +168,17 @@ export function AdminCheatFormDialog({
           });
           return;
         }
+        uploadedPath =
+          typeof (upJson as { path?: unknown }).path === "string"
+            ? (upJson as { path: string }).path.trim()
+            : undefined;
+        if (!uploadedPath) {
+          showToast({
+            text: t("dashboard.admin.allCheats.dialog.errorUpload"),
+            variant: "error",
+          });
+          return;
+        }
       }
 
       const basePayload: Record<string, unknown> = {
@@ -171,12 +189,14 @@ export function AdminCheatFormDialog({
         extension,
         crack,
         client: hasClient ? "true" : "false",
-        /** Pas d’URL externe : le fichier vit dans le bucket Supabase `mods`. */
-        link: "",
         statut,
         vip,
         semi_vip: semiVip,
       };
+
+      if (uploadedPath !== undefined) {
+        basePayload.link = uploadedPath;
+      }
 
       const url = isEdit
         ? `/api/admin/cheats/${editingRow!.id}`

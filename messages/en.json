@@ -289,7 +289,12 @@
     "pendingDeleteCountdown": "Deleting in",
     "pendingDeleteApplying": "Deleting…",
     "pendingDeleteCancel": "Cancel",
-    "loginRequired": "Sign in with Discord to send a suggestion."
+    "loginRequired": "Sign in with Discord to send a suggestion.",
+    "exclusiveDownload": {
+      "invalidLink": "Invalid file link.",
+      "urlError": "Could not generate the download link.",
+      "networkError": "Network error."
+    }
   },
   "settings": {
     "title": "Settings",

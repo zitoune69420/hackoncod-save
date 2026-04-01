@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
+import { ExclusiveCheatDownloadButton } from "@/app/components/commons/exclusive-cheat-download-button";
 import { hasMinimumRole, type UserRole } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
 
@@ -77,26 +78,13 @@ function getSemiVipCheatsColumns(t: (key: string) => string) {
       label: t("semivip.tableHeaders.download"),
       render: (row: SemiVipCheatRow) => (
         <div className="flex gap-2">
-          {row.link ? (
-            <Button size="sm" variant="default" asChild>
-              <a
-                href={row.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  showToast({
-                    text: t("common.leaveReviewAfterDownload"),
-                  })
-                }
-              >
-                {t("semivip.download")}
-              </a>
-            </Button>
-          ) : (
-            <Button size="sm" variant="default" disabled>
-              {t("semivip.download")}
-            </Button>
-          )}
+          <ExclusiveCheatDownloadButton
+            cheatId={row.id}
+            link={row.link}
+            kind="semivip"
+            label={t("semivip.download")}
+            reviewToastText={t("common.leaveReviewAfterDownload")}
+          />
         </div>
       ),
     },

@@ -16,6 +16,7 @@ import { SearchBar } from "@/components/commons/search-bar";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
+import { ExclusiveCheatDownloadButton } from "@/app/components/commons/exclusive-cheat-download-button";
 import { canAccessVipCheats, type UserRole } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
 
@@ -78,26 +79,13 @@ function getVipCheatsColumns(t: (key: string) => string) {
       label: t("vip.tableHeaders.download"),
       render: (row: VipCheatRow) => (
         <div className="flex gap-2">
-          {row.link ? (
-            <Button size="sm" variant="default" asChild>
-              <a
-                href={row.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  showToast({
-                    text: t("common.leaveReviewAfterDownload"),
-                  })
-                }
-              >
-                {t("vip.download")}
-              </a>
-            </Button>
-          ) : (
-            <Button size="sm" variant="default" disabled>
-              {t("vip.download")}
-            </Button>
-          )}
+          <ExclusiveCheatDownloadButton
+            cheatId={row.id}
+            link={row.link}
+            kind="vip"
+            label={t("vip.download")}
+            reviewToastText={t("common.leaveReviewAfterDownload")}
+          />
         </div>
       ),
     },

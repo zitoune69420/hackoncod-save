@@ -12,9 +12,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import { useTranslations } from "@/app/components/i18n-provider";
-import { showToast } from "@/components/commons/toasts";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { COD_GAMES } from "@/lib/cod-games";
+import { CheatDownloadButton } from "@/app/components/commons/exclusive-cheat-download-button";
 
 export type CheatRow = {
   id: string;
@@ -73,26 +73,14 @@ function getCheatsColumns(t: (key: string) => string) {
       label: t("cheats.tableHeaders.action"),
       render: (row: CheatRow) => (
         <div className="flex gap-2">
-          {row.link ? (
-            <Button variant="default" asChild>
-              <a
-                href={row.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() =>
-                  showToast({
-                    text: t("common.leaveReviewAfterDownload"),
-                  })
-                }
-              >
-                {t("cheats.download")}
-              </a>
-            </Button>
-          ) : (
-            <Button variant="default" disabled>
-              {t("cheats.download")}
-            </Button>
-          )}
+          <CheatDownloadButton
+            cheatId={row.id}
+            link={row.link}
+            channel="public"
+            label={t("cheats.download")}
+            reviewToastText={t("common.leaveReviewAfterDownload")}
+            size="default"
+          />
           <Button variant="outline">
             {t("cheats.report")}
           </Button>

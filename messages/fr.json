@@ -282,7 +282,12 @@
     "pendingDeleteCountdown": "Suppression dans",
     "pendingDeleteApplying": "Suppression…",
     "pendingDeleteCancel": "Annuler",
-    "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion."
+    "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion.",
+    "exclusiveDownload": {
+      "invalidLink": "Lien de fichier invalide.",
+      "urlError": "Impossible de générer le lien de téléchargement.",
+      "networkError": "Erreur réseau."
+    }
   },
   "navUser": {
     "upgradeToPro": "Passer en Pro",

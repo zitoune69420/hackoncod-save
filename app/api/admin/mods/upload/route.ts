@@ -1,8 +1,11 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
+import {
+  MODS_STORAGE_BUCKET,
+  normalizeModsFolder,
+} from "@/lib/mods-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
-const MODS_BUCKET = "mods";
 const MAX_BYTES = 120 * 1024 * 1024;
 
 function safeFileName(name: string): string {
@@ -20,6 +23,11 @@ export async function POST(req: Request) {
 
     const formData = await req.formData();
     const file = formData.get("file");
+    const folder = normalizeModsFolder(
+      typeof formData.get("folder") === "string"
+        ? (formData.get("folder") as string)
+        : undefined,
+    );
 
     if (!(file instanceof File) || file.size === 0) {
       return NextResponse.json({ error: "Missing file" }, { status: 400 });
@@ -32,11 +40,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const objectPath = `cheats/${crypto.randomUUID()}_${safeFileName(file.name)}`;
+    const objectPath = `${folder}/${crypto.randomUUID()}_${safeFileName(file.name)}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     const supabase = createAdminClient();
 
-    const { error } = await supabase.storage.from(MODS_BUCKET).upload(objectPath, buffer, {
+    const { error } = await supabase.storage
+      .from(MODS_STORAGE_BUCKET)
+      .upload(objectPath, buffer, {
       contentType: file.type || "application/octet-stream",
       upsert: false,
     });
@@ -50,11 +60,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: safeMessage }, { status: 500 });
     }
 
-    const { data: pub } = supabase.storage.from(MODS_BUCKET).getPublicUrl(objectPath);
+    const { data: pub } = supabase.storage
+      .from(MODS_STORAGE_BUCKET)
+      .getPublicUrl(objectPath);
 
     return NextResponse.json({
       url: pub.publicUrl,
       path: objectPath,
+      folder,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
