@@ -6,6 +6,7 @@
 export const THEME_STORAGE_KEY = "hackoncod_settings_theme"
 export const BACKGROUND_STORAGE_KEY = "hackoncod_settings_background"
 export const TOAST_STORAGE_KEY = "hackoncod_settings_toast"
+export const NOTIFICATION_SOUND_STORAGE_KEY = "hackoncod_settings_notification_sound"
 
 export type ThemeColor = "purple" | "green" | "blue" | "red" | "orange" | "pink" | "cyan"
 
@@ -73,6 +74,29 @@ export function setStoredToast(enabled: boolean): void {
   if (typeof window === "undefined") return
   try {
     localStorage.setItem(TOAST_STORAGE_KEY, enabled ? "true" : "false")
+  } catch {
+    // ignore
+  }
+}
+
+export function getStoredNotificationSound(): boolean {
+  if (typeof window === "undefined") return true
+  try {
+    const stored = localStorage.getItem(NOTIFICATION_SOUND_STORAGE_KEY)
+    if (stored === "false") return false
+    return true
+  } catch {
+    return true
+  }
+}
+
+export function setStoredNotificationSound(enabled: boolean): void {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(
+      NOTIFICATION_SOUND_STORAGE_KEY,
+      enabled ? "true" : "false",
+    )
   } catch {
     // ignore
   }

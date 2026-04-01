@@ -265,6 +265,7 @@
     }
   },
   "common": {
+    "more": "Plus",
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer",
@@ -285,8 +286,6 @@
   "navUser": {
     "upgradeToPro": "Passer en Pro",
     "account": "Compte",
-    "billing": "Facturation",
-    "notifications": "Notifications",
     "logOut": "Déconnexion",
     "signIn": "Connexion avec Discord",
     "signingIn": "Redirection…"
@@ -332,6 +331,8 @@
       "description": "Contrôlez la façon dont vous recevez les notifications",
       "toastNotifications": "Notifications toast",
       "toastNotificationsDescription": "Afficher les notifications toast pour les actions",
+      "soundNotifications": "Sons des notifications",
+      "soundNotificationsDescription": "Jouer un son lors de l’affichage d’une notification toast",
       "emailNotifications": "Notifications par email",
       "emailNotificationsDescription": "Recevoir des notifications par email",
       "updateNotifications": "Notifications de mise à jour",
@@ -343,6 +344,7 @@
       "title": "Informations du compte",
       "description": "Gérez les détails de votre compte",
       "username": "Nom d'utilisateur",
+      "userId": "Identifiant",
       "email": "Email",
       "status": "Statut du compte",
       "active": "Actif",

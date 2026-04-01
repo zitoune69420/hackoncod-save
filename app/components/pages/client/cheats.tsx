@@ -13,6 +13,7 @@ import { Cancel01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type CheatRow = {
   id: string;
@@ -184,6 +185,7 @@ export function CheatsToolbar({
 }) {
   const pinned = GAMES.filter((g) => g.pinned);
   const others = GAMES.filter((g) => !g.pinned);
+  const { t } = useTranslations();
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -206,9 +208,16 @@ export function CheatsToolbar({
         </Button>
       ))}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="px-3 gap-2" size="lg">...</Button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="px-3 gap-2" size="lg">
+                ...
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{t("common.more")}</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent className="max-h-80 w-72 overflow-y-auto">
           {others.map((game) => (
             <DropdownMenuItem

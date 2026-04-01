@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 
   title: {
     default: "Hack on COD",
-    template: "%s | Hack on COD",
+    template: "%s | Dashboard",
   },
 
   description:

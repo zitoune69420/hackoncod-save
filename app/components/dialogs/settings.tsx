@@ -35,6 +35,8 @@ import {
   setStoredBackground,
   getStoredToast,
   setStoredToast,
+  getStoredNotificationSound,
+  setStoredNotificationSound,
   applyAllStyles,
   type ThemeColor,
   type BackgroundColor,
@@ -140,6 +142,7 @@ type InitialConfig = {
   backgroundColor: BackgroundColor;
   language: Locale;
   toastEnabled: boolean;
+  notificationSoundEnabled: boolean;
 };
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
@@ -149,6 +152,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     React.useState<BackgroundColor>("darker");
   const [language, setLanguage] = React.useState<Locale>("fr");
   const [toastEnabled, setToastEnabled] = React.useState(false);
+  const [notificationSoundEnabled, setNotificationSoundEnabled] =
+    React.useState(true);
   const initialConfig = React.useRef<InitialConfig | null>(null);
 
   React.useEffect(() => {
@@ -157,16 +162,19 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       const bg = getStoredBackground();
       const lang = getStoredLanguage();
       const toast = getStoredToast();
+      const sound = getStoredNotificationSound();
       initialConfig.current = {
         colorTheme: theme,
         backgroundColor: bg,
         language: lang,
         toastEnabled: toast,
+        notificationSoundEnabled: sound,
       };
       setColorTheme(theme);
       setBackgroundColor(bg);
       setLanguage(lang);
       setToastEnabled(toast);
+      setNotificationSoundEnabled(sound);
     }
   }, [open]);
 
@@ -191,11 +199,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     setToastEnabled(checked);
   };
 
+  const handleNotificationSoundChange = (checked: boolean) => {
+    setNotificationSoundEnabled(checked);
+  };
+
   const handleSave = () => {
     setStoredTheme(colorTheme);
     setStoredBackground(backgroundColor);
     setStoredLanguage(language);
     setStoredToast(toastEnabled);
+    setStoredNotificationSound(notificationSoundEnabled);
     setLocale(language);
     applyAllStyles(colorTheme, backgroundColor);
     window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
@@ -214,10 +227,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       setBackgroundColor(init.backgroundColor);
       setLanguage(init.language);
       setToastEnabled(init.toastEnabled);
+      setNotificationSoundEnabled(init.notificationSoundEnabled);
       setStoredTheme(init.colorTheme);
       setStoredBackground(init.backgroundColor);
       setStoredLanguage(init.language);
       setStoredToast(init.toastEnabled);
+      setStoredNotificationSound(init.notificationSoundEnabled);
       setLocale(init.language);
       applyAllStyles(init.colorTheme, init.backgroundColor);
       window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
@@ -414,6 +429,26 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   id="toast-notifications"
                   checked={toastEnabled}
                   onCheckedChange={handleToastChange}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-sm font-medium">
+                {t("settings.notifications.soundNotifications")}
+              </h4>
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-input bg-muted/30 p-3">
+                <Label
+                  htmlFor="notification-sounds"
+                  className="flex-1 cursor-pointer text-sm font-normal text-muted-foreground"
+                >
+                  {t("settings.notifications.soundNotificationsDescription")}
+                </Label>
+                <Switch
+                  id="notification-sounds"
+                  checked={notificationSoundEnabled}
+                  onCheckedChange={handleNotificationSoundChange}
+                  disabled={!toastEnabled}
                 />
               </div>
             </div>

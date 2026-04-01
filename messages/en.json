@@ -267,13 +267,12 @@
   "navUser": {
     "upgradeToPro": "Upgrade to Pro",
     "account": "Account",
-    "billing": "Billing",
-    "notifications": "Notifications",
     "logOut": "Log out",
     "signIn": "Sign in with Discord",
     "signingIn": "Redirecting…"
   },
   "common": {
+    "more": "More",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -332,6 +331,8 @@
       "description": "Control how you receive notifications",
       "toastNotifications": "Toast Notifications",
       "toastNotificationsDescription": "Show toast notifications for actions",
+      "soundNotifications": "Notification sounds",
+      "soundNotificationsDescription": "Play a sound when a toast notification appears",
       "emailNotifications": "Email Notifications",
       "emailNotificationsDescription": "Receive notifications via email",
       "updateNotifications": "Update Notifications",
@@ -343,6 +344,7 @@
       "title": "Account Information",
       "description": "Manage your account details",
       "username": "Username",
+      "userId": "User ID",
       "email": "Email",
       "status": "Account Status",
       "active": "Active",

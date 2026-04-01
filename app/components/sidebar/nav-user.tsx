@@ -24,8 +24,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UnfoldMoreIcon,
   CheckmarkBadgeIcon,
-  CreditCardIcon,
-  NotificationIcon,
   LogoutIcon,
   DiscordIcon,
   Setting07Icon,
@@ -33,6 +31,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { SettingsModal } from "@/app/components/dialogs/settings";
 import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
+import { AccountInfoDialog } from "@/app/components/dialogs/account-info-dialog";
 import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url";
 import Link from "next/link";
 
@@ -67,6 +66,7 @@ export function NavUser({
   const [settingsOpenUncontrolled, setSettingsOpenUncontrolled] =
     React.useState(false);
   const [howToVipOpen, setHowToVipOpen] = React.useState(false);
+  const [accountDialogOpen, setAccountDialogOpen] = React.useState(false);
   const settingsOpen = settingsOpenControlled ?? settingsOpenUncontrolled;
   const setSettingsOpen = (open: boolean) => {
     onSettingsOpenChangeAction?.(open);
@@ -125,6 +125,18 @@ export function NavUser({
         onOpenChangeAction={setHowToVipOpen}
       />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {user ? (
+        <AccountInfoDialog
+          open={accountDialogOpen}
+          onOpenChange={setAccountDialogOpen}
+          user={{
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+          }}
+        />
+      ) : null}
 
       {sessionPending ? (
         <SidebarMenuItem>
@@ -197,17 +209,15 @@ export function NavUser({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setAccountDialogOpen(true)}
+                >
                   <HugeiconsIcon icon={CheckmarkBadgeIcon} strokeWidth={2} />
                   {t("navUser.account")}
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} />
-                  {t("navUser.billing")}
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <HugeiconsIcon icon={NotificationIcon} strokeWidth={2} />
-                  {t("navUser.notifications")}
+                <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                  <HugeiconsIcon icon={Setting07Icon} strokeWidth={2} />
+                  {t("sidebar.settings")}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
