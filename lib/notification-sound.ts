@@ -1,52 +1,109 @@
 /**
- * Son court joué lors d’une notification toast (si l’option est activée dans les paramètres).
+ * Sons joués lors d’une notification toast (si l’option est activée dans les paramètres).
+ * Fichiers : `public/audio/*.mp3`
+ *
+ * Les navigateurs bloquent souvent `audio.play()` hors « geste utilisateur ».
+ * On appelle `primeNotificationAudioFromUserGesture()` au premier clic/touche sur la page
+ * pour débloquer la lecture ensuite (ex. toast après réponse API).
  */
 
 import { getStoredNotificationSound } from "@/lib/theme"
 
-let sharedCtx: AudioContext | null = null
+export type NotificationSoundVariant = "success" | "error" | "warning" | "info"
 
-function getSharedAudioContext(): AudioContext | null {
-  if (typeof window === "undefined") return null
-  if (sharedCtx && sharedCtx.state !== "closed") return sharedCtx
+const SOUND_SRC: Record<NotificationSoundVariant, string> = {
+  success: "/audio/success_sound.mp3",
+  error: "/audio/failure_sound.mp3",
+  warning: "/audio/warning_sound.mp3",
+  info: "/audio/success_sound.mp3",
+}
+
+const DEFAULT_VOLUME = 0.4
+
+/** WAV silencieux minimal — sert uniquement au déblocage autoplay après interaction. */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
+
+let primed = false
+
+function markPrimed(audio: HTMLAudioElement) {
   try {
-    const AC =
-      window.AudioContext ||
-      (
-        window as unknown as {
-          webkitAudioContext?: typeof AudioContext
-        }
-      ).webkitAudioContext
-    if (!AC) return null
-    sharedCtx = new AC()
-    return sharedCtx
+    audio.pause()
+    audio.currentTime = 0
   } catch {
-    return null
+    // ignore
+  }
+  primed = true
+}
+
+/**
+ * À appeler depuis un geste utilisateur (pointerdown / touchend sur iOS, keydown…).
+ * Safari (surtout iOS) refuse souvent les premiers `play()` asynchrones sans ça, et peut
+ * rejeter les `data:` audio — d’où un repli sur un vrai fichier MP3.
+ */
+export function primeNotificationAudioFromUserGesture(): void {
+  if (typeof window === "undefined" || primed) return
+
+  const tryUnlockMp3 = (mutedFirst: boolean) => {
+    if (primed) return
+    const a = new Audio(SOUND_SRC.success)
+    a.volume = 0.0001
+    if (mutedFirst) a.muted = true
+    const p = a.play()
+    if (p === undefined) return
+    void p
+      .then(() => {
+        if (mutedFirst) a.muted = false
+        markPrimed(a)
+      })
+      .catch(() => {
+        if (!mutedFirst) tryUnlockMp3(true)
+      })
+  }
+
+  try {
+    const a = new Audio(SILENT_WAV)
+    a.volume = 0.0001
+    const p = a.play()
+    if (p === undefined) {
+      tryUnlockMp3(false)
+      return
+    }
+    void p
+      .then(() => markPrimed(a))
+      .catch(() => tryUnlockMp3(false))
+  } catch {
+    tryUnlockMp3(false)
   }
 }
 
-/** Joue un signal bref si les sons de notification sont activés. */
-export function tryPlayNotificationSound(): void {
+const audioPool: Partial<Record<NotificationSoundVariant, HTMLAudioElement>> =
+  {}
+
+function getPooledAudio(variant: NotificationSoundVariant): HTMLAudioElement {
+  let el = audioPool[variant]
+  if (!el) {
+    el = new Audio(SOUND_SRC[variant])
+    el.preload = "auto"
+    void el.load()
+    audioPool[variant] = el
+  }
+  return el
+}
+
+/** Joue le fichier audio associé au type de toast si les sons sont activés. */
+export function tryPlayNotificationSound(
+  variant: NotificationSoundVariant = "info",
+): void {
   if (typeof window === "undefined") return
   if (!getStoredNotificationSound()) return
-  const ctx = getSharedAudioContext()
-  if (!ctx) return
   try {
-    void ctx.resume().catch(() => {})
-    const now = ctx.currentTime
-    const gain = ctx.createGain()
-    gain.connect(ctx.destination)
-    gain.gain.setValueAtTime(0.0001, now)
-    gain.gain.linearRampToValueAtTime(0.06, now + 0.02)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14)
-
-    const osc = ctx.createOscillator()
-    osc.type = "sine"
-    osc.frequency.setValueAtTime(523.25, now)
-    osc.connect(gain)
-    osc.start(now)
-    osc.stop(now + 0.14)
+    const audio = getPooledAudio(variant)
+    audio.volume = DEFAULT_VOLUME
+    audio.currentTime = 0
+    const p = audio.play()
+    if (p !== undefined) void p.catch(() => {})
   } catch {
-    // autoplay / context fermé, etc.
+    // ignore
   }
 }

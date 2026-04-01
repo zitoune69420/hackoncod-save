@@ -5,41 +5,48 @@
 
 import { toast as sonnerToast } from "sonner"
 import { getStoredToast } from "@/lib/theme"
-import { tryPlayNotificationSound } from "@/lib/notification-sound"
+import {
+  tryPlayNotificationSound,
+  type NotificationSoundVariant,
+} from "@/lib/notification-sound"
 
 function shouldShowToast(): boolean {
   if (typeof window === "undefined") return false
   return getStoredToast()
 }
 
+function playFor(variant: NotificationSoundVariant) {
+  tryPlayNotificationSound(variant)
+}
+
 export function toast(message: string, options?: Parameters<typeof sonnerToast>[1]) {
   if (!shouldShowToast()) return
   sonnerToast(message, options)
-  tryPlayNotificationSound()
+  playFor("info")
 }
 
 toast.success = (message: string, options?: Parameters<typeof sonnerToast.success>[1]) => {
   if (!shouldShowToast()) return
   sonnerToast.success(message, options)
-  tryPlayNotificationSound()
+  playFor("success")
 }
 
 toast.error = (message: string, options?: Parameters<typeof sonnerToast.error>[1]) => {
   if (!shouldShowToast()) return
   sonnerToast.error(message, options)
-  tryPlayNotificationSound()
+  playFor("error")
 }
 
 toast.warning = (message: string, options?: Parameters<typeof sonnerToast.warning>[1]) => {
   if (!shouldShowToast()) return
   sonnerToast.warning(message, options)
-  tryPlayNotificationSound()
+  playFor("warning")
 }
 
 toast.info = (message: string, options?: Parameters<typeof sonnerToast.info>[1]) => {
   if (!shouldShowToast()) return
   sonnerToast.info(message, options)
-  tryPlayNotificationSound()
+  playFor("info")
 }
 
 toast.promise = sonnerToast.promise
