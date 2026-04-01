@@ -281,7 +281,8 @@
     "leaveReviewAfterDownload": "N'hésitez pas à laisser un avis !",
     "pendingDeleteCountdown": "Suppression dans",
     "pendingDeleteApplying": "Suppression…",
-    "pendingDeleteCancel": "Annuler"
+    "pendingDeleteCancel": "Annuler",
+    "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion."
   },
   "navUser": {
     "upgradeToPro": "Passer en Pro",
@@ -496,6 +497,8 @@
       "gameLabel": "Jeu",
       "gamePlaceholder": "Sélectionnez un jeu Call of Duty...",
       "checkingGame": "Vérification si le jeu existe...",
+      "gameInDatabase": "Ce titre est déjà dans notre base de données.",
+      "gameNotInDatabase": "Ce titre n'est pas encore dans notre catalogue.",
       "requestGameAddition": "Demander l'ajout du jeu",
       "requestGameAdditionDescription": "Ce jeu n'est pas dans notre base de données. Cochez cette case pour également demander son ajout.",
       "suggestionLabel": "Votre suggestion de {type}",
@@ -547,6 +550,18 @@
     "searchPlaceholder": "Rechercher des jeux par titre ou description...",
     "refresh": "Actualiser",
     "suggestGame": "Suggérer un Jeu",
+    "suggestDialog": {
+      "title": "Suggérer un jeu",
+      "description": "Décris le jeu ou la modification que tu aimerais voir dans le catalogue.",
+      "detailsLabel": "Ta suggestion",
+      "detailsPlaceholder": "Titre, lien Steam, contexte, pourquoi l’ajouter…",
+      "cancel": "Annuler",
+      "send": "Envoyer",
+      "sending": "Envoi…",
+      "errorEnterSuggestion": "Saisis une suggestion.",
+      "success": "Suggestion envoyée !",
+      "error": "Impossible d’envoyer la suggestion."
+    },
     "tableHeaders": {
       "id": "#",
       "title": "Titre",

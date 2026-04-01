@@ -69,10 +69,8 @@ const EMPTY_EMBED: DiscordEmbed = {
 };
 
 const PARTNERS = [
-  { value: "infarcted", label: "Infarcted" },
   { value: "amibot", label: "Amibot" },
   { value: "guysmodz", label: "Guyzmods" },
-  { value: "nolove", label: "nolove" },
 ] as const;
 
 // ─── URL validator ────────────────────────────────────────────────────────────
@@ -288,8 +286,8 @@ export function PartnersPage() {
   const canAccess = canAccessPartnerTools(effectiveRole);
 
   const [embed, setEmbed] = useState<DiscordEmbed>(EMPTY_EMBED);
-  const [mentionEveryone, setMentionEveryone] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<string>("infarcted");
+  const [mentionEveryone, setMentionEveryone] = useState(false);  
+  const [selectedPartner, setSelectedPartner] = useState<string>("amibot");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<MessageHistory[]>([]);
 
@@ -692,7 +690,7 @@ export function PartnersPage() {
                   onChange={(e) => updateField(index, "name", e.target.value)}
                 />
                 <Textarea
-                  className="min-h-[4.5rem] w-full min-w-0"
+                  className="min-h-18 w-full min-w-0"
                   placeholder={t("partners.fieldValuePlaceholder")}
                   value={field.value}
                   onChange={(e) => updateField(index, "value", e.target.value)}

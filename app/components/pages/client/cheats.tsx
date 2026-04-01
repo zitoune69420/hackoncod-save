@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { COD_GAMES } from "@/lib/cod-games";
 
 export type CheatRow = {
   id: string;
@@ -101,81 +102,6 @@ function getCheatsColumns(t: (key: string) => string) {
   ];
 }
 
-const GAMES = [
-  {
-    label: "Call of Duty: Black Ops",
-    icon: "cod-bo1.png",
-    value: "cod-bo1",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Black Ops 2",
-    icon: "cod-bo2.png",
-    value: "cod-bo2",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Black Ops 3",
-    icon: "cod-bo3.png",
-    value: "cod-bo3",
-    pinned: true,
-  },
-  {
-    label: "Call of Duty: Black Ops 4",
-    icon: "cod-bo4.png",
-    value: "cod-bo4",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Black Ops Cold War",
-    icon: "cod-bocw.png",
-    value: "cod-bocw",
-    pinned: true,
-  },
-  {
-    label: "Call of Duty: Ghosts",
-    icon: "cod-ghosts.png",
-    value: "cod-ghosts",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Infinite Warfare",
-    icon: "cod-iw.png",
-    value: "cod-iw",
-    pinned: true,
-  },
-  {
-    label: "Call of Duty 4: Modern Warfare",
-    icon: "cod4.png",
-    value: "cod4",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Modern Warfare 2",
-    icon: "cod-mw2.png",
-    value: "cod-mw2",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: Modern Warfare 3",
-    icon: "cod-mw3.png",
-    value: "cod-mw3",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: World at War",
-    icon: "cod-waw.png",
-    value: "cod-waw",
-    pinned: false,
-  },
-  {
-    label: "Call of Duty: World War 2",
-    icon: "cod-ww2.png",
-    value: "cod-ww2",
-    pinned: false,
-  },
-];
-
 export function CheatsToolbar({
   selectedGame,
   onSelectGameAction,
@@ -183,8 +109,8 @@ export function CheatsToolbar({
   selectedGame: string;
   onSelectGameAction: (game: string) => void;
 }) {
-  const pinned = GAMES.filter((g) => g.pinned);
-  const others = GAMES.filter((g) => !g.pinned);
+  const pinned = COD_GAMES.filter((g) => g.pinned);
+  const others = COD_GAMES.filter((g) => !g.pinned);
   const { t } = useTranslations();
 
   return (

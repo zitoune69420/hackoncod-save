@@ -14,6 +14,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
+import { SuggestCheatDialogTrigger } from "@/app/components/pages/client/content-suggestion-dialogs";
 
 function fetchCheats(game: string): Promise<CheatRow[]> {
   return fetch(`/api/cheats?game=${encodeURIComponent(game)}`).then((res) =>
@@ -113,13 +114,21 @@ export function CheatsPage() {
           {t("cheats.description")}
         </p>
       </div>
-      <div className="flex justify-between">
-        <CheatsToolbar
-          selectedGame={selectedGame}
-          onSelectGameAction={setSelectedGame}
-        />
-        <div className="flex">
-          <Button size="lg" variant="outline" onClick={handleRefresh} className="mr-2 px-3 gap-2">
+      <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <CheatsToolbar
+            selectedGame={selectedGame}
+            onSelectGameAction={setSelectedGame}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SuggestCheatDialogTrigger />
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleRefresh}
+            className="px-3 gap-2"
+          >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("cheats.refresh")}
           </Button>

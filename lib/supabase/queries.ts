@@ -118,6 +118,26 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
 }
 
 /** Tous les jeux (admin) — tableau + listes (id/titre dérivables côté client). */
+/** Indique si un jeu avec ce titre exact existe en base (page cheats / suggestions). */
+export async function gameExistsByTitle(title: string): Promise<boolean> {
+  const trimmed = title.trim();
+  if (!trimmed) return false;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("game")
+    .select("id")
+    .eq("title", trimmed)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[queries] gameExistsByTitle error:", error.message);
+    return false;
+  }
+
+  return data != null;
+}
+
 export async function getAllGamesForAdmin(): Promise<Game[]> {
   const supabase = createAdminClient();
 

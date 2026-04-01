@@ -10,6 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
+import { SuggestGameDialogTrigger } from "@/app/components/pages/client/content-suggestion-dialogs";
 
 function fetchGames(): Promise<GameRow[]> {
   return fetch("/api/games").then((res) => res.json());
@@ -100,17 +101,27 @@ export function GamesPage() {
           {t("games.description")}
         </p>
       </div>
-      <div className="flex justify-between">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={() => setSearchQuery(search)}
-          placeholder={t("games.searchPlaceholder")}
-        />
-        <Button size="lg" variant="outline" onClick={handleRefresh} className="mr-2 px-3 gap-2">
-          <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          {t("games.refresh")}
-        </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            onSearch={() => setSearchQuery(search)}
+            placeholder={t("games.searchPlaceholder")}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <SuggestGameDialogTrigger />
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleRefresh}
+            className="px-3 gap-2"
+          >
+            <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
+            {t("games.refresh")}
+          </Button>
+        </div>
       </div>
       {loading ? (
         <div className="flex min-h-16 items-center justify-center">

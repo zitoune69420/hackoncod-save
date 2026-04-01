@@ -288,7 +288,8 @@
     "leaveReviewAfterDownload": "Feel free to leave a review!",
     "pendingDeleteCountdown": "Deleting in",
     "pendingDeleteApplying": "Deleting…",
-    "pendingDeleteCancel": "Cancel"
+    "pendingDeleteCancel": "Cancel",
+    "loginRequired": "Sign in with Discord to send a suggestion."
   },
   "settings": {
     "title": "Settings",
@@ -496,6 +497,8 @@
       "gameLabel": "Game",
       "gamePlaceholder": "Select a Call of Duty game...",
       "checkingGame": "Checking if game exists...",
+      "gameInDatabase": "This title is already in our database.",
+      "gameNotInDatabase": "This title is not in our catalogue yet.",
       "requestGameAddition": "Request game addition",
       "requestGameAdditionDescription": "This game is not in our database. Check this box to also request adding it.",
       "suggestionLabel": "Your {type} suggestion",
@@ -547,6 +550,18 @@
     "searchPlaceholder": "Search games by title or description...",
     "refresh": "Refresh",
     "suggestGame": "Suggest a Game",
+    "suggestDialog": {
+      "title": "Suggest a game",
+      "description": "Describe the game or change you would like to see in the catalogue.",
+      "detailsLabel": "Your suggestion",
+      "detailsPlaceholder": "Title, Steam link, context, why it should be added…",
+      "cancel": "Cancel",
+      "send": "Send",
+      "sending": "Sending…",
+      "errorEnterSuggestion": "Please enter a suggestion.",
+      "success": "Suggestion sent!",
+      "error": "Could not send the suggestion."
+    },
     "tableHeaders": {
       "id": "#",
       "title": "Title",
