@@ -5,6 +5,8 @@ import { CommonTable } from "@/components/commons/table/table"
 import { useTranslations } from "@/app/components/i18n-provider"
 import { showToast } from "@/components/commons/toasts"
 import { truncateText } from "@/lib/truncate-text"
+import { useRouter } from "next/navigation"
+import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths"
 
 const DESCRIPTION_MAX_CHARS = 100
 
@@ -18,7 +20,10 @@ export type GameRow = {
   action?: React.ReactNode
 }
 
-function getGamesColumns(t: (key: string) => string) {
+function getGamesColumns(
+  t: (key: string) => string,
+  goToReviews: () => void,
+) {
   return [
     { key: "title" as const, label: t("games.tableHeaders.title") },
     {
@@ -60,6 +65,10 @@ function getGamesColumns(t: (key: string) => string) {
               onClick={() =>
                 showToast({
                   text: t("common.leaveReviewAfterDownload"),
+                  action: {
+                    label: t("common.addReview"),
+                    onClick: goToReviews,
+                  },
                 })
               }
             >
@@ -90,5 +99,13 @@ function getGamesColumns(t: (key: string) => string) {
 
 export function GamesTable({ data = [] }: { data?: GameRow[] }) {
   const { t } = useTranslations()
-  return <CommonTable columns={getGamesColumns(t)} data={data} pageSize={10} />
+  const router = useRouter()
+  const goToReviews = () => router.push(DASHBOARD_REVIEWS_HREF)
+  return (
+    <CommonTable
+      columns={getGamesColumns(t, goToReviews)}
+      data={data}
+      pageSize={10}
+    />
+  )
 }

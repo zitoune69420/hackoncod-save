@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/components/commons/toasts";
 import { useTranslations } from "@/app/components/i18n-provider";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths";
 import type { ComponentProps } from "react";
 
 export type CheatDownloadChannel = "public" | "vip" | "semivip";
@@ -30,14 +32,24 @@ export function CheatDownloadButton({
   size?: ComponentProps<typeof Button>["size"];
 }) {
   const { t } = useTranslations();
+  const router = useRouter();
   const trimmed = link?.trim() ?? "";
+
+  const reviewToast = () =>
+    showToast({
+      text: reviewToastText,
+      action: {
+        label: t("common.addReview"),
+        onClick: () => router.push(DASHBOARD_REVIEWS_HREF),
+      },
+    });
 
   const onClick = async () => {
     if (!trimmed) return;
 
     if (/^https?:\/\//iu.test(trimmed)) {
       window.open(trimmed, "_blank", "noopener,noreferrer");
-      showToast({ text: reviewToastText });
+      reviewToast();
       return;
     }
 
@@ -58,7 +70,7 @@ export function CheatDownloadButton({
         return;
       }
       window.open(json.url, "_blank", "noopener,noreferrer");
-      showToast({ text: reviewToastText });
+      reviewToast();
     } catch {
       showToast({
         text: t("common.exclusiveDownload.networkError"),

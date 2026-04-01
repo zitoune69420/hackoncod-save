@@ -1,7 +1,6 @@
 "use client"
 
 import { toast as sonnerToast } from "sonner"
-import { toast } from "@/lib/toast"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   CheckmarkCircle02Icon,
@@ -9,6 +8,8 @@ import {
   Alert02Icon,
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons"
+import { getStoredToast } from "@/lib/theme"
+import { tryPlayNotificationSound } from "@/lib/notification-sound"
 
 export type ToastVariant = "success" | "error" | "warning" | "info"
 
@@ -18,6 +19,13 @@ export interface ToastOptions {
   variant?: ToastVariant
   /** Si true, affiche le toast même si les notifications sont désactivées (ex. confirmation de sauvegarde des paramètres). */
   force?: boolean
+  /** Bouton d’action (ex. « Ajouter un avis »). */
+  action?: { label: string; onClick: () => void }
+  /**
+   * Si true, ne joue aucun son. Si omis : les toasts `force` sont muets ;
+   * les autres respectent le son de notification utilisateur.
+   */
+  muteSound?: boolean
 }
 
 const defaultIcons: Record<ToastVariant, React.ReactNode> = {
@@ -27,23 +35,39 @@ const defaultIcons: Record<ToastVariant, React.ReactNode> = {
   info: <HugeiconsIcon icon={InformationCircleIcon} strokeWidth={2} className="size-4" />,
 }
 
-const variantMap = {
-  success: toast.success,
-  error: toast.error,
-  warning: toast.warning,
-  info: toast.info,
-} as const
-
-/** Contourne la préférence utilisateur (même usage que variantMap, sans filtre getStoredToast). */
-const variantMapForced = {
+const variantToSonner = {
   success: sonnerToast.success,
   error: sonnerToast.error,
   warning: sonnerToast.warning,
   info: sonnerToast.info,
 } as const
 
-export function showToast({ text, icon, variant = "info", force }: ToastOptions) {
-  const fn = force ? variantMapForced[variant] : variantMap[variant]
+export function showToast({
+  text,
+  icon,
+  variant = "info",
+  force,
+  action,
+  muteSound,
+}: ToastOptions) {
   const iconNode = icon ?? defaultIcons[variant]
-  fn(text, { icon: iconNode })
+  const opts = {
+    icon: iconNode,
+    ...(action ? { action: { label: action.label, onClick: action.onClick } } : {}),
+  }
+
+  const effectiveMute = muteSound !== undefined ? muteSound : Boolean(force)
+
+  if (force) {
+    variantToSonner[variant](text, opts)
+  } else {
+    if (typeof window !== "undefined" && !getStoredToast()) {
+      return
+    }
+    variantToSonner[variant](text, opts)
+  }
+
+  if (!effectiveMute) {
+    tryPlayNotificationSound(variant)
+  }
 }

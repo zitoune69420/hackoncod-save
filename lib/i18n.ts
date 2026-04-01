@@ -9,7 +9,7 @@ export type Locale = "fr" | "en"
 
 export const SUPPORTED_LOCALES: Locale[] = ["fr", "en"]
 
-export const DEFAULT_LOCALE: Locale = "fr"
+export const DEFAULT_LOCALE: Locale = "en"
 
 export type Messages = Record<string, unknown>
 

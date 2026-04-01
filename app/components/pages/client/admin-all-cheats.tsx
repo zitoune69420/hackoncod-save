@@ -19,6 +19,8 @@ import { showPendingDeleteConfirmToast } from "@/components/commons/pending-dele
 import { useUserRole } from "@/hooks/use-user-role";
 import { AdminCheatFormDialog } from "@/app/components/pages/client/admin-cheat-form-dialog";
 import type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths";
 
 export type { AdminCheatRow } from "@/app/components/pages/client/admin-cheats-types";
 
@@ -48,6 +50,7 @@ function getAdminCheatsColumns(
   t: (key: string, params?: Record<string, string | number>) => string,
   onEdit: (row: AdminCheatRow) => void,
   onDelete: (row: AdminCheatRow) => void,
+  goToReviews: () => void,
 ) {
   return [
     {
@@ -118,6 +121,10 @@ function getAdminCheatsColumns(
                 onClick={() =>
                   showToast({
                     text: t("common.leaveReviewAfterDownload"),
+                    action: {
+                      label: t("common.addReview"),
+                      onClick: goToReviews,
+                    },
                   })
                 }
               >
@@ -145,9 +152,14 @@ function AdminCheatsTable({
   onDelete: (row: AdminCheatRow) => void;
 }) {
   const { t } = useTranslations();
+  const router = useRouter();
+  const goToReviews = useCallback(
+    () => router.push(DASHBOARD_REVIEWS_HREF),
+    [router],
+  );
   const columns = useMemo(
-    () => getAdminCheatsColumns(t, onEdit, onDelete),
-    [t, onEdit, onDelete],
+    () => getAdminCheatsColumns(t, onEdit, onDelete, goToReviews),
+    [t, onEdit, onDelete, goToReviews],
   );
   return <CommonTable columns={columns} data={data} pageSize={12} />;
 }

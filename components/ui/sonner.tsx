@@ -1,10 +1,28 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { CheckmarkCircle02Icon, InformationCircleIcon, Alert02Icon, MultiplicationSignCircleIcon, Loading03Icon } from "@hugeicons/core-free-icons"
+import {
+  DEFAULT_TOAST_POSITION,
+  getStoredToastPosition,
+  TOAST_POSITION_UPDATED_EVENT,
+  type ToastPosition,
+} from "@/lib/theme"
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const [position, setPosition] = useState<ToastPosition>(() =>
+    typeof window !== "undefined" ? getStoredToastPosition() : DEFAULT_TOAST_POSITION,
+  )
+
+  useEffect(() => {
+    const sync = () => setPosition(getStoredToastPosition())
+    sync()
+    window.addEventListener(TOAST_POSITION_UPDATED_EVENT, sync)
+    return () => window.removeEventListener(TOAST_POSITION_UPDATED_EVENT, sync)
+  }, [])
+
   return (
     <Sonner
       theme="dark"
@@ -40,6 +58,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         },
       }}
       {...props}
+      position={position}
     />
   )
 }

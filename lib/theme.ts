@@ -7,6 +7,31 @@ export const THEME_STORAGE_KEY = "hackoncod_settings_theme"
 export const BACKGROUND_STORAGE_KEY = "hackoncod_settings_background"
 export const TOAST_STORAGE_KEY = "hackoncod_settings_toast"
 export const NOTIFICATION_SOUND_STORAGE_KEY = "hackoncod_settings_notification_sound"
+export const TOAST_POSITION_STORAGE_KEY = "hackoncod_settings_toast_position"
+
+/** Émis quand la position du toaster change (temps réel depuis les paramètres). */
+export const TOAST_POSITION_UPDATED_EVENT = "hackoncod-toast-position-updated"
+
+/** Aligné sur la prop `position` de Sonner. */
+export type ToastPosition =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
+  | "top-center"
+  | "bottom-center"
+
+const VALID_TOAST_POSITIONS: ToastPosition[] = [
+  "top-left",
+  "top-right",
+  "top-center",
+  "bottom-left",
+  "bottom-right",
+  "bottom-center",
+]
+
+/** Position Sonner par défaut (sans préférence en localStorage). */
+export const DEFAULT_TOAST_POSITION: ToastPosition = "top-center"
 
 export type ThemeColor = "purple" | "green" | "blue" | "red" | "orange" | "pink" | "cyan"
 
@@ -102,12 +127,36 @@ export function setStoredNotificationSound(enabled: boolean): void {
   }
 }
 
+export function getStoredToastPosition(): ToastPosition {
+  if (typeof window === "undefined") return DEFAULT_TOAST_POSITION
+  try {
+    const stored = localStorage.getItem(TOAST_POSITION_STORAGE_KEY)
+    if (stored && isValidToastPosition(stored)) return stored
+  } catch {
+    // ignore
+  }
+  return DEFAULT_TOAST_POSITION
+}
+
+export function setStoredToastPosition(position: ToastPosition): void {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(TOAST_POSITION_STORAGE_KEY, position)
+  } catch {
+    // ignore
+  }
+}
+
 function isValidTheme(value: string): value is ThemeColor {
   return ["purple", "green", "blue", "red", "orange", "pink", "cyan"].includes(value)
 }
 
 function isValidBackground(value: string): value is BackgroundColor {
   return ["default", "light", "lighter", "dark", "darker", "darkest", "amoled"].includes(value)
+}
+
+function isValidToastPosition(value: string): value is ToastPosition {
+  return (VALID_TOAST_POSITIONS as readonly string[]).includes(value)
 }
 
 /** Backgrounds sombres qui nécessitent la classe .dark */

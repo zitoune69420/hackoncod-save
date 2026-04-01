@@ -37,12 +37,22 @@ import {
   setStoredToast,
   getStoredNotificationSound,
   setStoredNotificationSound,
+  DEFAULT_TOAST_POSITION,
+  getStoredToastPosition,
+  setStoredToastPosition,
   applyAllStyles,
+  TOAST_POSITION_UPDATED_EVENT,
   type ThemeColor,
   type BackgroundColor,
+  type ToastPosition,
 } from "@/lib/theme";
 import { useTranslations } from "@/app/components/i18n-provider";
-import { getStoredLanguage, setStoredLanguage, type Locale } from "@/lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  getStoredLanguage,
+  setStoredLanguage,
+  type Locale,
+} from "@/lib/i18n";
 import { showToast } from "@/components/commons/toasts";
 
 const COLOR_THEMES = [
@@ -117,6 +127,18 @@ const BACKGROUND_OPTIONS = [
   },
 ];
 
+const TOAST_POSITION_OPTIONS: { value: ToastPosition; labelKey: string }[] = [
+  { value: "top-left", labelKey: "settings.notifications.positionLabels.topLeft" },
+  { value: "top-center", labelKey: "settings.notifications.positionLabels.topCenter" },
+  { value: "top-right", labelKey: "settings.notifications.positionLabels.topRight" },
+  { value: "bottom-left", labelKey: "settings.notifications.positionLabels.bottomLeft" },
+  {
+    value: "bottom-center",
+    labelKey: "settings.notifications.positionLabels.bottomCenter",
+  },
+  { value: "bottom-right", labelKey: "settings.notifications.positionLabels.bottomRight" },
+];
+
 const LANGUAGES: { value: Locale; labelKey: string; flag: string }[] = [
   {
     value: "fr",
@@ -143,6 +165,7 @@ type InitialConfig = {
   language: Locale;
   toastEnabled: boolean;
   notificationSoundEnabled: boolean;
+  toastPosition: ToastPosition;
 };
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
@@ -150,10 +173,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [colorTheme, setColorTheme] = React.useState<ThemeColor>("purple");
   const [backgroundColor, setBackgroundColor] =
     React.useState<BackgroundColor>("darker");
-  const [language, setLanguage] = React.useState<Locale>("fr");
-  const [toastEnabled, setToastEnabled] = React.useState(false);
+  const [language, setLanguage] = React.useState<Locale>(DEFAULT_LOCALE);
+  const [toastEnabled, setToastEnabled] = React.useState(true);
   const [notificationSoundEnabled, setNotificationSoundEnabled] =
     React.useState(true);
+  const [toastPosition, setToastPosition] =
+    React.useState<ToastPosition>(DEFAULT_TOAST_POSITION);
   const initialConfig = React.useRef<InitialConfig | null>(null);
 
   React.useEffect(() => {
@@ -163,18 +188,21 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       const lang = getStoredLanguage();
       const toast = getStoredToast();
       const sound = getStoredNotificationSound();
+      const position = getStoredToastPosition();
       initialConfig.current = {
         colorTheme: theme,
         backgroundColor: bg,
         language: lang,
         toastEnabled: toast,
         notificationSoundEnabled: sound,
+        toastPosition: position,
       };
       setColorTheme(theme);
       setBackgroundColor(bg);
       setLanguage(lang);
       setToastEnabled(toast);
       setNotificationSoundEnabled(sound);
+      setToastPosition(position);
     }
   }, [open]);
 
@@ -203,19 +231,28 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     setNotificationSoundEnabled(checked);
   };
 
+  const handleToastPositionChange = (v: ToastPosition) => {
+    setToastPosition(v);
+    setStoredToastPosition(v);
+    window.dispatchEvent(new CustomEvent(TOAST_POSITION_UPDATED_EVENT));
+  };
+
   const handleSave = () => {
     setStoredTheme(colorTheme);
     setStoredBackground(backgroundColor);
     setStoredLanguage(language);
     setStoredToast(toastEnabled);
     setStoredNotificationSound(notificationSoundEnabled);
+    setStoredToastPosition(toastPosition);
     setLocale(language);
     applyAllStyles(colorTheme, backgroundColor);
     window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
+    window.dispatchEvent(new CustomEvent(TOAST_POSITION_UPDATED_EVENT));
     showToast({
       text: t("settings.language.saved"),
       variant: "success",
       force: true,
+      muteSound: true,
     });
     onOpenChange(false);
   };
@@ -228,14 +265,17 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       setLanguage(init.language);
       setToastEnabled(init.toastEnabled);
       setNotificationSoundEnabled(init.notificationSoundEnabled);
+      setToastPosition(init.toastPosition);
       setStoredTheme(init.colorTheme);
       setStoredBackground(init.backgroundColor);
       setStoredLanguage(init.language);
       setStoredToast(init.toastEnabled);
       setStoredNotificationSound(init.notificationSoundEnabled);
+      setStoredToastPosition(init.toastPosition);
       setLocale(init.language);
       applyAllStyles(init.colorTheme, init.backgroundColor);
       window.dispatchEvent(new CustomEvent(THEME_UPDATED_EVENT));
+      window.dispatchEvent(new CustomEvent(TOAST_POSITION_UPDATED_EVENT));
     }
     onOpenChange(false);
   };
@@ -451,6 +491,35 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   disabled={!toastEnabled}
                 />
               </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="toast-position">
+                {t("settings.notifications.positionZone")}
+              </Label>
+              <Select
+                value={toastPosition}
+                onValueChange={(v) =>
+                  handleToastPositionChange(v as ToastPosition)
+                }
+              >
+                <SelectTrigger id="toast-position" className="w-full">
+                  <SelectValue>
+                    {t(
+                      TOAST_POSITION_OPTIONS.find((o) => o.value === toastPosition)
+                        ?.labelKey ??
+                        "settings.notifications.positionLabels.bottomRight",
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="p-1">
+                  {TOAST_POSITION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {t(opt.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
