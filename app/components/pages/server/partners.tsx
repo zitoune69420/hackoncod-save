@@ -103,9 +103,9 @@ function FormRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="grid w-full min-w-0 gap-2">
       <Label htmlFor={htmlFor}>{label}</Label>
-      {children}
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }
@@ -508,13 +508,16 @@ export function PartnersPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* ── Left: form ───────────────────────────────────────────────────── */}
-        <div className="space-y-4 lg:col-span-1">
+        <div className="grid min-w-0 gap-4 lg:col-span-1">
           <SectionTitle>{t("partners.createMessage")}</SectionTitle>
 
           {/* Partner selector */}
           <FormRow label={t("partners.partner")} htmlFor="partner">
             <Select value={selectedPartner} onValueChange={setSelectedPartner}>
-              <SelectTrigger id="partner" className="w-full">
+              <SelectTrigger
+                id="partner"
+                className="h-9 min-h-9 w-full min-w-0"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -533,6 +536,7 @@ export function PartnersPage() {
           <FormRow label={t("partners.titleLabel")} htmlFor="embed-title">
             <Input
               id="embed-title"
+              className="h-9 min-h-9 w-full min-w-0"
               placeholder={t("partners.titlePlaceholder")}
               value={embed.title}
               onChange={(e) => updateEmbed("title", e.target.value)}
@@ -543,6 +547,7 @@ export function PartnersPage() {
           <FormRow label={t("partners.descriptionLabel")} htmlFor="embed-desc">
             <Textarea
               id="embed-desc"
+              className="min-h-24 w-full min-w-0"
               placeholder={t("partners.descriptionPlaceholder")}
               value={embed.description}
               onChange={(e) => updateEmbed("description", e.target.value)}
@@ -583,6 +588,7 @@ export function PartnersPage() {
           <FormRow label={t("partners.footerLabel")} htmlFor="embed-footer">
             <Input
               id="embed-footer"
+              className="h-9 min-h-9 w-full min-w-0"
               placeholder={t("partners.footerPlaceholder")}
               value={embed.footer}
               onChange={(e) => updateEmbed("footer", e.target.value)}
@@ -596,6 +602,7 @@ export function PartnersPage() {
           >
             <Input
               id="embed-thumbnail"
+              className="h-9 min-h-9 w-full min-w-0"
               type="url"
               placeholder={t("partners.thumbnailPlaceholder")}
               value={embed.thumbnail}
@@ -607,6 +614,7 @@ export function PartnersPage() {
           <FormRow label={t("partners.imageLabel")} htmlFor="embed-image">
             <Input
               id="embed-image"
+              className="h-9 min-h-9 w-full min-w-0"
               type="url"
               placeholder={t("partners.imagePlaceholder")}
               value={embed.image}
@@ -617,14 +625,16 @@ export function PartnersPage() {
           <Separator />
 
           {/* Author */}
-          <div className="space-y-1.5">
+          <div className="grid w-full min-w-0 gap-2">
             <Label>{t("partners.authorLabel")}</Label>
             <Input
+              className="h-9 min-h-9 w-full min-w-0"
               placeholder={t("partners.authorNamePlaceholder")}
               value={embed.author.name}
               onChange={(e) => updateAuthor("name", e.target.value)}
             />
             <Input
+              className="h-9 min-h-9 w-full min-w-0"
               placeholder={t("partners.authorAvatarPlaceholder")}
               value={embed.author.icon_url}
               onChange={(e) => updateAuthor("icon_url", e.target.value)}
@@ -653,7 +663,10 @@ export function PartnersPage() {
             </div>
 
             {embed.fields.map((field, index) => (
-              <div key={index} className="rounded-md border p-3 space-y-2">
+              <div
+                key={index}
+                className="min-w-0 space-y-2 rounded-md border p-3"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {t("partners.field")} {index + 1}
@@ -673,11 +686,13 @@ export function PartnersPage() {
                   </Button>
                 </div>
                 <Input
+                  className="h-9 min-h-9 w-full min-w-0"
                   placeholder={t("partners.fieldNamePlaceholder")}
                   value={field.name}
                   onChange={(e) => updateField(index, "name", e.target.value)}
                 />
                 <Textarea
+                  className="min-h-[4.5rem] w-full min-w-0"
                   placeholder={t("partners.fieldValuePlaceholder")}
                   value={field.value}
                   onChange={(e) => updateField(index, "value", e.target.value)}
@@ -714,7 +729,7 @@ export function PartnersPage() {
         </div>
 
         {/* ── Right: preview + history ──────────────────────────────────────── */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* Preview */}
           <div className="space-y-3">
             <SectionTitle>{t("partners.preview")}</SectionTitle>
