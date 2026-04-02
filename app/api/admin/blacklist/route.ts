@@ -1,3 +1,8 @@
+import { findDiscordAccountId } from "@/lib/banned/site-ban-db";
+import {
+  buildBlacklistUpsertRow,
+  parseBlacklistWriteBody,
+} from "@/lib/blacklist/admin-blacklist-write";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import {
   getAllGuildBans,
@@ -14,7 +19,6 @@ import {
 import {
   getAllBlacklistForAdmin,
   insertBlacklist,
-  type BlacklistUpsertRow,
 } from "@/lib/supabase/queries";
 import type { BlacklistEntry, BlacklistEntryWithDisplay } from "@/lib/supabase/types";
 import { NextResponse } from "next/server";
@@ -144,27 +148,6 @@ export async function GET() {
   }
 }
 
-function nullIfEmpty(s: unknown): string | null {
-  if (typeof s !== "string") return null;
-  const t = s.trim();
-  return t === "" ? null : t;
-}
-
-function normalizeBlacklistBody(raw: unknown): BlacklistUpsertRow | null {
-  if (raw == null || typeof raw !== "object") return null;
-  const o = raw as Record<string, unknown>;
-  const user_id = nullIfEmpty(o.user_id);
-  const discord = nullIfEmpty(o.discord);
-  if (!user_id && !discord) return null;
-
-  return {
-    user_id,
-    discord,
-    reason: nullIfEmpty(o.reason),
-    added_by: nullIfEmpty(o.added_by),
-  };
-}
-
 export async function POST(req: Request) {
   try {
     const access = await getCurrentUserAccess({ source: "db" });
@@ -172,17 +155,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const sessionUserId = access.session?.user?.id;
+    if (!sessionUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => null);
-    const row = normalizeBlacklistBody(body);
-    if (!row) {
+    const parsed = parseBlacklistWriteBody(body);
+    if (!parsed) {
       return NextResponse.json(
         {
-          error:
-            "Invalid body (at least one of user_id or discord required)",
+          error: "Invalid body (user_id snowflake Discord et champs optionnels)",
         },
         { status: 400 },
       );
     }
+
+    const actorDiscordId = await findDiscordAccountId(sessionUserId);
+    if (!actorDiscordId) {
+      return NextResponse.json(
+        {
+          error:
+            "Impossible de résoudre ton compte Discord (connecte-toi avec Discord).",
+        },
+        { status: 400 },
+      );
+    }
+
+    const row = await buildBlacklistUpsertRow({
+      user_id: parsed.user_id,
+      reason: parsed.reason,
+      added_by: actorDiscordId,
+    });
 
     const { id } = await insertBlacklist(row);
 

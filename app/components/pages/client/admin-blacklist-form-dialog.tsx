@@ -16,6 +16,8 @@ import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
 import type { AdminBlacklistRow } from "./admin-blacklist-types";
 
+const DISCORD_SNOWFLAKE_RE = /^\d{5,24}$/;
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,27 +34,17 @@ export function AdminBlacklistFormDialog({
   const { t } = useTranslations();
 
   const [userId, setUserId] = React.useState("");
-  const [discord, setDiscord] = React.useState("");
   const [reason, setReason] = React.useState("");
-  const [addedBy, setAddedBy] = React.useState("");
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) return;
     if (editingRow) {
-      setUserId(editingRow.user_id);
-      setDiscord(
-        editingRow.discord.trim()
-          ? editingRow.discord
-          : editingRow.discord_display,
-      );
-      setReason(editingRow.reason);
-      setAddedBy(editingRow.added_by);
+      setUserId(editingRow.user_id ?? "");
+      setReason(editingRow.reason ?? "");
     } else {
       setUserId("");
-      setDiscord("");
       setReason("");
-      setAddedBy("");
     }
   }, [open, editingRow]);
 
@@ -61,10 +53,9 @@ export function AdminBlacklistFormDialog({
 
   const handleSubmit = async () => {
     const trimmedUser = userId.trim();
-    const trimmedDiscord = discord.trim();
-    if (!trimmedUser && !trimmedDiscord) {
+    if (!DISCORD_SNOWFLAKE_RE.test(trimmedUser)) {
       showToast({
-        text: t("dashboard.admin.allBlacklist.dialog.validationIdentifier"),
+        text: t("dashboard.admin.allBlacklist.dialog.validationUserIdSnowflake"),
         variant: "error",
       });
       return;
@@ -73,10 +64,8 @@ export function AdminBlacklistFormDialog({
     setSaving(true);
     try {
       const payload = {
-        user_id: trimmedUser || null,
-        discord: trimmedDiscord || null,
+        user_id: trimmedUser,
         reason: reason.trim() || null,
-        added_by: addedBy.trim() || null,
       };
 
       const url = isPersistedInDb
@@ -141,17 +130,7 @@ export function AdminBlacklistFormDialog({
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               autoComplete="off"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="bl-discord">
-              {t("dashboard.admin.allBlacklist.dialog.discord")}
-            </Label>
-            <Input
-              id="bl-discord"
-              value={discord}
-              onChange={(e) => setDiscord(e.target.value)}
-              autoComplete="off"
+              inputMode="numeric"
             />
           </div>
           <div className="grid gap-2">
@@ -164,17 +143,6 @@ export function AdminBlacklistFormDialog({
               onChange={(e) => setReason(e.target.value)}
               rows={3}
               className="resize-y"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="bl-added-by">
-              {t("dashboard.admin.allBlacklist.dialog.addedBy")}
-            </Label>
-            <Input
-              id="bl-added-by"
-              value={addedBy}
-              onChange={(e) => setAddedBy(e.target.value)}
-              autoComplete="off"
             />
           </div>
         </div>
