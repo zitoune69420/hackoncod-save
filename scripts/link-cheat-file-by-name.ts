@@ -9,10 +9,13 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createAdminClient } from "../lib/supabase/admin";
-import { getAllCheats, updateCheat } from "../lib/supabase/queries";
-import { listAllModsObjectPaths, pathMatchesModsScope } from "../lib/mods-orphan-files";
-import { MODS_STORAGE_BUCKET } from "../lib/mods-storage";
-import type { CheatWithGame } from "../lib/supabase/types";
+import { getAllCheats } from "../lib/supabase/queries";
+import {
+  gameTitle,
+  linkCheatToModsFile,
+  loadModsPaths,
+  type LinkScope,
+} from "./link-cheat-core";
 
 function loadEnvLocal(): void {
   const p = resolve(process.cwd(), ".env.local");
@@ -35,22 +38,12 @@ function loadEnvLocal(): void {
   }
 }
 
-function gameTitle(g: CheatWithGame["game"]): string {
-  if (g == null) return "—";
-  if (Array.isArray(g)) return g[0]?.title ?? "—";
-  return (g as { title?: string }).title ?? "—";
-}
-
-function norm(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
 async function main(): Promise<void> {
   loadEnvLocal();
   const args = process.argv.slice(2);
   let cheatQ = "";
   let fileQ = "";
-  let scope: "server" | "shop" = "server";
+  let scope: LinkScope = "server";
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--cheat" && args[i + 1]) cheatQ = args[++i]!;
     else if (args[i] === "--file" && args[i + 1]) fileQ = args[++i]!;
@@ -66,51 +59,28 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const cheats = await getAllCheats();
-  const cn = norm(cheatQ);
-  const matches = cheats.filter((c) => norm(c.name) === cn || norm(c.name).includes(cn));
-  if (matches.length === 0) {
-    console.error("Aucun cheat trouvé pour:", cheatQ);
-    process.exit(1);
-  }
-  if (matches.length > 1) {
-    console.error("Plusieurs cheats, affine le nom :");
-    for (const c of matches) {
-      console.error(" -", c.id, c.name, "(" + gameTitle(c.game) + ")");
-    }
-    process.exit(1);
-  }
-  const cheat = matches[0]!;
-
   const supabase = createAdminClient();
-  const paths = await listAllModsObjectPaths(supabase, MODS_STORAGE_BUCKET);
-  const fn = norm(fileQ);
-  const fileLower = fileQ.trim().toLowerCase();
-  const candidates = paths.filter((p) => {
-    if (!pathMatchesModsScope(p, scope)) return false;
-    const base = p.split("/").pop() ?? p;
-    return (
-      base.toLowerCase() === fileLower ||
-      base.toLowerCase().includes(fileLower) ||
-      norm(base).includes(fn)
-    );
+  const [allCheats, paths] = await Promise.all([
+    getAllCheats(),
+    loadModsPaths(supabase),
+  ]);
+
+  const r = await linkCheatToModsFile({
+    allCheats,
+    paths,
+    cheatNameQuery: cheatQ,
+    fileNameQuery: fileQ,
+    scope,
   });
 
-  if (candidates.length === 0) {
-    console.error("Aucun fichier dans le bucket pour:", fileQ, "scope:", scope);
-    process.exit(1);
-  }
-  if (candidates.length > 1) {
-    console.error("Plusieurs fichiers possibles:");
-    for (const p of candidates) console.error(" -", p);
+  if (!r.ok) {
+    console.error(r.error);
     process.exit(1);
   }
 
-  const objectPath = candidates[0]!;
-  await updateCheat(cheat.id, { link: objectPath });
   console.log("OK");
-  console.log("  cheat:", cheat.name, cheat.id);
-  console.log("  link: ", objectPath);
+  console.log("  cheat:", r.cheat.name, r.cheat.id, "(" + gameTitle(r.cheat.game) + ")");
+  console.log("  link: ", r.path);
 }
 
 main().catch((e) => {

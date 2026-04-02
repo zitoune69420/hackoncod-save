@@ -98,7 +98,7 @@ export function NavMain({
                 <SidebarMenuSub>
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem
-                      key={`${item.id ?? item.title}-${subItem.pageId}`}
+                      key={`${item.id ?? item.title}-${subItem.pageId}-${subItem.title}`}
                     >
                       <SidebarMenuSubButton
                         isActive={currentPage === subItem.pageId}

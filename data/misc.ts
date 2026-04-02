@@ -3,7 +3,7 @@ export const injectors = [
   { key: "xenosInjector", link: "files/xenos.7z", image: "/tools/xenos.png" },
   { key: "dllInjector", link: "files/dllinjector.msi", image: "/tools/dllinjector.png" },
   { key: "coldWarInjector", link: "files/cwinjector.zip", image: "/tools/coldwar-gsc.png" },
-  { key: "t7cInjector", link: "files/t7cinstaller.zip", image: "/tools/t7cinjector.png" },
+  // { key: "t7cInjector", link: "files/t7cinstaller.zip", image: "/tools/t7cinjector.png" },
   { key: "opsLoaderFull", link: "files/OpsLoaderFull.zip", image: "/tools/opsloader.png" },
 ]
 
