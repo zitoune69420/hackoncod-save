@@ -530,6 +530,27 @@ export async function updateBlacklist(
   }
 }
 
+export async function getBlacklistRowById(
+  id: string,
+): Promise<BlacklistEntry | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("retard")
+    .select(
+      "id, user_id, discord, reason, added_by, created_at, updated_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[queries] getBlacklistRowById error:", error);
+    return null;
+  }
+
+  return (data ?? null) as BlacklistEntry | null;
+}
+
 export async function deleteBlacklist(id: string): Promise<void> {
   const supabase = createAdminClient();
 

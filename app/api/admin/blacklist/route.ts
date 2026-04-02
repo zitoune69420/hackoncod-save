@@ -8,6 +8,10 @@ import {
   normalizeDiscordUserIdForLookup,
 } from "@/lib/discord/guild-member-display";
 import {
+  discordSnowflakeFromBlacklistFields,
+  tryGuildBanMemberForBlock,
+} from "@/lib/discord/guild-bans";
+import {
   getAllBlacklistForAdmin,
   insertBlacklist,
   type BlacklistUpsertRow,
@@ -181,6 +185,16 @@ export async function POST(req: Request) {
     }
 
     const { id } = await insertBlacklist(row);
+
+    const targetSnowflake = discordSnowflakeFromBlacklistFields(
+      row.user_id,
+      row.discord,
+    );
+    await tryGuildBanMemberForBlock(
+      targetSnowflake,
+      row.reason ?? "Liste noire Hackoncod (ajout manuel)",
+    );
+
     return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

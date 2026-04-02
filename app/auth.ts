@@ -39,17 +39,47 @@ export const auth = betterAuth({
         return
       }
       try {
+        let discordAccountId: string | undefined
+        try {
+          const accounts = await ctx.context.internalAdapter.findAccounts(
+            newSession.user.id,
+          )
+          const discord = accounts.find(
+            (a: { providerId?: string }) => a.providerId === "discord",
+          )
+          if (discord?.accountId)
+            discordAccountId = String(discord.accountId).trim()
+        } catch {
+          /* ignore */
+        }
         const { syncUserProfileAfterLogin } = await import(
           "@/lib/auth/sync-app-user"
         )
-        await syncUserProfileAfterLogin(
+        const sync = await syncUserProfileAfterLogin(
           newSession.user as {
             id: string
             name?: string | null
             email?: string | null
             image?: string | null
           },
+          {
+            discordAccountId:
+              discordAccountId && discordAccountId.length > 0
+                ? discordAccountId
+                : undefined,
+          },
         )
+        if (sync.ok === false && sync.siteBanned) {
+          const { buildSiteBanOAuthResponse } = await import(
+            "@/lib/auth/revoke-site-ban-session"
+          )
+          const response = await buildSiteBanOAuthResponse(
+            ctx,
+            newSession.user.id,
+            sync.reason,
+          )
+          return { response }
+        }
       } catch (err) {
         console.error("[auth] sync-app-user", err)
       }

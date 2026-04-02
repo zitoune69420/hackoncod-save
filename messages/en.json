@@ -313,6 +313,12 @@
       "invalidLink": "Invalid file link.",
       "urlError": "Could not generate the download link.",
       "networkError": "Network error."
+    },
+    "siteBan": {
+      "title": "Access restricted",
+      "description": "You cannot use this site with this account or network.",
+      "reasonLabel": "Reason",
+      "clearHint": "If you think this is a mistake, contact the team."
     }
   },
   "settings": {

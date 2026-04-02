@@ -1,6 +1,6 @@
 import "server-only";
 
-import { discordFetchBot } from "./discord-rest";
+import { DISCORD_API_BASE, discordFetchBot } from "./discord-rest";
 
 const SNOWFLAKE_RE = /^\d{5,24}$/;
 
@@ -9,6 +9,14 @@ function normalizeSnowflake(value: unknown): string | null {
   const s = String(value).trim();
   if (!SNOWFLAKE_RE.test(s)) return null;
   return s;
+}
+
+/** Pour la blacklist admin : ID Discord dans `user_id`, ou champ `discord` si c’est un snowflake. */
+export function discordSnowflakeFromBlacklistFields(
+  userId: string | null,
+  discordField: string | null,
+): string | null {
+  return normalizeSnowflake(userId) ?? normalizeSnowflake(discordField);
 }
 
 /** Utilisateur dans un objet ban Discord. */
@@ -93,4 +101,110 @@ export async function getAllGuildBans(
   }
 
   return all;
+}
+
+/**
+ * Ban serveur pour un utilisateur (`GET /guilds/.../bans/...`).
+ * Retourne null si non banni, 404, token/guild absents, ou erreur API (on ne bloque pas le site si Discord est down).
+ */
+export async function fetchGuildBanIfAny(
+  rawUserId: string,
+): Promise<DiscordBanPayload | null> {
+  const guildId = normalizeSnowflake(process.env.DISCORD_GUILD_ID ?? "");
+  const userId = normalizeSnowflake(rawUserId);
+  if (!guildId || !userId) return null;
+  const token = process.env.DISCORD_BOT_TOKEN?.trim();
+  if (!token) return null;
+  try {
+    const res = await fetch(
+      `${DISCORD_API_BASE}/guilds/${guildId}/bans/${userId}`,
+      {
+        headers: {
+          Authorization: `Bot ${token}`,
+          "Content-Type": "application/json",
+        },
+        next: { revalidate: 0 },
+      },
+    );
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      console.warn("[guild-bans] fetchGuildBanIfAny HTTP", res.status);
+      return null;
+    }
+    return (await res.json()) as DiscordBanPayload;
+  } catch (e) {
+    console.error("[guild-bans] fetchGuildBanIfAny", e);
+    return null;
+  }
+}
+
+const GUILD_BAN_REASON_MAX = 512;
+
+export type GuildBanPutResult =
+  | { ok: true }
+  | { ok: false; status: number; detail?: string };
+
+/**
+ * Bannit un utilisateur sur le serveur configuré (`DISCORD_GUILD_ID`).
+ * Succès : 204 (ou 200). Ne lève pas — journalise les erreurs (permissions, utilisateur introuvable, etc.).
+ */
+export async function putGuildBanMember(
+  rawUserId: string,
+  options?: { reason?: string | null },
+): Promise<GuildBanPutResult> {
+  const guildId = normalizeSnowflake(process.env.DISCORD_GUILD_ID ?? "");
+  const userId = normalizeSnowflake(rawUserId);
+  if (!guildId || !userId) {
+    return { ok: false, status: 0, detail: "missing_guild_or_user_id" };
+  }
+  const token = process.env.DISCORD_BOT_TOKEN?.trim();
+  if (!token) {
+    return { ok: false, status: 0, detail: "missing_bot_token" };
+  }
+
+  let reason = (options?.reason ?? "").trim().slice(0, GUILD_BAN_REASON_MAX);
+  if (!reason) reason = "Hackoncod — liste noire / blocage site";
+
+  try {
+    const res = await fetch(
+      `${DISCORD_API_BASE}/guilds/${guildId}/bans/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bot ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ delete_message_seconds: 0, reason }),
+        next: { revalidate: 0 },
+      },
+    );
+
+    if (res.status === 204 || res.status === 200) {
+      return { ok: true };
+    }
+
+    const text = await res.text().catch(() => "");
+    console.warn(
+      "[guild-bans] putGuildBanMember HTTP",
+      res.status,
+      text.slice(0, 300),
+    );
+    return { ok: false, status: res.status, detail: text.slice(0, 200) };
+  } catch (e) {
+    console.error("[guild-bans] putGuildBanMember", e);
+    return { ok: false, status: 0, detail: "fetch_error" };
+  }
+}
+
+/** Ban Discord best-effort : ignore si pas d’ID ou config incomplète. */
+export async function tryGuildBanMemberForBlock(
+  discordUserId: string | null | undefined,
+  reason: string | null,
+): Promise<void> {
+  const id = normalizeSnowflake(discordUserId ?? "");
+  if (!id) return;
+  const r = await putGuildBanMember(id, { reason });
+  if (!r.ok) {
+    console.warn("[guild-bans] tryGuildBanMemberForBlock failed", id, r);
+  }
 }

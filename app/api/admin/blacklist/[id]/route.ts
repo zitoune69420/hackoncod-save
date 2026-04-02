@@ -1,7 +1,13 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { isUuid } from "@/lib/security/is-uuid";
 import {
+  discordSnowflakeFromBlacklistFields,
+  tryGuildBanMemberForBlock,
+} from "@/lib/discord/guild-bans";
+import { purgeBanSideTablesForDiscordSnowflake } from "@/lib/banned/site-ban-db";
+import {
   deleteBlacklist,
+  getBlacklistRowById,
   type BlacklistUpsertRow,
   updateBlacklist,
 } from "@/lib/supabase/queries";
@@ -57,6 +63,16 @@ export async function PATCH(
     }
 
     await updateBlacklist(idTrim, row);
+
+    const targetSnowflake = discordSnowflakeFromBlacklistFields(
+      row.user_id,
+      row.discord,
+    );
+    await tryGuildBanMemberForBlock(
+      targetSnowflake,
+      row.reason ?? "Liste noire Hackoncod (mise à jour)",
+    );
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -83,7 +99,19 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
+    const existing = await getBlacklistRowById(idTrim);
+    if (!existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const targetSnowflake = discordSnowflakeFromBlacklistFields(
+      existing.user_id,
+      existing.discord,
+    );
+
     await deleteBlacklist(idTrim);
+    await purgeBanSideTablesForDiscordSnowflake(targetSnowflake);
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

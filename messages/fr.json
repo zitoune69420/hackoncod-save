@@ -306,6 +306,12 @@
       "invalidLink": "Lien de fichier invalide.",
       "urlError": "Impossible de générer le lien de téléchargement.",
       "networkError": "Erreur réseau."
+    },
+    "siteBan": {
+      "title": "Accès restreint",
+      "description": "Tu ne peux pas utiliser ce site avec ce compte ou ce réseau.",
+      "reasonLabel": "Motif",
+      "clearHint": "En cas d’erreur, contacte l’équipe."
     }
   },
   "navUser": {

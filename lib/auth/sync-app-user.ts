@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { SyncProfileResult } from "@/lib/banned/site-ban-db";
+import { getOAuthBanOutcome } from "@/lib/banned/site-ban-db";
 import { resolveUserRoleForUserId } from "@/lib/permissions-server";
 import { upsertAppUserFromSession } from "@/lib/supabase/app-users";
 
@@ -12,11 +14,12 @@ type SessionUserLike = {
 
 /**
  * Après OAuth Discord : résolution des rôles serveur + écriture Supabase (`public.users`).
- * Import dynamique depuis `app/auth.ts` pour éviter un cycle de modules avec `permissions-server`.
+ * Si `site_banned`, blacklist app (`retard`) ou ban Discord serveur, retourne `siteBanned`.
  */
 export async function syncUserProfileAfterLogin(
   user: SessionUserLike,
-): Promise<void> {
+  options?: { discordAccountId?: string | null },
+): Promise<SyncProfileResult> {
   const role = await resolveUserRoleForUserId(user.id, user);
   const saved = await upsertAppUserFromSession(
     user.id,
@@ -31,4 +34,8 @@ export async function syncUserProfileAfterLogin(
       saved.message,
     );
   }
+
+  return getOAuthBanOutcome(user.id, {
+    discordAccountId: options?.discordAccountId,
+  });
 }

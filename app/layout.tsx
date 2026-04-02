@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/app/components/theme-provider";
 import { I18nProvider } from "@/app/components/i18n-provider";
 import { ThemeInitScript } from "@/app/theme-init-script";
 import { Toaster } from "@/components/ui/sonner";
+import { SiteBanSync } from "@/app/components/site-ban-sync";
 import { PageViewTracker } from "@/app/components/analytics/page-view-tracker";
 import { NotificationSoundUnlock } from "@/app/components/notification-sound-unlock";
 
@@ -256,6 +257,7 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <TooltipProvider>
+              <SiteBanSync />
               <NotificationSoundUnlock />
               <Suspense fallback={null}>
                 <PageViewTracker />
