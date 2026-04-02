@@ -11,6 +11,7 @@ import { AdminStatsUsersServer } from "@/app/components/pages/server/admin-stats
 import { AdminStatsPerformanceServer } from "@/app/components/pages/server/admin-stats-performance";
 import { AdminStatsSecurityServer } from "@/app/components/pages/server/admin-stats-security";
 import { DashboardPagesClient } from "@/app/dashboard/dashboard-pages-client";
+import { ForumPageServer } from "@/app/components/pages/server/forum-page-server";
 
 export async function DashboardMainContent({
   searchParams,
@@ -36,6 +37,9 @@ export async function DashboardMainContent({
     return (
       <AdminStatsSecurityServer range={getDashboardSecurityRange(searchParams)} />
     );
+  }
+  if (contentPage === "forum") {
+    return <ForumPageServer searchParams={searchParams} />;
   }
   return <DashboardPagesClient contentPage={contentPage} />;
 }

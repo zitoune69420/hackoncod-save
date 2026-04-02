@@ -694,6 +694,10 @@
   "forum": {
     "title": "Forum",
     "description": "Find some discussions about projects, ask questions, or share your thoughts with the community",
+    "noThreads": "No threads yet.",
+    "threadNotFound": "This thread does not exist or was removed.",
+    "backToForumLink": "Back to forum",
+    "pinnedBadge": "Pinned",
     "toasts": {
       "discussionOpened": "Opening discussion..."
     },
@@ -706,6 +710,8 @@
     "postComment": "Post comment",
     "postingComment": "Posting...",
     "mustBeLoggedInToComment": "You must be logged in to add a comment.",
+    "discordAccountRequired": "Your Discord account must be linked to post on the forum.",
+    "commentValidationError": "Invalid or empty message.",
     "commentSuccess": "Comment added successfully.",
     "commentError": "Error while adding comment.",
     "reply": "Reply",
@@ -719,7 +725,24 @@
     "saveEdit": "Save",
     "saving": "Saving...",
     "editSuccess": "Discussion updated successfully.",
-    "editError": "Error while updating the discussion."
+    "editError": "Error while updating the discussion.",
+    "newThread": "New post",
+    "newThreadDialogTitle": "Start a discussion",
+    "newThreadDialogDescription": "Add a title, write your message in Markdown, then check the preview before posting.",
+    "threadTitleLabel": "Title",
+    "threadTitlePlaceholder": "e.g. Question about setup…",
+    "threadBodyLabel": "Message",
+    "threadBodyPlaceholder": "Markdown supported (bold, lists, links…)",
+    "composeTab": "Write",
+    "previewTab": "Preview",
+    "previewEmpty": "Nothing to show yet — type in the Write tab.",
+    "cancelNewThread": "Cancel",
+    "publishThread": "Publish",
+    "publishingThread": "Publishing…",
+    "threadCreated": "Discussion published.",
+    "threadCreateError": "Could not publish the discussion.",
+    "threadValidationError": "Title and message are required.",
+    "mustBeLoggedInToPost": "Sign in to create a discussion."
   },
   "purchases": {
     "title": "My Purchases",

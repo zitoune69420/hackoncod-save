@@ -15,6 +15,7 @@ export const DASHBOARD_PAGE_IDS = [
   "videos",
   "reviews",
   "misc",
+  "forum",
   "vip-cheats",
   "semivip-cheats",
   "partners",

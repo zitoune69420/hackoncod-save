@@ -694,6 +694,10 @@
   "forum": {
     "title": "Forum",
     "description": "Trouvez des discussions sur les projets, posez des questions ou partagez vos pensées avec la communauté",
+    "noThreads": "Aucun fil pour le moment.",
+    "threadNotFound": "Ce fil n’existe pas ou a été supprimé.",
+    "backToForumLink": "Retour au forum",
+    "pinnedBadge": "Épinglé",
     "toasts": {
       "discussionOpened": "Ouverture de la discussion..."
     },
@@ -706,6 +710,8 @@
     "postComment": "Publier le commentaire",
     "postingComment": "Publication...",
     "mustBeLoggedInToComment": "Tu dois être connecté pour ajouter un commentaire.",
+    "discordAccountRequired": "Ton compte Discord doit être lié pour publier sur le forum.",
+    "commentValidationError": "Message invalide ou trop court.",
     "commentSuccess": "Commentaire ajouté avec succès.",
     "commentError": "Erreur lors de l'ajout du commentaire.",
     "reply": "Répondre",
@@ -719,7 +725,24 @@
     "saveEdit": "Enregistrer",
     "saving": "Enregistrement...",
     "editSuccess": "Discussion mise à jour avec succès.",
-    "editError": "Erreur lors de la mise à jour de la discussion."
+    "editError": "Erreur lors de la mise à jour de la discussion.",
+    "newThread": "Nouveau post",
+    "newThreadDialogTitle": "Créer une discussion",
+    "newThreadDialogDescription": "Donne un titre à ton sujet, rédige le message en markdown puis vérifie l’aperçu avant publication.",
+    "threadTitleLabel": "Titre",
+    "threadTitlePlaceholder": "Ex. Question sur la config…",
+    "threadBodyLabel": "Message",
+    "threadBodyPlaceholder": "Markdown pris en charge (gras, listes, liens…)",
+    "composeTab": "Rédaction",
+    "previewTab": "Aperçu",
+    "previewEmpty": "Rien à afficher — saisis du texte dans l’onglet Rédaction.",
+    "cancelNewThread": "Annuler",
+    "publishThread": "Publier",
+    "publishingThread": "Publication…",
+    "threadCreated": "Discussion publiée.",
+    "threadCreateError": "Impossible de publier la discussion.",
+    "threadValidationError": "Le titre et le message sont obligatoires.",
+    "mustBeLoggedInToPost": "Connecte-toi pour créer une discussion."
   },
   "purchases": {
     "title": "Mes Achats",

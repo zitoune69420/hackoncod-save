@@ -124,6 +124,72 @@ export async function getAppUserRole(
 }
 
 /**
+ * Noms / e-mails pour affichage forum quand `user_id` = ID Better Auth (pas snowflake Discord).
+ */
+export async function getAppUserForumDisplayByIds(
+  rawIds: readonly string[],
+): Promise<Map<string, { name: string | null; email: string | null }>> {
+  const ids = [
+    ...new Set(
+      rawIds.map((x) => String(x ?? "").trim()).filter((s) => s.length > 0),
+    ),
+  ];
+  const out = new Map<string, { name: string | null; email: string | null }>();
+  if (ids.length === 0) return out;
+
+  const supabase = createAdminClient();
+  const uuidIds = ids.filter(isUuid);
+  const rows: Pick<AppUserRow, "id" | "auth_user_id" | "name" | "email">[] = [];
+
+  try {
+    if (uuidIds.length > 0) {
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select("id, auth_user_id, name, email")
+        .in("id", uuidIds);
+      if (error) {
+        logSupabaseError("getAppUserForumDisplayByIds.in_id", error);
+      } else if (data) {
+        rows.push(...(data as typeof rows));
+      }
+    }
+
+    const { data: data2, error: err2 } = await supabase
+      .from(TABLE)
+      .select("id, auth_user_id, name, email")
+      .in("auth_user_id", ids);
+
+    if (err2) {
+      if (err2.code !== "42703" && !err2.message?.includes("auth_user_id")) {
+        logSupabaseError("getAppUserForumDisplayByIds.in_auth_user_id", err2);
+      }
+    } else if (data2) {
+      const seen = new Set(rows.map((r) => r.id));
+      for (const r of data2 as typeof rows) {
+        if (!seen.has(r.id)) {
+          seen.add(r.id);
+          rows.push(r);
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[app-users] getAppUserForumDisplayByIds", e);
+    return out;
+  }
+
+  for (const id of ids) {
+    const row = rows.find(
+      (r) => r.id === id || (r.auth_user_id != null && r.auth_user_id === id),
+    );
+    out.set(id, {
+      name: row?.name ?? null,
+      email: row?.email ?? null,
+    });
+  }
+  return out;
+}
+
+/**
  * Insert ou update explicite (évite les upsert PostgREST qui cassent si la contrainte / les colonnes ne matchent pas).
  */
 export async function upsertAppUserFromSession(

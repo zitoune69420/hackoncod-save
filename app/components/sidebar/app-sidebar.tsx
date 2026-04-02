@@ -44,7 +44,7 @@ function useNavData() {
           items: [
             { title: t("sidebar.videos"), pageId: "videos" },
             { title: t("sidebar.reviews"), pageId: "reviews" },
-            { title: t("sidebar.forum"), pageId: "content" },
+            { title: t("sidebar.forum"), pageId: "forum" },
           ],
         },
         {
