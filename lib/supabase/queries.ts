@@ -13,11 +13,12 @@ export async function getSemiVipCheats(): Promise<CheatWithGame[]> {
     .from("cheat")
     .select(
       `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
       game(title)
     `,
     )
     .eq("semi_vip", true)
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -37,11 +38,12 @@ export async function getVipCheats(): Promise<CheatWithGame[]> {
     .from("cheat")
     .select(
       `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
       game(title)
     `,
     )
     .eq("vip", true)
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -76,13 +78,14 @@ export async function getCheatsByGameTitle(
     .from("cheat")
     .select(
       `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
       game(title)
     `,
     )
     .eq("game_id", game.id)
     .eq("vip", false)
     .eq("semi_vip", false)
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -105,10 +108,11 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
     .from("cheat")
     .select(
       `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, created_at, updated_at,
+      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
       game(title)
     `,
     )
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -222,6 +226,7 @@ export type CheatInsertRow = {
   statut: string;
   vip: boolean;
   semi_vip: boolean;
+  pinned: boolean;
 };
 
 export async function insertCheat(row: CheatInsertRow): Promise<{ id: string }> {

@@ -102,7 +102,7 @@ export function GamesPage() {
         </p>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 w-full sm:w-auto sm:max-w-xl">
           <SearchBar
             value={search}
             onChange={setSearch}

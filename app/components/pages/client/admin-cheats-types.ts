@@ -12,6 +12,7 @@ export type AdminCheatRow = {
   client: string;
   vip: boolean;
   semi_vip: boolean;
+  pinned: boolean;
   statut: string;
   link: string;
   /** Colonne actions (tableau). */

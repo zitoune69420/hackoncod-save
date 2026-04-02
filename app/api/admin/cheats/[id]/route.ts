@@ -23,6 +23,7 @@ function normalizeBody(raw: unknown): Partial<CheatInsertRow> | null {
   if (typeof o.statut === "string") out.statut = o.statut;
   if (typeof o.vip === "boolean") out.vip = o.vip;
   if (typeof o.semi_vip === "boolean") out.semi_vip = o.semi_vip;
+  if (typeof o.pinned === "boolean") out.pinned = o.pinned;
 
   return Object.keys(out).length ? out : null;
 }

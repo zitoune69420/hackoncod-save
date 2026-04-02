@@ -59,6 +59,11 @@ function getAdminCheatsColumns(
       key: "game" as const,
       label: t("dashboard.admin.allCheats.table.game"),
     },
+    {
+      key: "pinned" as const,
+      label: t("dashboard.admin.allCheats.table.pinned"),
+      render: (row: AdminCheatRow) => <BoolCell value={row.pinned} />,
+    },
     { key: "name" as const, label: t("dashboard.admin.allCheats.table.name") },
     { key: "mode" as const, label: t("dashboard.admin.allCheats.table.mode") },
     {
@@ -191,17 +196,22 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
       : "dashboard.admin.allCheats.shopTitle";
 
   const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) return data;
-    const q = searchQuery.toLowerCase();
-    return data.filter(
-      (row) =>
-        row.game.toLowerCase().includes(q) ||
-        row.name.toLowerCase().includes(q) ||
-        row.mode.toLowerCase().includes(q) ||
-        row.platform.toLowerCase().includes(q) ||
-        row.extension.toLowerCase().includes(q) ||
-        row.statut.toLowerCase().includes(q),
-    );
+    const q = searchQuery.trim().toLowerCase();
+    const rows = q
+      ? data.filter(
+          (row) =>
+            row.game.toLowerCase().includes(q) ||
+            row.name.toLowerCase().includes(q) ||
+            row.mode.toLowerCase().includes(q) ||
+            row.platform.toLowerCase().includes(q) ||
+            row.extension.toLowerCase().includes(q) ||
+            row.statut.toLowerCase().includes(q),
+        )
+      : data;
+    return [...rows].sort((a, b) => {
+      if (a.pinned === b.pinned) return 0;
+      return a.pinned ? -1 : 1;
+    });
   }, [data, searchQuery]);
 
   useEffect(() => {

@@ -11,6 +11,8 @@ export type Cheat = {
   statut: string
   vip: boolean
   semi_vip: boolean
+  /** Ordre d’affichage (mis en tête sans étiquette côté site). */
+  pinned: boolean
   created_at: string
   updated_at: string
 }

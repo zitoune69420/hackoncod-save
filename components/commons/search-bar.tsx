@@ -17,9 +17,9 @@ export function SearchBar({
   placeholder?: string;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex min-w-0 gap-2">
       <Input
-        className="h-9 min-w-72 flex-1 px-3 text-base md:min-w-80 md:text-base"
+        className="h-9 min-w-0 flex-1 px-3 text-base md:text-base"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

@@ -388,7 +388,7 @@ export function AdminAllGamesPage({ scope }: { scope: AdminAllGamesScope }) {
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("dashboard.admin.allGames.refresh")}
           </Button>
-          <div className="min-w-0 w-full sm:flex-1">
+          <div className="min-w-0 w-full sm:w-auto sm:max-w-xl">
             <SearchBar
               value={search}
               onChange={setSearch}

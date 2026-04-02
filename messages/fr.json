@@ -78,7 +78,7 @@
         "dialog": {
           "createTitle": "Nouveau cheat",
           "editTitle": "Modifier le cheat",
-          "description": "Choisis le jeu, renseigne les champs et ajoute le fichier du cheat (stocké dans le bucket Supabase « mods »). Aucune URL de téléchargement n’est enregistrée en base.",
+          "description": "Choisis le jeu, renseigne les champs ; le fichier est optionnel (bucket Supabase « mods »). Aucune URL de téléchargement n’est enregistrée en base.",
           "game": "Jeu",
           "gamePlaceholder": "Choisir un jeu",
           "name": "Nom",
@@ -88,17 +88,17 @@
           "statut": "Statut",
           "client": "Client",
           "fileLabel": "Fichier du cheat",
-          "fileHint": "Obligatoire pour une nouvelle entrée. Le fichier est envoyé vers le bucket Supabase « mods ». La base ne stocke pas d’URL de téléchargement.",
+          "fileHint": "Optionnel : tu peux créer la fiche sans fichier puis lier un objet « mods » plus tard. Si tu choisis un fichier, il est envoyé vers le bucket Supabase « mods » ; la base ne stocke pas d’URL de téléchargement.",
           "crack": "Crack",
           "vip": "VIP",
           "semivip": "Semi-VIP",
+          "pinned": "Épinglé (en tête des listes)",
           "create": "Créer",
           "save": "Enregistrer",
           "success": "Cheat enregistré.",
           "errorSave": "Impossible d’enregistrer le cheat.",
           "errorUpload": "Impossible d’envoyer le fichier.",
-          "validationGameName": "Choisis un jeu et saisis un nom.",
-          "validationFile": "Ajoute un fichier cheat pour une nouvelle entrée."
+          "validationGameName": "Choisis un jeu et saisis un nom."
         },
         "table": {
           "game": "Jeu",
@@ -110,6 +110,7 @@
           "client": "Client",
           "vip": "VIP",
           "semivip": "Semi-VIP",
+          "pinned": "Épinglé",
           "statut": "Statut",
           "action": "Action"
         },

@@ -78,7 +78,7 @@
         "dialog": {
           "createTitle": "New cheat",
           "editTitle": "Edit cheat",
-          "description": "Choose the game, set the fields, and attach the cheat file (stored in the Supabase « mods » bucket). No download URL is saved in the database.",
+          "description": "Choose the game and set the fields; the file is optional (Supabase « mods » bucket). No download URL is saved in the database.",
           "game": "Game",
           "gamePlaceholder": "Select a game",
           "name": "Name",
@@ -88,17 +88,17 @@
           "statut": "Status",
           "client": "Client",
           "fileLabel": "Cheat file",
-          "fileHint": "Required for a new cheat. File is uploaded to the Supabase « mods » bucket. The database does not store a download URL.",
+          "fileHint": "Optional: create the entry without a file and link a « mods » object later. If you pick a file, it is uploaded to the Supabase « mods » bucket; the database does not store a download URL.",
           "crack": "Cracked",
           "vip": "VIP",
           "semivip": "Semi-VIP",
+          "pinned": "Pinned (show first in lists)",
           "create": "Create",
           "save": "Save",
           "success": "Cheat saved.",
           "errorSave": "Could not save cheat.",
           "errorUpload": "Could not upload file.",
-          "validationGameName": "Choose a game and enter a name.",
-          "validationFile": "Add a cheat file for a new entry."
+          "validationGameName": "Choose a game and enter a name."
         },
         "table": {
           "game": "Game",
@@ -110,6 +110,7 @@
           "client": "Client",
           "vip": "VIP",
           "semivip": "Semi-VIP",
+          "pinned": "Pinned",
           "statut": "Status",
           "action": "Action"
         },

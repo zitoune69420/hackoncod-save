@@ -87,6 +87,7 @@ export function AdminCheatFormDialog({
   const [crack, setCrack] = React.useState(false);
   const [vip, setVip] = React.useState(false);
   const [semiVip, setSemiVip] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
   const [saving, setSaving] = React.useState(false);
 
@@ -109,6 +110,7 @@ export function AdminCheatFormDialog({
       setCrack(Boolean(editingRow.crack));
       setVip(Boolean(editingRow.vip));
       setSemiVip(Boolean(editingRow.semi_vip));
+      setPinned(Boolean(editingRow.pinned));
     } else {
       setGameId(games[0]?.id ?? "");
       setName("");
@@ -120,6 +122,7 @@ export function AdminCheatFormDialog({
       setCrack(false);
       setVip(false);
       setSemiVip(false);
+      setPinned(false);
     }
     setFile(null);
   }, [open, editingRow, games]);
@@ -132,14 +135,6 @@ export function AdminCheatFormDialog({
     if (!gid || !trimmedName) {
       showToast({
         text: t("dashboard.admin.allCheats.dialog.validationGameName"),
-        variant: "error",
-      });
-      return;
-    }
-
-    if (!isEdit && !file) {
-      showToast({
-        text: t("dashboard.admin.allCheats.dialog.validationFile"),
         variant: "error",
       });
       return;
@@ -192,6 +187,7 @@ export function AdminCheatFormDialog({
         statut,
         vip,
         semi_vip: semiVip,
+        pinned,
       };
 
       if (uploadedPath !== undefined) {
@@ -399,6 +395,12 @@ export function AdminCheatFormDialog({
                 checked={semiVip}
                 onCheckedChange={setSemiVip}
               />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="cheat-pinned" className="cursor-pointer font-normal">
+                {t("dashboard.admin.allCheats.dialog.pinned")}
+              </Label>
+              <Switch id="cheat-pinned" checked={pinned} onCheckedChange={setPinned} />
             </div>
           </div>
 

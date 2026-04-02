@@ -89,13 +89,13 @@ export function cacheKey(
     | "admin-all-blacklist",
   gameTitle?: string,
 ): string {
-  if (type === "cheats" && gameTitle) return `cheats:v3:${gameTitle}`;
+  if (type === "cheats" && gameTitle) return `cheats:v4:${gameTitle}`;
   if (type === "games") return "games";
   if (type === "videos") return "videos";
   if (type === "reviews") return "reviews";
   if (type === "vip-cheats") return "vip-cheats-v2";
   if (type === "semivip-cheats") return "semivip-cheats-v2";
-  if (type === "admin-all-cheats") return "admin-all-cheats-v2";
+  if (type === "admin-all-cheats") return "admin-all-cheats-v3";
   if (type === "admin-all-games") return "admin-all-games-v1";
   if (type === "admin-all-videos") return "admin-all-videos-v1";
   if (type === "admin-all-reviews") return "admin-all-reviews-v1";

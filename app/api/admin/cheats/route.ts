@@ -35,6 +35,7 @@ export async function GET() {
       semi_vip: Boolean(c.semi_vip),
       statut: String(c.statut ?? ""),
       link: String(c.link ?? ""),
+      pinned: Boolean(c.pinned),
     }));
 
     return NextResponse.json(rows, {
@@ -68,6 +69,7 @@ function normalizeBody(raw: unknown): CheatInsertRow | null {
     statut: typeof o.statut === "string" ? o.statut : "",
     vip: Boolean(o.vip),
     semi_vip: Boolean(o.semi_vip),
+    pinned: typeof o.pinned === "boolean" ? o.pinned : false,
   };
 }
 
