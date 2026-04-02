@@ -20,6 +20,12 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown02Icon,
+  ArrowDownLeft01Icon,
+  ArrowDownRight01Icon,
+  ArrowUp02Icon,
+  ArrowUpLeft01Icon,
+  ArrowUpRight01Icon,
   Notification01Icon,
   PaintBrush01Icon,
   TranslateIcon,
@@ -138,6 +144,15 @@ const TOAST_POSITION_OPTIONS: { value: ToastPosition; labelKey: string }[] = [
   },
   { value: "bottom-right", labelKey: "settings.notifications.positionLabels.bottomRight" },
 ];
+
+const TOAST_POSITION_ICON: Record<ToastPosition, typeof ArrowUp02Icon> = {
+  "top-left": ArrowUpLeft01Icon,
+  "top-center": ArrowUp02Icon,
+  "top-right": ArrowUpRight01Icon,
+  "bottom-left": ArrowDownLeft01Icon,
+  "bottom-center": ArrowDown02Icon,
+  "bottom-right": ArrowDownRight01Icon,
+};
 
 const LANGUAGES: { value: Locale; labelKey: string; flag: string }[] = [
   {
@@ -505,16 +520,28 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               >
                 <SelectTrigger id="toast-position" className="w-full">
                   <SelectValue>
-                    {t(
-                      TOAST_POSITION_OPTIONS.find((o) => o.value === toastPosition)
-                        ?.labelKey ??
-                        "settings.notifications.positionLabels.bottomRight",
-                    )}
+                    <HugeiconsIcon
+                      icon={TOAST_POSITION_ICON[toastPosition]}
+                      className="size-4 shrink-0 text-muted-foreground"
+                      strokeWidth={2}
+                    />
+                    <span>
+                      {t(
+                        TOAST_POSITION_OPTIONS.find((o) => o.value === toastPosition)
+                          ?.labelKey ??
+                          "settings.notifications.positionLabels.bottomRight",
+                      )}
+                    </span>
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="p-1">
                   {TOAST_POSITION_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
+                      <HugeiconsIcon
+                        icon={TOAST_POSITION_ICON[opt.value]}
+                        className="size-4 shrink-0 text-muted-foreground"
+                        strokeWidth={2}
+                      />
                       {t(opt.labelKey)}
                     </SelectItem>
                   ))}
