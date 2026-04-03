@@ -10,4 +10,9 @@ export type CommonTableProps<T> = {
   columns: Column<T>[]
   data: T[]
   pageSize?: number
+  /**
+   * Entrée en cascade des lignes (léger ressort). Désactivé par défaut pour
+   * ne pas modifier le comportement des autres tableaux.
+   */
+  rowEntranceAnimation?: boolean
 }

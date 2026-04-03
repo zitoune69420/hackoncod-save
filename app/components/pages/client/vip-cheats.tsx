@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { CommonTable } from "@/components/commons/table/table";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -95,7 +96,12 @@ function getVipCheatsColumns(t: (key: string) => string) {
 export function VipCheatsTable({ data = [] }: { data?: VipCheatRow[] }) {
   const { t } = useTranslations();
   return (
-    <CommonTable columns={getVipCheatsColumns(t)} data={data} pageSize={10} />
+    <CommonTable
+      columns={getVipCheatsColumns(t)}
+      data={data}
+      pageSize={10}
+      rowEntranceAnimation
+    />
   );
 }
 
@@ -121,6 +127,28 @@ export function VipCheatsPage({
   isAuthenticated = false,
 }: VipCheatsClientPageProps) {
   const { t } = useTranslations();
+  const reduceMotion = useReducedMotion();
+
+  const blockIn = {
+    hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: reduceMotion
+        ? { duration: 0.18, ease: "easeOut" as const }
+        : { type: "spring" as const, stiffness: 400, damping: 30 },
+    },
+  };
+
+  const sectionStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.04 : 0.08,
+      },
+    },
+  };
+
   const {
     role: resolvedRole,
     isAuthenticated: resolvedIsAuthenticated,
@@ -232,21 +260,26 @@ export function VipCheatsPage({
     return (
       <>
         <div className="space-y-6">
-          <div>
+          <motion.div variants={blockIn} initial="hidden" animate="show">
             <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
             <p className="text-sm text-muted-foreground">
               {t("vip.description")}
             </p>
-          </div>
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
+          </motion.div>
+          <motion.div
+            className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center space-y-4"
+            variants={sectionStagger}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div variants={blockIn} className="flex size-16 items-center justify-center rounded-full bg-primary/10">
               <HugeiconsIcon
                 icon={CrownIcon}
                 className="size-8 text-primary"
                 strokeWidth={2}
               />
-            </div>
-            <div className="space-y-2">
+            </motion.div>
+            <motion.div variants={blockIn} className="space-y-2">
               <h2 className="text-lg font-semibold">
                 {t("vip.accessRequired")}
               </h2>
@@ -256,12 +289,14 @@ export function VipCheatsPage({
               <p className="text-xs text-muted-foreground max-w-sm">
                 {t("vip.accessRequiredNote")}
               </p>
-            </div>
-            <Button onClick={() => setHowToVipOpen(true)}>
-              <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
-              {t("vip.howTo.menuLabel")}
-            </Button>
-          </div>
+            </motion.div>
+            <motion.div variants={blockIn}>
+              <Button onClick={() => setHowToVipOpen(true)}>
+                <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
+                {t("vip.howTo.menuLabel")}
+              </Button>
+            </motion.div>
+          </motion.div>
         </div>
         <HowToVipDialog
           open={howToVipOpen}
@@ -273,22 +308,36 @@ export function VipCheatsPage({
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div variants={blockIn} initial="hidden" animate="show">
         <h1 className="text-2xl font-semibold">{t("vip.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("vip.description")}</p>
-      </div>
-      <div className="flex justify-between">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          onSearch={() => setSearchQuery(search)}
-          placeholder={t("vip.searchPlaceholder")}
-        />
-        <Button size="lg" variant="outline" onClick={handleRefresh} className="ml-2 px-3 gap-2">
-          <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-          {t("vip.refresh")}
-        </Button>
-      </div>
+      </motion.div>
+      <motion.div
+        className="flex justify-between"
+        variants={sectionStagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={blockIn} className="min-w-0 flex-1">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            onSearch={() => setSearchQuery(search)}
+            placeholder={t("vip.searchPlaceholder")}
+          />
+        </motion.div>
+        <motion.div variants={blockIn} className="ml-2 shrink-0">
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleRefresh}
+            className="px-3 gap-2"
+          >
+            <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
+            {t("vip.refresh")}
+          </Button>
+        </motion.div>
+      </motion.div>
       {loading ? (
         <div className="flex min-h-16 items-center justify-center">
           <Progress value={progress} className="h-1 w-48" />

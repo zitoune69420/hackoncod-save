@@ -427,6 +427,7 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
               placeholder={t("dashboard.admin.allCheats.searchPlaceholder")}
+              className="max-w-none"
             />
           </div>
         </div>

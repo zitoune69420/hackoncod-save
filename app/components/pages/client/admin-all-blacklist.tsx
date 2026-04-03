@@ -509,6 +509,7 @@ export function AdminAllBlacklistPage() {
               placeholder={t(
                 "dashboard.admin.allBlacklist.searchPlaceholder",
               )}
+              className="max-w-none"
             />
           </div>
         </div>

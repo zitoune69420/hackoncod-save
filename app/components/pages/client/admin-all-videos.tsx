@@ -339,6 +339,7 @@ export function AdminAllVideosPage() {
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
               placeholder={t("dashboard.admin.allVideos.searchPlaceholder")}
+              className="max-w-none"
             />
           </div>
         </div>

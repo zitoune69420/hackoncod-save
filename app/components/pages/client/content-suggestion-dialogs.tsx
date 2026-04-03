@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +39,7 @@ function resetCheatForm() {
 
 export function SuggestCheatDialogTrigger() {
   const { t } = useTranslations();
+  const reduceMotion = useReducedMotion();
   const idPrefix = useId();
   const checkId = `${idPrefix}-request-game`;
   const [open, setOpen] = useState(false);
@@ -60,6 +62,7 @@ export function SuggestCheatDialogTrigger() {
     }
     const ac = new AbortController();
     setCheckingDb(true);
+    setPartial({ existsInDb: null });
     fetch(
       `/api/games/exists?title=${encodeURIComponent(selectedCodLabel.trim())}`,
       { signal: ac.signal },
@@ -158,105 +161,170 @@ export function SuggestCheatDialogTrigger() {
           {t("cheats.suggestCheat")}
         </TooltipContent>
       </Tooltip>
-      <DialogContent className="sm:max-w-md" showCloseButton>
-        <DialogHeader>
-          <DialogTitle>{t("cheats.suggestDialog.titleCheat")}</DialogTitle>
-          <DialogDescription>
-            {t("cheats.suggestDialog.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("cheats.suggestDialog.gameLabel")}
-            </span>
-            <Select
-              value={selectedCodLabel || undefined}
-              onValueChange={(v) =>
-                setForm((prev) => ({
-                  ...prev,
-                  selectedCodLabel: v,
-                  requestGameAdd: false,
-                }))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={t("cheats.suggestDialog.gamePlaceholder")}
-                />
-              </SelectTrigger>
-              <SelectContent className="max-h-56 p-2">
-                {COD_GAME_TITLES_FOR_SUGGESTIONS.map((title) => (
-                  <SelectItem key={title} value={title}>
-                    {title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedCodLabel ? (
-              <p className="text-xs text-muted-foreground">
-                {checkingDb
-                  ? t("cheats.suggestDialog.checkingGame")
-                  : existsInDb === true
-                    ? t("cheats.suggestDialog.gameInDatabase")
-                    : existsInDb === false
-                      ? t("cheats.suggestDialog.gameNotInDatabase")
-                      : null}
-              </p>
-            ) : null}
-          </div>
-          {existsInDb === false ? (
-            <div className="gap-3 py-2">
-              <div className="flex items-start gap-2 mb-2">
-                <Checkbox
-                  id={checkId}
-                  checked={requestGameAdd}
-                  onCheckedChange={(c) =>
-                    setPartial({ requestGameAdd: c === true })
-                  }
-                  className="mt-0.5"
-                />
-                <div className="grid min-w-0 flex-1 gap-1.5">
-                  <Label
-                    htmlFor={checkId}
-                    className="cursor-pointer text-sm leading-snug font-medium"
-                  >
-                    {t("cheats.suggestDialog.requestGameAddition")}
-                  </Label>
-                </div>
-              </div>
-              <p className="text-sm leading-snug text-muted-foreground">
-                  {t("cheats.suggestDialog.requestGameAdditionDescription")}
-              </p>
+      <DialogContent
+        className="sm:max-w-md overflow-hidden"
+        showCloseButton
+      >
+        <motion.div
+          layout
+          className="grid gap-4"
+          transition={
+            reduceMotion
+              ? { layout: { duration: 0.2, ease: "easeOut" } }
+              : {
+                  layout: {
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 34,
+                    mass: 0.85,
+                  },
+                }
+          }
+        >
+          <DialogHeader>
+            <DialogTitle>{t("cheats.suggestDialog.titleCheat")}</DialogTitle>
+            <DialogDescription>
+              {t("cheats.suggestDialog.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t("cheats.suggestDialog.gameLabel")}
+              </span>
+              <Select
+                value={selectedCodLabel || undefined}
+                onValueChange={(v) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    selectedCodLabel: v,
+                    requestGameAdd: false,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={t("cheats.suggestDialog.gamePlaceholder")}
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-56 p-2">
+                  {COD_GAME_TITLES_FOR_SUGGESTIONS.map((title) => (
+                    <SelectItem key={title} value={title}>
+                      {title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCodLabel ? (
+                <p className="text-xs text-muted-foreground">
+                  {checkingDb
+                    ? t("cheats.suggestDialog.checkingGame")
+                    : existsInDb === true
+                      ? t("cheats.suggestDialog.gameInDatabase")
+                      : existsInDb === false
+                        ? t("cheats.suggestDialog.gameNotInDatabase")
+                        : null}
+                </p>
+              ) : null}
             </div>
-          ) : null}
-          <div className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("cheats.suggestDialog.suggestionLabelCheat")}
-            </span>
-            <Textarea
-              value={details}
-              onChange={(e) => setPartial({ details: e.target.value })}
-              placeholder={t("cheats.suggestDialog.cheatPlaceholderText")}
-              className="min-h-28"
-            />
+            <AnimatePresence mode="popLayout">
+              {existsInDb === false && !checkingDb ? (
+                <motion.div
+                  key={selectedCodLabel}
+                  className="grid gap-3 py-2"
+                  initial={
+                    reduceMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, y: -12, scale: 0.97 }
+                  }
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={
+                    reduceMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, y: -8, scale: 0.98 }
+                  }
+                  transition={
+                    reduceMotion
+                      ? { duration: 0.15 }
+                      : {
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 28,
+                          mass: 0.85,
+                        }
+                  }
+                >
+                  <div className="flex items-start gap-2">
+                    <motion.div
+                      className="mt-0.5 shrink-0"
+                      initial={
+                        reduceMotion
+                          ? false
+                          : { scale: 0.6, opacity: 0, rotate: -12 }
+                      }
+                      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                      transition={
+                        reduceMotion
+                          ? { duration: 0 }
+                          : {
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 18,
+                              delay: 0.06,
+                            }
+                      }
+                    >
+                      <Checkbox
+                        id={checkId}
+                        checked={requestGameAdd}
+                        onCheckedChange={(c) =>
+                          setPartial({ requestGameAdd: c === true })
+                        }
+                      />
+                    </motion.div>
+                    <div className="grid min-w-0 flex-1 gap-1.5">
+                      <Label
+                        htmlFor={checkId}
+                        className="cursor-pointer text-sm leading-snug font-medium"
+                      >
+                        {t("cheats.suggestDialog.requestGameAddition")}
+                      </Label>
+                    </div>
+                  </div>
+                  <p className="text-sm leading-snug text-muted-foreground">
+                    {t("cheats.suggestDialog.requestGameAdditionDescription")}
+                  </p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+            <div className="grid gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t("cheats.suggestDialog.suggestionLabelCheat")}
+              </span>
+              <Textarea
+                value={details}
+                onChange={(e) => setPartial({ details: e.target.value })}
+                placeholder={t("cheats.suggestDialog.cheatPlaceholderText")}
+                className="min-h-28"
+              />
+            </div>
           </div>
-        </div>
-        <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={sending}
-          >
-            {t("cheats.suggestDialog.cancel")}
-          </Button>
-          <Button type="button" onClick={submit} disabled={sending || checkingDb}>
-            {sending
-              ? t("cheats.suggestDialog.sending")
-              : t("cheats.suggestDialog.send")}
-          </Button>
-        </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={sending}
+            >
+              {t("cheats.suggestDialog.cancel")}
+            </Button>
+            <Button type="button" onClick={submit} disabled={sending || checkingDb}>
+              {sending
+                ? t("cheats.suggestDialog.sending")
+                : t("cheats.suggestDialog.send")}
+            </Button>
+          </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

@@ -369,6 +369,7 @@ export function AdminAllReviewsPage({ scope }: { scope: AdminAllReviewsScope }) 
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
               placeholder={t("dashboard.admin.allReviews.searchPlaceholder")}
+              className="max-w-none"
             />
           </div>
         </div>

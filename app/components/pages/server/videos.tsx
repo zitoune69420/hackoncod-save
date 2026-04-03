@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
@@ -98,6 +99,49 @@ function VideoCard({ video }: { video: VideoRow }) {
 
 export function VideosPage() {
   const { t } = useTranslations();
+  const reduceMotion = useReducedMotion();
+
+  const blockIn = {
+    hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: reduceMotion
+        ? { duration: 0.18, ease: "easeOut" as const }
+        : { type: "spring" as const, stiffness: 400, damping: 30 },
+    },
+  };
+
+  const cardIn = {
+    hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: reduceMotion
+        ? { duration: 0.16, ease: "easeOut" as const }
+        : { type: "spring" as const, stiffness: 380, damping: 28 },
+    },
+  };
+
+  const sectionStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.04 : 0.08,
+      },
+    },
+  };
+
+  const gridStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.04 : 0.06,
+        delayChildren: reduceMotion ? 0 : 0.03,
+      },
+    },
+  };
+
   const [data, setData] = useState<VideoRow[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -163,41 +207,63 @@ export function VideosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <motion.div
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        variants={sectionStagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.div variants={blockIn} className="min-w-0">
           <h1 className="text-2xl font-semibold">{t("videos.title")}</h1>
           <p className="text-sm text-muted-foreground">
             {t("videos.description")}
           </p>
-        </div>
-        <div className="flex gap-2">
+        </motion.div>
+        <motion.div variants={blockIn} className="flex shrink-0 gap-2">
           <SearchBar
             value={search}
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
             placeholder={t("videos.searchPlaceholder")}
           />
-          <Button size="lg" variant="outline" onClick={handleRefresh} className="px-3 gap-2">
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleRefresh}
+            className="px-3 gap-2"
+          >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("videos.refresh")}
           </Button>
-        </div>
-      </div>
-      {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        </motion.div>
+      </motion.div>
+      {error ? (
+        <motion.div
+          variants={blockIn}
+          initial="hidden"
+          animate="show"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive"
+        >
           {error}
-        </div>
-      )}
+        </motion.div>
+      ) : null}
       {loading ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-2">
           <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : !error ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <motion.div
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          variants={gridStagger}
+          initial="hidden"
+          animate="show"
+        >
           {filteredData.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <motion.div key={video.id} variants={cardIn} className="min-w-0">
+              <VideoCard video={video} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : null}
     </div>
   );

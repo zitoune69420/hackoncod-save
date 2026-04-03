@@ -106,6 +106,7 @@ export function GamesTable({ data = [] }: { data?: GameRow[] }) {
       columns={getGamesColumns(t, goToReviews)}
       data={data}
       pageSize={10}
+      rowEntranceAnimation
     />
   )
 }

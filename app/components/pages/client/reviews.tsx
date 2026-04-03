@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { motion, useReducedMotion } from "framer-motion"
 import {
   Card,
   CardContent,
@@ -39,6 +40,52 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache"
 import { showToast } from "@/components/commons/toasts"
 
 const PAGE_SIZE = 12
+
+function useReviewPageMotion() {
+  const reduceMotion = useReducedMotion()
+  return useMemo(
+    () => ({
+      blockIn: {
+        hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: reduceMotion
+            ? { duration: 0.18, ease: "easeOut" as const }
+            : { type: "spring" as const, stiffness: 400, damping: 30 },
+        },
+      },
+      cardIn: {
+        hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: reduceMotion
+            ? { duration: 0.16, ease: "easeOut" as const }
+            : { type: "spring" as const, stiffness: 380, damping: 28 },
+        },
+      },
+      sectionStagger: {
+        hidden: {},
+        show: {
+          transition: {
+            staggerChildren: reduceMotion ? 0.04 : 0.08,
+          },
+        },
+      },
+      gridStagger: {
+        hidden: {},
+        show: {
+          transition: {
+            staggerChildren: reduceMotion ? 0.04 : 0.06,
+            delayChildren: reduceMotion ? 0 : 0.03,
+          },
+        },
+      },
+    }),
+    [reduceMotion],
+  )
+}
 
 async function fetchReviews(
   offset: number,
@@ -266,14 +313,22 @@ function AddReviewDialog({ onSuccess }: { onSuccess: () => void }) {
 
 function ReviewsPageHeader({ onReviewAdded }: { onReviewAdded: () => void }) {
   const { t } = useTranslations()
+  const { blockIn, sectionStagger } = useReviewPageMotion()
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
+    <motion.div
+      className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+      variants={sectionStagger}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={blockIn} className="min-w-0">
         <h1 className="text-2xl font-semibold">{t("reviews.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("reviews.description")}</p>
-      </div>
-      <AddReviewDialog onSuccess={onReviewAdded} />
-    </div>
+      </motion.div>
+      <motion.div variants={blockIn} className="shrink-0">
+        <AddReviewDialog onSuccess={onReviewAdded} />
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -331,6 +386,7 @@ function ReviewCard({ review }: { review: ReviewWithAuthor }) {
 
 export function ReviewsPage() {
   const { t } = useTranslations()
+  const { blockIn } = useReviewPageMotion()
   const [reviews, setReviews] = useState<ReviewWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -395,9 +451,14 @@ export function ReviewsPage() {
     return (
       <div className="space-y-6">
         <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        <motion.div
+          variants={blockIn}
+          initial="hidden"
+          animate="show"
+          className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive"
+        >
           {error}
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -406,9 +467,14 @@ export function ReviewsPage() {
     return (
       <div className="space-y-6">
         <ReviewsPageHeader onReviewAdded={() => loadData(true)} />
-        <div className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
+        <motion.div
+          variants={blockIn}
+          initial="hidden"
+          animate="show"
+          className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground"
+        >
           {t("reviews.noReviews")}
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -427,6 +493,7 @@ export function ReviewsLoadMore({
   initialReviews: ReviewWithAuthor[]
 }) {
   const { t } = useTranslations()
+  const { cardIn, gridStagger } = useReviewPageMotion()
   const [extraReviews, setExtraReviews] = useState<ReviewWithAuthor[]>([])
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialReviews.length >= PAGE_SIZE)
@@ -455,11 +522,18 @@ export function ReviewsLoadMore({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        variants={gridStagger}
+        initial="hidden"
+        animate="show"
+      >
         {allReviews.map((review) => (
-          <ReviewCard key={review.id} review={review} />
+          <motion.div key={review.id} variants={cardIn} className="min-w-0">
+            <ReviewCard review={review} />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
       {hasMore && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={loadMore} disabled={loading}>

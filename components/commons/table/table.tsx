@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Suspense } from "react"
+import { motion, useReducedMotion } from "framer-motion"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   Table,
@@ -58,15 +59,54 @@ function CommonTableFallback() {
   )
 }
 
-function CommonTableInner<T>({ columns, data, pageSize = 10 }: CommonTableProps<T>) {
+const tableRowClassName =
+  "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+
+const rowEntranceContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.04, delayChildren: 0.03 },
+  },
+}
+
+const rowEntranceItem = {
+  hidden: { opacity: 0, y: 10 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 420,
+      damping: 24,
+      mass: 0.85,
+    },
+  },
+}
+
+function CommonTableInner<T>({
+  columns,
+  data,
+  pageSize = 10,
+  rowEntranceAnimation = false,
+}: CommonTableProps<T>) {
   const { t } = useTranslations()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const reduceMotion = useReducedMotion()
 
   const [page, setPage] = React.useState(1)
   const totalPages = Math.ceil(data.length / pageSize) || 1
   const paginatedData = data.slice((page - 1) * pageSize, page * pageSize)
+
+  const paginatedRowsKey = React.useMemo(() => {
+    const slice = data.slice((page - 1) * pageSize, page * pageSize)
+    return `${page}:${slice
+      .map((row) => (row as { id?: string }).id ?? "")
+      .join("|")}`
+  }, [data, page, pageSize])
+
+  const useRowEntrance = rowEntranceAnimation && !reduceMotion
 
   const prevDataLengthRef = React.useRef<number | null>(null)
 
@@ -130,20 +170,48 @@ function CommonTableInner<T>({ columns, data, pageSize = 10 }: CommonTableProps<
             ))}
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {paginatedData.map((row, i) => (
-            <TableRow key={(row as { id?: string }).id ?? i}>
-              {columns.map((col) => (
-                <TableCell
-                  key={String(col.key)}
-                  className={cn(col.cellClassName)}
-                >
-                  {col.render ? col.render(row) : (row[col.key] as React.ReactNode)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
+        {useRowEntrance ? (
+          <motion.tbody
+            key={paginatedRowsKey}
+            data-slot="table-body"
+            className="[&_tr:last-child]:border-0"
+            variants={rowEntranceContainer}
+            initial="hidden"
+            animate="show"
+          >
+            {paginatedData.map((row, i) => (
+              <motion.tr
+                key={(row as { id?: string }).id ?? i}
+                variants={rowEntranceItem}
+                className={cn(tableRowClassName)}
+              >
+                {columns.map((col) => (
+                  <TableCell
+                    key={String(col.key)}
+                    className={cn(col.cellClassName)}
+                  >
+                    {col.render ? col.render(row) : (row[col.key] as React.ReactNode)}
+                  </TableCell>
+                ))}
+              </motion.tr>
+            ))}
+          </motion.tbody>
+        ) : (
+          <TableBody>
+            {paginatedData.map((row, i) => (
+              <TableRow key={(row as { id?: string }).id ?? i}>
+                {columns.map((col) => (
+                  <TableCell
+                    key={String(col.key)}
+                    className={cn(col.cellClassName)}
+                  >
+                    {col.render ? col.render(row) : (row[col.key] as React.ReactNode)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        )}
       </Table>
 
       {data.length > pageSize && (

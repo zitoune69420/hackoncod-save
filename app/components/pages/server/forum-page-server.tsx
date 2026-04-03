@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ForumAddComment } from "@/app/components/pages/client/forum-add-comment";
+import {
+  ForumMotionFadeIn,
+  ForumMotionListHeader,
+  ForumMotionStaggerChildren,
+} from "@/app/components/pages/client/forum-motion";
 import { ForumNewThreadDialog } from "@/app/components/pages/client/forum-new-thread-dialog";
 import { ForumPageHeader } from "@/app/components/pages/client/forum-page-header";
 import { ForumMarkdown } from "@/app/components/pages/client/forum-markdown";
@@ -98,47 +103,6 @@ function buildCommentTree(flat: ForumCommentRow[]): CommentNode[] {
   return roots;
 }
 
-function ThreadList({
-  threads,
-  profiles,
-}: {
-  threads: ForumThreadRow[];
-  profiles: Map<string, ForumAuthorView>;
-}) {
-  if (threads.length === 0) {
-    return null;
-  }
-  return (
-    <div className="flex flex-col gap-3">
-      {threads.map((thread) => (
-        <Link
-          key={thread.id}
-          href={`/dashboard?page=forum&thread=${encodeURIComponent(thread.id)}`}
-          scroll={false}
-        >
-          <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-            <CardHeader className="gap-2 pb-2">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-lg font-semibold leading-tight">
-                  {thread.title ?? "—"}
-                </h2>
-                {thread.pinned ? <ForumPinnedBadge /> : null}
-              </div>
-              <p className="line-clamp-2 text-sm text-muted-foreground">
-                {excerpt(thread.content)}
-              </p>
-              <ForumThreadListAuthorRow
-                author={pickAuthor(profiles, thread.user_id)}
-                dateIso={thread.created_at ?? thread.updated_at}
-              />
-            </CardHeader>
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function CommentBranch({
   node,
   depth,
@@ -233,8 +197,10 @@ export async function ForumPageServer({
     if (!thread) {
       return (
         <div className={forumLayoutClass}>
-          <ForumPageHeader variant="list" />
-          <ForumThreadNotFound />
+          <ForumMotionFadeIn className="space-y-6">
+            <ForumPageHeader variant="list" />
+            <ForumThreadNotFound />
+          </ForumMotionFadeIn>
         </div>
       );
     }
@@ -249,13 +215,19 @@ export async function ForumPageServer({
     return (
       <div className={forumLayoutClass}>
         <ForumPageHeader variant="thread" />
-        <ThreadView thread={thread} author={threadAuthor} />
+        <ForumMotionFadeIn>
+          <ThreadView thread={thread} author={threadAuthor} />
+        </ForumMotionFadeIn>
         <section className="space-y-3">
-          <ForumCommentsHeading />
+          <ForumMotionFadeIn>
+            <ForumCommentsHeading />
+          </ForumMotionFadeIn>
           {tree.length === 0 ? (
-            <ForumNoComments />
+            <ForumMotionFadeIn>
+              <ForumNoComments />
+            </ForumMotionFadeIn>
           ) : (
-            <div className="space-y-4">
+            <ForumMotionStaggerChildren className="space-y-4">
               {tree.map((node) => (
                 <CommentBranch
                   key={node.id}
@@ -265,7 +237,7 @@ export async function ForumPageServer({
                   threadId={thread.id}
                 />
               ))}
-            </div>
+            </ForumMotionStaggerChildren>
           )}
           <ForumAddComment threadId={thread.id} className="pt-2" />
         </section>
@@ -278,16 +250,44 @@ export async function ForumPageServer({
 
   return (
     <div className={forumLayoutClass}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 flex-1">
-          <ForumPageHeader variant="list" />
-        </div>
-        <ForumNewThreadDialog className="shrink-0 self-start" />
-      </div>
+      <ForumMotionListHeader
+        header={<ForumPageHeader variant="list" />}
+        action={
+          <ForumNewThreadDialog className="shrink-0 self-start" />
+        }
+      />
       {threads.length === 0 ? (
-        <ForumNoThreads />
+        <ForumMotionFadeIn>
+          <ForumNoThreads />
+        </ForumMotionFadeIn>
       ) : (
-        <ThreadList threads={threads} profiles={profiles} />
+        <ForumMotionStaggerChildren className="flex flex-col gap-3">
+          {threads.map((thread) => (
+            <Link
+              key={thread.id}
+              href={`/dashboard?page=forum&thread=${encodeURIComponent(thread.id)}`}
+              scroll={false}
+            >
+              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
+                <CardHeader className="gap-2 pb-2">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h2 className="text-lg font-semibold leading-tight">
+                      {thread.title ?? "—"}
+                    </h2>
+                    {thread.pinned ? <ForumPinnedBadge /> : null}
+                  </div>
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {excerpt(thread.content)}
+                  </p>
+                  <ForumThreadListAuthorRow
+                    author={pickAuthor(profiles, thread.user_id)}
+                    dateIso={thread.created_at ?? thread.updated_at}
+                  />
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </ForumMotionStaggerChildren>
       )}
     </div>
   );

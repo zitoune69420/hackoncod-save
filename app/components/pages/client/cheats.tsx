@@ -157,6 +157,11 @@ export function CheatsToolbar({
 export function CheatsTable({ data = [] }: { data?: CheatRow[] }) {
   const { t } = useTranslations();
   return (
-    <CommonTable columns={getCheatsColumns(t)} data={data} pageSize={10} />
+    <CommonTable
+      columns={getCheatsColumns(t)}
+      data={data}
+      pageSize={10}
+      rowEntranceAnimation
+    />
   );
 }

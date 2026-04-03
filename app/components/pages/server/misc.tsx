@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Download01Icon } from "@hugeicons/core-free-icons"
+import { motion, useReducedMotion } from "framer-motion"
 import { useTranslations } from "@/app/components/i18n-provider"
 import { injectors, tools } from "@/data/misc"
 import Image from "next/image"
@@ -34,30 +35,119 @@ function ToolCard({ title, link, image }: { title: string; link: string; image?:
 
 export function MiscPage() {
   const { t } = useTranslations()
+  const reduceMotion = useReducedMotion()
+
+  const blockIn = {
+    hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 8 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: reduceMotion
+        ? { duration: 0.18, ease: "easeOut" as const }
+        : { type: "spring" as const, stiffness: 400, damping: 30 },
+    },
+  }
+
+  const cardIn = {
+    hidden: reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: reduceMotion
+        ? { duration: 0.16, ease: "easeOut" as const }
+        : { type: "spring" as const, stiffness: 380, damping: 28 },
+    },
+  }
+
+  const sectionStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.04 : 0.08,
+      },
+    },
+  }
+
+  const gridStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.04 : 0.06,
+        delayChildren: reduceMotion ? 0 : 0.03,
+      },
+    },
+  }
+
+  const pageStagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: reduceMotion ? 0.05 : 0.1,
+      },
+    },
+  }
+
   return (
-    <div className="space-y-8">
-      <div>
+    <motion.div
+      className="space-y-8"
+      variants={pageStagger}
+      initial="hidden"
+      animate="show"
+    >
+      <motion.div variants={blockIn}>
         <h1 className="text-2xl font-semibold">{t("misc.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("misc.description")}</p>
-      </div>
+      </motion.div>
 
-      <section className="space-y-4 max-w-6xl w-full">
-        <h2 className="text-lg font-medium">{t("misc.injectors")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.section
+        className="space-y-4 max-w-6xl w-full"
+        variants={sectionStagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.h2 variants={blockIn} className="text-lg font-medium">
+          {t("misc.injectors")}
+        </motion.h2>
+        <motion.div
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          variants={gridStagger}
+        >
           {injectors.map((item) => (
-            <ToolCard key={item.key} title={t(`misc.items.${item.key}`)} link={item.link} image={item.image} />
+            <motion.div key={item.key} variants={cardIn} className="min-w-0">
+              <ToolCard
+                title={t(`misc.items.${item.key}`)}
+                link={item.link}
+                image={item.image}
+              />
+            </motion.div>
           ))}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <section className="space-y-4 max-w-6xl w-full">
-        <h2 className="text-lg font-medium">{t("misc.tools")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.section
+        className="space-y-4 max-w-6xl w-full"
+        variants={sectionStagger}
+        initial="hidden"
+        animate="show"
+      >
+        <motion.h2 variants={blockIn} className="text-lg font-medium">
+          {t("misc.tools")}
+        </motion.h2>
+        <motion.div
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          variants={gridStagger}
+        >
           {tools.map((item) => (
-            <ToolCard key={item.key} title={t(`misc.items.${item.key}`)} link={item.link} image={item.image} />
+            <motion.div key={item.key} variants={cardIn} className="min-w-0">
+              <ToolCard
+                title={t(`misc.items.${item.key}`)}
+                link={item.link}
+                image={item.image}
+              />
+            </motion.div>
           ))}
-        </div>
-      </section>
-    </div>
+        </motion.div>
+      </motion.section>
+    </motion.div>
   )
 }

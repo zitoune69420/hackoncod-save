@@ -394,6 +394,7 @@ export function AdminAllGamesPage({ scope }: { scope: AdminAllGamesScope }) {
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
               placeholder={t("dashboard.admin.allGames.searchPlaceholder")}
+              className="max-w-none"
             />
           </div>
         </div>
