@@ -114,29 +114,30 @@ export function CheatsPage() {
           {t("cheats.description")}
         </p>
       </div>
-      <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
         <div className="min-w-0 flex-1">
           <CheatsToolbar
             selectedGame={selectedGame}
             onSelectGameAction={setSelectedGame}
           />
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <SuggestCheatDialogTrigger />
+        <div className="flex w-full min-w-0 flex-nowrap items-center justify-end gap-2 lg:ml-auto lg:w-auto">
           <Button
             size="lg"
             variant="outline"
             onClick={handleRefresh}
-            className="px-3 gap-2"
+            className="shrink-0 gap-2 px-3"
           >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
             {t("cheats.refresh")}
           </Button>
+          <SuggestCheatDialogTrigger />
           <SearchBar
             value={search}
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
             placeholder={t("cheats.searchPlaceholder")}
+            className="min-w-0 shrink-0"
           />
         </div>
       </div>
