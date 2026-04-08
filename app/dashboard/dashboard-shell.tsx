@@ -68,6 +68,11 @@ const ADMIN_BREADCRUMB: Partial<
     sectionFirst: "admin-server-cheats",
     pageLabel: "sidebar.blacklist",
   },
+  "admin-server-banned-ips": {
+    section: "server",
+    sectionFirst: "admin-server-cheats",
+    pageLabel: "sidebar.bannedIps",
+  },
   "admin-shop-cheats": {
     section: "shop",
     sectionFirst: "admin-shop-cheats",

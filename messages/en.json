@@ -256,6 +256,28 @@
           "action": "Action"
         }
       },
+      "allBannedIps": {
+        "title": "Banned IPs",
+        "description": "IP addresses stored in banned_ips. Add entries using the same dialog as blacklist (IP tab selected by default) or delete a row.",
+        "searchPlaceholder": "IP, Discord name, id, reason…",
+        "refresh": "Refresh",
+        "accessDenied": "Founders only.",
+        "addEntry": "Add banned IP",
+        "deleteSuccess": "Banned IP removed.",
+        "deleteError": "Could not delete this entry.",
+        "errorLoading": "Could not load banned IPs.",
+        "table": {
+          "ip": "IP address",
+          "discord": "Discord",
+          "reason": "Reason",
+          "date": "Date",
+          "action": "Action",
+          "noReason": "—",
+          "entriesCount": "{{count}} entries",
+          "deleteMenu": "Delete…",
+          "deleteRowLabel": "Delete: {{label}}"
+        }
+      },
       "allReviews": {
         "serverTitle": "All Reviews",
         "shopTitle": "Reviews",
@@ -453,6 +475,7 @@
     "files": "Files",
     "logs": "Logs",
     "blacklist": "Blacklist",
+    "bannedIps": "Banned IPs",
     "messenger": "Messenger",
     "settings": "Settings",
     "getHelp": "Get Help",

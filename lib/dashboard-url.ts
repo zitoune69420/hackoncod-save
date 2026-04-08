@@ -25,6 +25,7 @@ export const DASHBOARD_PAGE_IDS = [
   "admin-server-videos",
   "admin-server-reviews",
   "admin-server-blacklist",
+  "admin-server-banned-ips",
   "admin-shop-cheats",
   "admin-shop-games",
   "admin-shop-services",

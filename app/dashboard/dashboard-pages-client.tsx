@@ -20,6 +20,7 @@ import {
   AdminServerReviewsPage,
   AdminShopReviewsPage,
   AdminServerBlacklistPage,
+  AdminServerBannedIpsPage,
 } from "@/app/components/pages";
 import {
   DASHBOARD_DEFAULT_PAGE,
@@ -51,6 +52,8 @@ PAGES["admin-server-videos"] = AdminServerVideosPage as ComponentType<PageProps>
 PAGES["admin-server-reviews"] = AdminServerReviewsPage as ComponentType<PageProps>;
 PAGES["admin-shop-reviews"] = AdminShopReviewsPage as ComponentType<PageProps>;
 PAGES["admin-server-blacklist"] = AdminServerBlacklistPage as ComponentType<PageProps>;
+PAGES["admin-server-banned-ips"] =
+  AdminServerBannedIpsPage as ComponentType<PageProps>;
 for (const id of [
   "admin-shop-services",
   "admin-shop-accounts",

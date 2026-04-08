@@ -15,3 +15,4 @@ export { AdminServerVideosPage } from "./server/admin-server-videos";
 export { AdminServerReviewsPage } from "./server/admin-server-reviews";
 export { AdminShopReviewsPage } from "./server/admin-shop-reviews";
 export { AdminServerBlacklistPage } from "./server/admin-server-blacklist";
+export { AdminServerBannedIpsPage } from "./server/admin-server-banned-ips";

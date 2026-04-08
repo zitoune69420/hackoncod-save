@@ -26,6 +26,8 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   editingRow: AdminBlacklistRow | null;
   onSaved: () => void;
+  /** Onglet ouvert à la création (ignoré en édition). */
+  defaultCreateMode?: BanMode;
 };
 
 export function AdminBlacklistFormDialog({
@@ -33,6 +35,7 @@ export function AdminBlacklistFormDialog({
   onOpenChange,
   editingRow,
   onSaved,
+  defaultCreateMode = "discord",
 }: Props) {
   const { t } = useTranslations();
 
@@ -56,9 +59,9 @@ export function AdminBlacklistFormDialog({
       setBanIp("");
       setIpOptionalDiscord("");
       setReason("");
-      setBanMode("discord");
+      setBanMode(defaultCreateMode);
     }
-  }, [open, editingRow]);
+  }, [open, editingRow, defaultCreateMode]);
 
   const persistedDbId = editingRow?.db_row_id?.trim() ?? "";
   const isPersistedInDb = Boolean(persistedDbId);

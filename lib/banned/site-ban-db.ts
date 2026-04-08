@@ -1,5 +1,6 @@
 import "server-only";
 
+import type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
 import { auth } from "@/app/auth";
 import { fetchGuildBanIfAny } from "@/lib/discord/guild-bans";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -227,6 +228,44 @@ export async function isIpInBanList(ip: string): Promise<boolean> {
     return false;
   }
   return data != null;
+}
+
+export type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
+
+export async function listAllBannedIpsForAdmin(): Promise<BannedIpAdminRow[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("banned_ips")
+    .select("id, ip, discord_id, reason, created_at")
+    .order("created_at", { ascending: false });
+  if (error) {
+    if (error.code === "42P01" || error.code === "PGRST205") {
+      return [];
+    }
+    console.error("[site-ban-db] listAllBannedIpsForAdmin", error.message);
+    throw new Error(error.message ?? "list banned_ips");
+  }
+  const rows = (data ?? []) as BannedIpAdminRow[];
+  return rows.map((r) => ({
+    id: String(r.id ?? ""),
+    ip: String(r.ip ?? ""),
+    discord_id: r.discord_id != null ? String(r.discord_id) : null,
+    reason: r.reason != null ? String(r.reason) : null,
+    created_at: r.created_at != null ? String(r.created_at) : null,
+  }));
+}
+
+export async function deleteBannedIpById(id: string): Promise<void> {
+  const raw = id.trim();
+  if (!raw) throw new Error("id requis");
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("banned_ips").delete().eq("id", raw);
+  if (error) {
+    if (error.code === "42P01") {
+      throw new Error("Table banned_ips introuvable.");
+    }
+    throw new Error(error.message ?? "delete banned_ips");
+  }
 }
 
 export async function isDiscordIdInBanList(

@@ -256,6 +256,28 @@
           "action": "Action"
         }
       },
+      "allBannedIps": {
+        "title": "IPs bannies",
+        "description": "Liste des adresses IP enregistrées dans banned_ips. Tu peux en ajouter (même dialogue que la blacklist, onglet IP par défaut) ou supprimer une ligne.",
+        "searchPlaceholder": "IP, pseudo Discord, id, motif…",
+        "refresh": "Actualiser",
+        "accessDenied": "Accès réservé aux fondateurs.",
+        "addEntry": "Ajouter une IP bannie",
+        "deleteSuccess": "IP retirée des bannissements.",
+        "deleteError": "Impossible de supprimer cette entrée.",
+        "errorLoading": "Erreur lors du chargement des IPs bannies.",
+        "table": {
+          "ip": "Adresse IP",
+          "discord": "Discord",
+          "reason": "Motif",
+          "date": "Date",
+          "action": "Action",
+          "noReason": "—",
+          "entriesCount": "{{count}} entrées",
+          "deleteMenu": "Supprimer…",
+          "deleteRowLabel": "Supprimer : {{label}}"
+        }
+      },
       "allReviews": {
         "serverTitle": "Avis (serveur)",
         "shopTitle": "Avis (boutique)",
@@ -453,6 +475,7 @@
     "files": "Fichiers",
     "logs": "Journaux",
     "blacklist": "Liste noire",
+    "bannedIps": "IPs bannies",
     "messenger": "Messagerie",
     "settings": "Paramètres",
     "getHelp": "Aide",

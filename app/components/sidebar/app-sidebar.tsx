@@ -71,6 +71,7 @@ function useNavData() {
             { title: "Videos", pageId: "admin-server-videos" },
             { title: "Reviews", pageId: "admin-server-reviews" },
             { title: "Blacklist", pageId: "admin-server-blacklist" },
+            { title: t("sidebar.bannedIps"), pageId: "admin-server-banned-ips" },
           ],
         },
         {
