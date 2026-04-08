@@ -1,7 +1,10 @@
-import { findDiscordAccountId } from "@/lib/banned/site-ban-db";
+import {
+  findDiscordAccountId,
+  insertBannedIpRowStrict,
+} from "@/lib/banned/site-ban-db";
 import {
   buildBlacklistUpsertRow,
-  parseBlacklistWriteBody,
+  parseBlacklistPostBody,
 } from "@/lib/blacklist/admin-blacklist-write";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import {
@@ -161,11 +164,12 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => null);
-    const parsed = parseBlacklistWriteBody(body);
+    const parsed = parseBlacklistPostBody(body);
     if (!parsed) {
       return NextResponse.json(
         {
-          error: "Invalid body (user_id snowflake Discord et champs optionnels)",
+          error:
+            "Corps invalide : mode discord (user_id snowflake) ou mode ip (ip valide, discord_user_id optionnel).",
         },
         { status: 400 },
       );
@@ -179,6 +183,41 @@ export async function POST(req: Request) {
             "Impossible de résoudre ton compte Discord (connecte-toi avec Discord).",
         },
         { status: 400 },
+      );
+    }
+
+    if (parsed.kind === "ip") {
+      const reasonStored = parsed.reason?.trim() || null;
+      const banMessage =
+        reasonStored ?? "Bannissement IP (ajout manuel admin)";
+      await insertBannedIpRowStrict({
+        ip: parsed.ip,
+        discord_id: parsed.discord_user_id,
+        reason: reasonStored,
+      });
+
+      let retardId: string | null = null;
+      if (parsed.discord_user_id) {
+        const row = await buildBlacklistUpsertRow({
+          user_id: parsed.discord_user_id,
+          reason: parsed.reason,
+          added_by: actorDiscordId,
+        });
+        const inserted = await insertBlacklist(row);
+        retardId = inserted.id;
+        const targetSnowflake = discordSnowflakeFromBlacklistFields(
+          row.user_id,
+          row.discord,
+        );
+        await tryGuildBanMemberForBlock(
+          targetSnowflake,
+          banMessage,
+        );
+      }
+
+      return NextResponse.json(
+        { ok: true, banned_ip: true, retard_id: retardId },
+        { status: 201 },
       );
     }
 

@@ -192,6 +192,26 @@ export async function insertBannedIpRow(input: {
   }
 }
 
+/** Même insert ; lève une erreur lisible pour les échecs admin (doublon, RLS, etc.). */
+export async function insertBannedIpRowStrict(input: {
+  ip: string;
+  discord_id: string | null;
+  reason: string | null;
+}): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("banned_ips").insert({
+    ip: input.ip.slice(0, 128),
+    discord_id: input.discord_id?.slice(0, 64) ?? null,
+    reason: input.reason?.slice(0, 500) ?? null,
+  });
+  if (error) {
+    if (error.code === "42P01") {
+      throw new Error("Table banned_ips introuvable.");
+    }
+    throw new Error(error.message ?? "insert banned_ips");
+  }
+}
+
 export async function isIpInBanList(ip: string): Promise<boolean> {
   if (!ip || ip === "unknown") return false;
   const supabase = createAdminClient();
