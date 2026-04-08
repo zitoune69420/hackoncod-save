@@ -101,16 +101,17 @@ export function GamesPage() {
           {t("games.description")}
         </p>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0 w-full sm:w-auto sm:max-w-xl">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 w-full">
           <SearchBar
             value={search}
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
             placeholder={t("games.searchPlaceholder")}
+            className="max-w-none"
           />
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex items-center gap-2">
           <SuggestGameDialogTrigger />
           <Button
             size="lg"
