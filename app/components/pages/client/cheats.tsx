@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CommonTable } from "@/components/commons/table/table";
@@ -15,6 +16,7 @@ import { useTranslations } from "@/app/components/i18n-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { COD_GAMES } from "@/lib/cod-games";
 import { CheatDownloadButton } from "@/app/components/commons/exclusive-cheat-download-button";
+import { cn } from "@/lib/utils";
 
 export type CheatRow = {
   id: string;
@@ -132,22 +134,39 @@ export function CheatsToolbar({
           </TooltipTrigger>
           <TooltipContent>{t("common.more")}</TooltipContent>
         </Tooltip>
-        <DropdownMenuContent className="max-h-80 w-72 overflow-y-auto">
-          {others.map((game) => (
-            <DropdownMenuItem
-              key={game.value}
-              onClick={() => onSelectGameAction(game.label)}
-            >
-              <Image
-                src={`/games/icons/${game.icon}`}
-                alt={game.label}
-                width={24}
-                height={24}
-                className="mr-2 rounded-[5px]"
-              />
-              {game.label}
-            </DropdownMenuItem>
-          ))}
+        <DropdownMenuContent className="max-h-80 w-76 overflow-y-auto">
+          <DropdownMenuRadioGroup
+            value={
+              others.some((g) => g.label === selectedGame)
+                ? selectedGame
+                : undefined
+            }
+            onValueChange={(label) => {
+              if (label) onSelectGameAction(label);
+            }}
+          >
+            {others.map((game) => (
+              <DropdownMenuRadioItem
+                key={game.value}
+                value={game.label}
+                className={cn(
+                  "gap-2 pl-2 pr-8",
+                  "data-[state=checked]:bg-primary/15 data-[state=checked]:font-medium data-[state=checked]:text-foreground",
+                  "dark:data-[state=checked]:bg-primary/25",
+                  "data-[state=checked]:focus:bg-primary/20 data-[state=checked]:data-highlighted:bg-primary/20",
+                )}
+              >
+                <Image
+                  src={`/games/icons/${game.icon}`}
+                  alt={game.label}
+                  width={24}
+                  height={24}
+                  className="shrink-0 rounded-[5px]"
+                />
+                {game.label}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
