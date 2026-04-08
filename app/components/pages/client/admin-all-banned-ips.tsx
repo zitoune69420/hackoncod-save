@@ -490,7 +490,7 @@ export function AdminAllBannedIpsPage() {
       showPendingDeleteConfirmToast({
         getLine: (sec) =>
           sec > 0
-            ? t("common.pendingDeleteCountdown")
+            ? t("common.pendingDeleteCountdown", { seconds: sec })
             : t("common.pendingDeleteApplying"),
         cancelLabel: t("common.pendingDeleteCancel"),
         applyingLabel: t("common.pendingDeleteApplying"),

@@ -338,7 +338,7 @@
     "previous": "Previous",
     "leaveReviewAfterDownload": "Feel free to leave a review!",
     "addReview": "Add review",
-    "pendingDeleteCountdown": "Deleting in",
+    "pendingDeleteCountdown": "Deleting in {{seconds}} s",
     "pendingDeleteApplying": "Deleting…",
     "pendingDeleteCancel": "Cancel",
     "loginRequired": "Sign in with Discord to send a suggestion.",

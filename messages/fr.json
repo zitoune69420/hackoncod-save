@@ -331,7 +331,7 @@
     "previous": "Précédent",
     "leaveReviewAfterDownload": "N'hésitez pas à laisser un avis !",
     "addReview": "Ajouter un avis",
-    "pendingDeleteCountdown": "Suppression dans",
+    "pendingDeleteCountdown": "Suppression dans {{seconds}} s",
     "pendingDeleteApplying": "Suppression…",
     "pendingDeleteCancel": "Annuler",
     "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion.",
