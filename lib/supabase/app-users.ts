@@ -115,6 +115,52 @@ export async function getAppUserRow(
   }
 }
 
+/**
+ * UUID primaire (`users.id`) pour les colonnes FK uuid (ex. `sale.buy_by`).
+ * L’ID Better Auth peut être un snowflake Discord : résolution via `auth_user_id`.
+ */
+export async function getAppUserTableIdForAuthUser(
+  authUserId: string,
+): Promise<string | null> {
+  try {
+    const supabase = createAdminClient();
+    if (isUuid(authUserId)) {
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select("id")
+        .eq("id", authUserId)
+        .maybeSingle();
+      if (error) {
+        logSupabaseError("getAppUserTableIdForAuthUser.eq_id", error);
+        return null;
+      }
+      return data?.id ?? null;
+    }
+
+    if (process.env.SUPABASE_APP_USERS_SKIP_AUTH_USER_ID === "1") {
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("id")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === "42703" || error.message?.includes("auth_user_id")) {
+        return null;
+      }
+      logSupabaseError("getAppUserTableIdForAuthUser.eq_auth_user_id", error);
+      return null;
+    }
+    return data?.id ?? null;
+  } catch (e) {
+    console.error("[app-users] getAppUserTableIdForAuthUser", e);
+    return null;
+  }
+}
+
 export async function getAppUserRole(
   authUserId: string,
 ): Promise<UserRole | null> {

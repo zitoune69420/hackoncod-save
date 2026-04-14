@@ -21,6 +21,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon, CustomerService01Icon } from "@hugeicons/core-free-icons";
 import { Spinner } from "@/components/ui/spinner";
 import type { Ticket } from "@/lib/supabase/shop-types";
+import { useTicketChatLoading } from "@/app/dashboard/ticket-chat-loading-context";
 
 async function fetchTicketsList(): Promise<Ticket[]> {
   const res = await fetch("/api/shop/tickets");
@@ -56,6 +57,7 @@ export function NavSupport({
   navTransitionPending?: boolean;
 }) {
   const { t } = useTranslations();
+  const { loadingOrderId } = useTicketChatLoading();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -135,6 +137,13 @@ export function NavSupport({
                     const oid = tk.order.id;
                     const active =
                       isTicketsPage && currentOrderId === oid;
+                    const chatOpening =
+                      loadingOrderId != null && loadingOrderId === oid;
+                    const showRowSpinner =
+                      chatOpening ||
+                      (navTransitionPending &&
+                        pendingNavPageId === "tickets" &&
+                        active);
                     return (
                       <SidebarMenuSubItem key={oid}>
                         <SidebarMenuSubButton
@@ -146,9 +155,7 @@ export function NavSupport({
                           }
                           className="gap-2"
                         >
-                          {navTransitionPending &&
-                          pendingNavPageId === "tickets" &&
-                          active ? (
+                          {showRowSpinner ? (
                             <Spinner className="size-3.5 shrink-0 text-muted-foreground" />
                           ) : null}
                           <span className="truncate" title={ticketSidebarTitle(tk, t)}>

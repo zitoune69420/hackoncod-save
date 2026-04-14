@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useMemo, type FormEvent } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import {
   Dialog,
@@ -41,6 +43,8 @@ import type {
   CheatPrice,
   ServicePrice,
 } from "@/lib/supabase/shop-types";
+import { createOrderAction } from "@/app/actions/shop-order";
+import { cacheKey, invalidateCache } from "@/lib/cache";
 
 type Step = "preorder" | "payment" | "confirmation" | "chat";
 
@@ -88,6 +92,9 @@ export function ShopProductDialog({
   prices,
 }: ShopProductDialogProps) {
   const { t } = useTranslations();
+  const router = useRouter();
+  const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
   const [currentStep, setCurrentStep] = useState<Step>("preorder");
   const [showProductInfo, setShowProductInfo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,6 +113,10 @@ export function ShopProductDialog({
   const [confirmPaymentSent, setConfirmPaymentSent] = useState(false);
   const [confirmPriceVariation, setConfirmPriceVariation] = useState(false);
 
+  // Order result
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
   const resetState = useCallback(() => {
     setCurrentStep("preorder");
     setShowProductInfo(false);
@@ -118,6 +129,8 @@ export function ShopProductDialog({
     setSenderAccount("");
     setConfirmPaymentSent(false);
     setConfirmPriceVariation(false);
+    setOrderError(null);
+    setCreatedOrderId(null);
   }, []);
 
   const handleOpenChange = useCallback(
@@ -127,6 +140,75 @@ export function ShopProductDialog({
     },
     [onOpenChange, resetState],
   );
+
+  /** Animations ressort / stagger partagées entre toutes les étapes du dialogue. */
+  const stepPanelMotion = useMemo(() => {
+    const reduced = !!reduceMotion;
+    const spring = (stiffness: number, damping: number, delay = 0) =>
+      reduced
+        ? { duration: 0.22 }
+        : ({
+            type: "spring" as const,
+            stiffness,
+            damping,
+            delay,
+            mass: 0.72,
+          });
+    return {
+      container: {
+        hidden: {},
+        show: {
+          transition: {
+            staggerChildren: reduced ? 0 : 0.1,
+            delayChildren: reduced ? 0 : 0.04,
+          },
+        },
+      },
+      section: {
+        hidden: { opacity: 0, y: reduced ? 0 : 14 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: spring(400, 26),
+        },
+      },
+      actions: {
+        hidden: { opacity: 0, y: reduced ? 0 : 14 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: spring(340, 28, 0.08),
+        },
+      },
+      iconRing: {
+        hidden: reduced
+          ? { opacity: 0 }
+          : { opacity: 0, scale: 0.32, rotate: -12 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          rotate: 0,
+          transition: spring(400, 15),
+        },
+      },
+      iconGlyph: {
+        hidden: reduced ? { opacity: 0 } : { opacity: 0, scale: 0.15 },
+        show: {
+          opacity: 1,
+          scale: 1,
+          transition: spring(560, 17, 0.06),
+        },
+      },
+      text: {
+        hidden: { opacity: 0, y: reduced ? 0 : 18 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: spring(380, 26),
+        },
+      },
+    };
+  }, [reduceMotion]);
 
   if (!product) return null;
 
@@ -167,12 +249,35 @@ export function ShopProductDialog({
   async function handleConfirmationSubmit(e: FormEvent) {
     e.preventDefault();
     if (!confirmPaymentSent || (productType === "account" && !confirmPriceVariation)) return;
+    if (!product) return;
     setIsSubmitting(true);
-    // TODO: wire up to /api/shop/create-order + /api/shop/payment
-    setTimeout(() => {
+    setOrderError(null);
+
+    try {
+      const result = await createOrderAction({
+        productId: product.id,
+        productType,
+        priceId: selectedPriceId || null,
+        notes: formNotes || null,
+        paymentMethod,
+        senderFirstName,
+        senderLastName,
+        senderAccount,
+      });
+
+      if (!result.ok) {
+        setOrderError(result.error);
+        setIsSubmitting(false);
+        return;
+      }
+
+      setCreatedOrderId(result.orderId);
       setIsSubmitting(false);
       setCurrentStep("chat");
-    }, 1200);
+    } catch {
+      setOrderError("server");
+      setIsSubmitting(false);
+    }
   }
 
   // ── Render helpers ────────────────────────────────────────────────
@@ -281,27 +386,41 @@ export function ShopProductDialog({
         style={{ maxWidth: "min(32rem, calc(100vw - 2rem))" }}
       >
         {currentStep !== "chat" && (
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {product.name}
-              <Badge
-                variant={product.is_active ? "default" : "secondary"}
-              >
-                {product.is_active
-                  ? t("shop.common.active")
-                  : t("shop.common.inactive")}
-              </Badge>
-            </DialogTitle>
-            {product.description && currentStep === "preorder" && (
-              <DialogDescription className="line-clamp-2">{product.description}</DialogDescription>
-            )}
-          </DialogHeader>
+          <motion.div
+            key={`dialog-head-${currentStep}`}
+            initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              reduceMotion
+                ? { duration: 0.18 }
+                : { type: "spring", stiffness: 460, damping: 34 }
+            }
+          >
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                {product.name}
+              </DialogTitle>
+              {product.description && currentStep === "preorder" && (
+                <DialogDescription className="line-clamp-2">{product.description}</DialogDescription>
+              )}
+            </DialogHeader>
+          </motion.div>
         )}
 
         <div className="space-y-6">
           {/* Toggle product info + product info + stepper */}
           {currentStep !== "chat" && (
-          <div className={currentStep === "preorder" ? "space-y-6" : "space-y-2"}>
+          <motion.div
+            key={`dialog-meta-${currentStep}`}
+            className={currentStep === "preorder" ? "space-y-6" : "space-y-2"}
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={
+              reduceMotion
+                ? { duration: 0.18 }
+                : { type: "spring", stiffness: 400, damping: 30, delay: 0.02 }
+            }
+          >
             {currentStep !== "preorder" && (
               <Button
                 type="button"
@@ -340,16 +459,33 @@ export function ShopProductDialog({
               </div>
             </div>
 
-            {renderStepper()}
-          </div>
+            <motion.div
+              key={currentStep}
+              initial={reduceMotion ? false : { opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0.2 }
+                  : { type: "spring", stiffness: 420, damping: 32 }
+              }
+            >
+              {renderStepper()}
+            </motion.div>
+          </motion.div>
           )}
 
           {/* ── Step 1: Preorder ─────────────────────────────────── */}
           {currentStep === "preorder" && (
-            <div key="step-preorder" className="animate-step-in space-y-4">
+            <motion.div
+              key="step-preorder"
+              className="space-y-4"
+              variants={stepPanelMotion.container}
+              initial="hidden"
+              animate="show"
+            >
               <form onSubmit={handlePreorderSubmit} className="space-y-4">
                 {hasPrices && (
-                  <div>
+                  <motion.div variants={stepPanelMotion.section}>
                     <Label htmlFor="price_id" className="block pb-2">
                       {t("shop.dialog.selectPriceRequired")}
                     </Label>
@@ -371,10 +507,10 @@ export function ShopProductDialog({
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </motion.div>
                 )}
 
-                <div>
+                <motion.div variants={stepPanelMotion.section}>
                   <Label htmlFor="notes" className="block pb-2">
                     {t("shop.dialog.notes")}
                   </Label>
@@ -386,26 +522,34 @@ export function ShopProductDialog({
                     placeholder={t("shop.dialog.notesPlaceholder")}
                     className="resize-none"
                   />
-                </div>
+                </motion.div>
 
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || (hasPrices && !selectedPriceId)}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  {t("shop.dialog.goToPayment")}
-                  <HugeiconsIcon icon={ArrowRight02Icon} strokeWidth={2} />
-                </Button>
+                <motion.div variants={stepPanelMotion.actions}>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting || (hasPrices && !selectedPriceId)}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    {t("shop.dialog.goToPayment")}
+                    <HugeiconsIcon icon={ArrowRight02Icon} strokeWidth={2} />
+                  </Button>
+                </motion.div>
               </form>
-            </div>
+            </motion.div>
           )}
 
           {/* ── Step 2: Payment ──────────────────────────────────── */}
           {currentStep === "payment" && (
-            <div key="step-payment" className="animate-step-in space-y-4">
+            <motion.div
+              key="step-payment"
+              className="space-y-4"
+              variants={stepPanelMotion.container}
+              initial="hidden"
+              animate="show"
+            >
               <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                <div>
+                <motion.div variants={stepPanelMotion.section}>
                   <Label className="block pb-2">
                     {t("shop.dialog.paymentMethodRequired")}
                   </Label>
@@ -439,10 +583,16 @@ export function ShopProductDialog({
                       );
                     })}
                   </div>
-                </div>
+                </motion.div>
 
                 {paymentMethod && (
-                  <div className="animate-step-in rounded-md border bg-muted/50 p-4">
+                  <motion.div
+                    key={paymentMethod}
+                    variants={stepPanelMotion.section}
+                    initial="hidden"
+                    animate="show"
+                    className="rounded-md border bg-muted/50 p-4"
+                  >
                     <div className="space-y-2">
                       <div className="mb-2 flex items-center gap-2">
                         {paymentMethod === "PayPal" ? (
@@ -466,39 +616,41 @@ export function ShopProductDialog({
                           : (product as { revolut?: string | null }).revolut}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="sender_first_name" className="block pb-2">
-                      {t("shop.dialog.senderFirstName")}
-                    </Label>
-                    <Input
-                      id="sender_first_name"
-                      value={senderFirstName}
-                      onChange={(e) => setSenderFirstName(e.target.value)}
-                      placeholder={t("shop.dialog.firstNamePlaceholder")}
-                      className="h-9"
-                      required
-                    />
+                <motion.div variants={stepPanelMotion.section}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="sender_first_name" className="block pb-2">
+                        {t("shop.dialog.senderFirstName")}
+                      </Label>
+                      <Input
+                        id="sender_first_name"
+                        value={senderFirstName}
+                        onChange={(e) => setSenderFirstName(e.target.value)}
+                        placeholder={t("shop.dialog.firstNamePlaceholder")}
+                        className="h-9"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sender_last_name" className="block pb-2">
+                        {t("shop.dialog.senderLastName")}
+                      </Label>
+                      <Input
+                        id="sender_last_name"
+                        value={senderLastName}
+                        onChange={(e) => setSenderLastName(e.target.value)}
+                        placeholder={t("shop.dialog.lastNamePlaceholder")}
+                        className="h-9"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="sender_last_name" className="block pb-2">
-                      {t("shop.dialog.senderLastName")}
-                    </Label>
-                    <Input
-                      id="sender_last_name"
-                      value={senderLastName}
-                      onChange={(e) => setSenderLastName(e.target.value)}
-                      placeholder={t("shop.dialog.lastNamePlaceholder")}
-                      className="h-9"
-                      required
-                    />
-                  </div>
-                </div>
+                </motion.div>
 
-                <div>
+                <motion.div variants={stepPanelMotion.section}>
                   <Label htmlFor="sender_account" className="block pb-2">
                     {t("shop.dialog.senderAccount")}
                   </Label>
@@ -514,46 +666,57 @@ export function ShopProductDialog({
                     }
                     required
                   />
-                </div>
+                </motion.div>
 
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCurrentStep("preorder")}
-                    className="flex-1 gap-2"
-                    size="lg"
-                  >
-                    <HugeiconsIcon icon={ArrowLeft02Icon} strokeWidth={2} />
-                    {t("shop.dialog.back")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      isSubmitting ||
-                      !paymentMethod ||
-                      !senderFirstName ||
-                      !senderLastName ||
-                      !senderAccount
-                    }
-                    className="flex-1"
-                    size="lg"
-                  >
-                    {t("shop.dialog.confirmPayment")}
-                  </Button>
-                </div>
+                <motion.div variants={stepPanelMotion.actions}>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep("preorder")}
+                      className="flex-1 gap-2"
+                      size="lg"
+                    >
+                      <HugeiconsIcon icon={ArrowLeft02Icon} strokeWidth={2} />
+                      {t("shop.dialog.back")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        !paymentMethod ||
+                        !senderFirstName ||
+                        !senderLastName ||
+                        !senderAccount
+                      }
+                      className="flex-1"
+                      size="lg"
+                    >
+                      {t("shop.dialog.confirmPayment")}
+                    </Button>
+                  </div>
+                </motion.div>
               </form>
-            </div>
+            </motion.div>
           )}
 
           {/* ── Step 3: Confirmation ─────────────────────────────── */}
           {currentStep === "confirmation" && (
-            <div key="step-confirmation" className="animate-step-in space-y-4">
+            <motion.div
+              key="step-confirmation"
+              className="space-y-4"
+              variants={stepPanelMotion.container}
+              initial="hidden"
+              animate="show"
+            >
               <form
                 onSubmit={handleConfirmationSubmit}
                 className="space-y-4"
               >
-                <div className="rounded-md border bg-muted/30 p-4">
+                <motion.div
+                  variants={stepPanelMotion.section}
+                  className="rounded-md border bg-muted/30 p-4"
+                >
                   <h4 className="mb-3 text-sm font-medium">
                     {t("shop.dialog.summaryTitle")}
                   </h4>
@@ -608,9 +771,12 @@ export function ShopProductDialog({
                       </div>
                     )}
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+                <motion.div
+                  variants={stepPanelMotion.section}
+                  className="rounded-md border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20"
+                >
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="confirm-payment-sent"
@@ -627,10 +793,13 @@ export function ShopProductDialog({
                       {t("shop.dialog.paymentConfirmation")}
                     </Label>
                   </div>
-                </div>
+                </motion.div>
 
                 {productType === "account" && (
-                  <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                  <motion.div
+                    variants={stepPanelMotion.section}
+                    className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
+                  >
                     <div className="flex items-start space-x-3">
                       <Checkbox
                         id="confirm-price-variation"
@@ -647,62 +816,128 @@ export function ShopProductDialog({
                         {t("shop.dialog.priceVariationConfirmation")}
                       </Label>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCurrentStep("payment")}
-                    className="flex-1 gap-2"
+                {orderError && (
+                  <motion.div
+                    variants={stepPanelMotion.section}
+                    className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
                   >
-                    <HugeiconsIcon icon={ArrowLeft02Icon} strokeWidth={2} />
-                    {t("shop.dialog.back")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || !confirmPaymentSent || (productType === "account" && !confirmPriceVariation)}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <HugeiconsIcon
-                          icon={Loading03Icon}
-                          className="mr-2 size-4 animate-spin"
-                          strokeWidth={2}
-                        />
-                        {t("shop.dialog.processing")}
-                      </>
-                    ) : (
-                      t("shop.dialog.confirm")
-                    )}
-                  </Button>
-                </div>
+                    {orderError === "unauthorized"
+                      ? t("shop.dialog.errorUnauthorized")
+                      : orderError === "product_not_found"
+                        ? t("shop.dialog.errorProductNotFound")
+                        : t("shop.dialog.errorServer")}
+                  </motion.div>
+                )}
+
+                <motion.div variants={stepPanelMotion.actions}>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep("payment")}
+                      className="flex-1 gap-2"
+                    >
+                      <HugeiconsIcon icon={ArrowLeft02Icon} strokeWidth={2} />
+                      {t("shop.dialog.back")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || !confirmPaymentSent || (productType === "account" && !confirmPriceVariation)}
+                      className="flex-1"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <HugeiconsIcon
+                            icon={Loading03Icon}
+                            className="mr-2 size-4 animate-spin"
+                            strokeWidth={2}
+                          />
+                          {t("shop.dialog.processing")}
+                        </>
+                      ) : (
+                        t("shop.dialog.confirm")
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
               </form>
-            </div>
+            </motion.div>
           )}
 
           {/* ── Step 4: Order placed ───────────────────────────────── */}
           {currentStep === "chat" && (
-            <div key="step-chat" className="animate-step-in flex flex-col items-center gap-5">
-              <div className="flex size-20 items-center justify-center rounded-full bg-green-500/15">
-                <HugeiconsIcon
-                  icon={CheckmarkCircle02Icon}
-                  strokeWidth={1.5}
-                  className="size-12 shrink-0"
-                  color="#22c55e"
-                />
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">
+            <motion.div
+              key="step-chat"
+              className="flex flex-col items-center gap-5 overflow-hidden px-0.5 pt-1"
+              variants={stepPanelMotion.container}
+              initial="hidden"
+              animate="show"
+            >
+              <motion.div
+                variants={stepPanelMotion.iconRing}
+                className="relative flex size-24 items-center justify-center"
+              >
+                {!reduceMotion ? (
+                  <motion.div
+                    className="pointer-events-none absolute inset-0 rounded-full bg-green-500/25"
+                    initial={{ scale: 0.85, opacity: 0.9 }}
+                    animate={{ scale: [1, 1.45], opacity: [0.5, 0] }}
+                    transition={{
+                      duration: 0.75,
+                      ease: [0.22, 1, 0.36, 1],
+                      delay: 0.35,
+                    }}
+                  />
+                ) : null}
+                <div className="relative flex size-24 items-center justify-center rounded-full bg-green-500/15">
+                  <motion.div
+                    variants={stepPanelMotion.iconGlyph}
+                    className="flex items-center justify-center"
+                  >
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
+                      strokeWidth={1.5}
+                      className="size-14 shrink-0 drop-shadow-sm"
+                      color="#22c55e"
+                    />
+                  </motion.div>
+                </div>
+              </motion.div>
+              <motion.div
+                variants={stepPanelMotion.text}
+                className="text-center"
+              >
+                <motion.h3
+                  className="text-lg font-semibold"
+                  animate={
+                    reduceMotion
+                      ? undefined
+                      : { y: [0, -3, 0] }
+                  }
+                  transition={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          delay: 0.45,
+                          duration: 0.55,
+                          times: [0, 0.45, 1],
+                          ease: [0.34, 1.56, 0.64, 1],
+                        }
+                  }
+                >
                   {t("shop.dialog.orderPlacedTitle")}
-                </h3>
+                </motion.h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t("shop.dialog.orderPlacedDescription")}
                 </p>
-              </div>
-              <div className="flex w-full gap-2">
+              </motion.div>
+              <motion.div
+                variants={stepPanelMotion.actions}
+                className="flex w-full gap-2"
+              >
                 <Button
                   variant="outline"
                   onClick={() => handleOpenChange(false)}
@@ -713,15 +948,22 @@ export function ShopProductDialog({
                 <Button
                   className="flex-1 gap-2"
                   onClick={() => {
-                    // TODO: open chat for this order
                     handleOpenChange(false);
+                    if (createdOrderId) {
+                      invalidateCache(cacheKey("tickets"));
+                      const qs = new URLSearchParams({
+                        page: "tickets",
+                        orderId: createdOrderId,
+                      });
+                      router.replace(`${pathname}?${qs.toString()}`);
+                    }
                   }}
                 >
                   <HugeiconsIcon icon={Message01Icon} strokeWidth={2} />
                   {t("shop.dialog.openChat")}
                 </Button>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </DialogContent>

@@ -130,6 +130,35 @@ function createComponents(opts: ComponentOpts) {
         {...props}
       />
     ),
+    h2: ({ ...props }: React.ComponentProps<"h2">) => (
+      <h2
+        className={cn(
+          blockMb,
+          "text-base font-semibold leading-snug",
+          text,
+        )}
+        {...props}
+      />
+    ),
+    h3: ({ ...props }: React.ComponentProps<"h3">) => (
+      <h3
+        className={cn(
+          blockMb,
+          "text-sm font-semibold leading-snug",
+          text,
+        )}
+        {...props}
+      />
+    ),
+    hr: ({ ...props }: React.ComponentProps<"hr">) => (
+      <hr
+        className={cn(
+          "mb-1 mt-3 border-border/50 first:mt-0",
+          mutedBody && "border-border/40",
+        )}
+        {...props}
+      />
+    ),
   };
 }
 

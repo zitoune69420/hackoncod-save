@@ -35,6 +35,7 @@ import {
   isValidDashboardPageId,
   type DashboardPageId,
 } from "@/lib/dashboard-url";
+import { TicketChatLoadingProvider } from "@/app/dashboard/ticket-chat-loading-context";
 
 /** Fil d’Ariane admin : [section → première page], libellé de la page courante. */
 const ADMIN_BREADCRUMB: Partial<
@@ -315,6 +316,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const breadcrumbSegments = getDashboardBreadcrumbSegments(contentPage, t);
 
   return (
+    <TicketChatLoadingProvider>
     <SidebarProvider>
       <AppSidebar
         currentPage={contentPage}
@@ -374,6 +376,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>
     </SidebarProvider>
+    </TicketChatLoadingProvider>
   );
 }
 

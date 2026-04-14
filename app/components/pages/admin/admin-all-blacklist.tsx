@@ -12,14 +12,14 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminBlacklistFormDialog } from "@/app/components/pages/client/admin-blacklist-form-dialog";
-import type { AdminBlacklistRow } from "@/app/components/pages/client/admin-blacklist-types";
+import { AdminBlacklistFormDialog } from "@/app/components/pages/admin/admin-blacklist-form-dialog";
+import type { AdminBlacklistRow } from "@/app/components/pages/admin/admin-blacklist-types";
 import type { BlacklistEntryWithDisplay } from "@/lib/supabase/types";
 import { truncateText } from "@/lib/truncate-text";
 
 const REASON_MAX_CHARS = 80;
 
-export type { AdminBlacklistRow } from "@/app/components/pages/client/admin-blacklist-types";
+export type { AdminBlacklistRow } from "@/app/components/pages/admin/admin-blacklist-types";
 
 /** Assure les champs string (lignes API ou cache localStorage plus ancien). */
 function normalizeBlacklistRow(row: AdminBlacklistRow): AdminBlacklistRow {

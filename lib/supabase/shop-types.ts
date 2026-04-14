@@ -176,3 +176,51 @@ export interface InfoBlock {
   value: string | number | boolean | null | undefined;
   type?: "text" | "badge" | "boolean";
 }
+
+// ── Sales ────────────────────────────────────────────────────────────
+
+export interface Sale {
+  id: string;
+  title: string | null;
+  price: number | null;
+  og_price: number | null;
+  selled_by: string | null;
+  buy_by: string | null;
+  date: string | null;
+  type: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SaleAccount {
+  id: string;
+  sale_id: string | null;
+  email: string | null;
+  login: string | null;
+  old_password: string | null;
+  new_password: string | null;
+  last_activity: string | null;
+  balance: number | null;
+  register: string | null;
+  level: number | null;
+  country: string | null;
+  origin: string | null;
+  zla: boolean | null;
+  friends: number | null;
+  games: number | null;
+  skins: number | null;
+  region: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SaleCheat {
+  id: string;
+  sale_id: string | null;
+  key: string | null;
+  link: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}

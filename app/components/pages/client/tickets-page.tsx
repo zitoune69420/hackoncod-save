@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "@/app/components/i18n-provider";
@@ -8,13 +8,19 @@ import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Refresh01Icon } from "@hugeicons/core-free-icons";
-import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
+import { Loading03Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
+import {
+  cacheKey,
+  getCached,
+  invalidateCache,
+  setCached,
+} from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { getShopImageUrl } from "@/lib/shop-utils";
 import { authClient } from "@/lib/auth-client";
 import { useUserRole } from "@/hooks/use-user-role";
 import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url";
+import { useTicketChatLoading } from "@/app/dashboard/ticket-chat-loading-context";
 import { TicketList } from "./ticket-list";
 import { TicketChat } from "./ticket-chat";
 import type {
@@ -32,6 +38,7 @@ async function fetchTickets(): Promise<Ticket[]> {
 
 export function TicketsPage() {
   const { t } = useTranslations();
+  const { setTicketChatLoading } = useTicketChatLoading();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,6 +87,9 @@ export function TicketsPage() {
   const [viewerDiscordId, setViewerDiscordId] = useState<string | null>(null);
   const [chatImageUrl, setChatImageUrl] = useState<string | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
+
+  /** Un rechargement API si l’URL contient un orderId pas encore dans la liste (ex. commande fraîche). */
+  const didRefetchForMissingOrder = useRef(false);
 
   const filteredTickets = useMemo(() => {
     if (!searchQuery.trim()) return tickets;
@@ -149,6 +159,7 @@ export function TicketsPage() {
         syncTicketsUrl(orderId);
       }
       setChatLoading(true);
+      setTicketChatLoading(orderId);
       setSelectedOrderId(orderId);
       try {
         const [msgJson, ticket] = await Promise.all([
@@ -157,33 +168,47 @@ export function TicketsPage() {
           ),
           Promise.resolve(tickets.find((tk) => tk.order.id === orderId)),
         ]);
-        if (ticket) {
-          setSelectedOrder(ticket.order);
-          if (Array.isArray(msgJson)) {
-            setChatMessages(msgJson);
-            setViewerDiscordId(null);
-          } else {
-            setChatMessages(msgJson.messages ?? []);
-            setViewerDiscordId(msgJson.viewerDiscordId ?? null);
-          }
-          const img =
-            ticket.order.product && "image" in ticket.order.product
-              ? await getShopImageUrl(
-                  ticket.order.product.image as string | null,
-                )
-              : null;
-          setChatImageUrl(img);
+        if (!ticket) {
+          setSelectedOrderId(null);
+          setSelectedOrder(null);
+          setChatMessages([]);
+          setViewerDiscordId(null);
+          setChatImageUrl(null);
+          showToast({ text: t("tickets.toastError"), variant: "error" });
+          return;
         }
+        setSelectedOrder(ticket.order);
+        if (Array.isArray(msgJson)) {
+          setChatMessages(msgJson);
+          setViewerDiscordId(null);
+        } else {
+          setChatMessages(msgJson.messages ?? []);
+          setViewerDiscordId(msgJson.viewerDiscordId ?? null);
+        }
+        const img =
+          ticket.order.product && "image" in ticket.order.product
+            ? await getShopImageUrl(
+                ticket.order.product.image as string | null,
+              )
+            : null;
+        setChatImageUrl(img);
       } catch {
         showToast({ text: t("tickets.toastError"), variant: "error" });
         setSelectedOrderId(null);
+        setSelectedOrder(null);
+        setChatMessages([]);
         syncTicketsUrl(null);
       } finally {
         setChatLoading(false);
+        setTicketChatLoading(null);
       }
     },
-    [tickets, t, syncTicketsUrl],
+    [tickets, t, syncTicketsUrl, setTicketChatLoading],
   );
+
+  useEffect(() => {
+    didRefetchForMissingOrder.current = false;
+  }, [orderIdParam]);
 
   useEffect(() => {
     if (!orderIdParam) {
@@ -196,16 +221,24 @@ export function TicketsPage() {
       }
       return;
     }
-    if (loading || chatLoading) return;
-    if (tickets.length === 0) {
-      syncTicketsUrl(null);
-      return;
-    }
+
+    if (loading) return;
+
     const hasTicket = tickets.some((tk) => tk.order.id === orderIdParam);
     if (!hasTicket) {
+      if (!didRefetchForMissingOrder.current) {
+        didRefetchForMissingOrder.current = true;
+        invalidateCache(cacheKey("tickets"));
+        loadTickets(true);
+        return;
+      }
+      didRefetchForMissingOrder.current = false;
+      showToast({ text: t("tickets.toastError"), variant: "error" });
       syncTicketsUrl(null);
       return;
     }
+
+    if (chatLoading) return;
     if (selectedOrderId === orderIdParam && selectedOrder) return;
     void openChat(orderIdParam, { skipUrlSync: true });
   }, [
@@ -217,6 +250,8 @@ export function TicketsPage() {
     selectedOrder,
     openChat,
     syncTicketsUrl,
+    t,
+    loadTickets,
   ]);
 
   const handleBack = useCallback(() => {
@@ -293,8 +328,21 @@ export function TicketsPage() {
       </motion.div>
 
       {loading || chatLoading ? (
-        <div className="flex min-h-48 flex-col items-center justify-center gap-2">
-          <Progress value={progress} className="h-1 w-48" />
+        <div className="flex min-h-48 flex-col items-center justify-center gap-3">
+          {chatLoading ? (
+            <>
+              <HugeiconsIcon
+                icon={Loading03Icon}
+                strokeWidth={2}
+                className="size-8 shrink-0 animate-spin text-muted-foreground"
+              />
+              <p className="max-w-xs text-center text-sm text-muted-foreground">
+                {t("tickets.loadingMessages")}
+              </p>
+            </>
+          ) : (
+            <Progress value={progress} className="h-1 w-48" />
+          )}
         </div>
       ) : (
         <TicketList tickets={filteredTickets} onSelect={openChat} />

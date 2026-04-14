@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CommonTable } from "@/components/commons/table/table";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  Cancel01Icon,
+  Refresh01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
@@ -12,48 +17,59 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminVideoFormDialog } from "@/app/components/pages/client/admin-video-form-dialog";
-import type { AdminVideoRow } from "@/app/components/pages/client/admin-videos-types";
-import type { Video } from "@/lib/supabase/types";
+import { AdminGameFormDialog } from "@/app/components/pages/admin/admin-game-form-dialog";
+import type { AdminGameRow } from "@/app/components/pages/admin/admin-games-types";
+import type { Game } from "@/lib/supabase/types";
 import { truncateText } from "@/lib/truncate-text";
 
 const DESCRIPTION_MAX_CHARS = 100;
 
-export type { AdminVideoRow } from "@/app/components/pages/client/admin-videos-types";
+export type { AdminGameRow } from "@/app/components/pages/admin/admin-games-types";
 
-function videoToRow(v: Video): AdminVideoRow {
+function gameToRow(g: Game): AdminGameRow {
   return {
-    id: v.id,
-    title: v.title,
-    description: v.description ?? "",
-    image: v.image ?? "",
-    link: v.link ?? "",
+    id: g.id,
+    title: g.title,
+    description: g.description ?? "",
+    image: g.image ?? "",
+    steam: g.steam ?? "",
+    link: g.link ?? "",
+    client: g.client ?? "",
+    displayed: Boolean(g.displayed),
   };
 }
 
-async function fetchAdminVideos(): Promise<AdminVideoRow[]> {
-  const res = await fetch("/api/admin/videos");
+async function fetchAdminGames(): Promise<AdminGameRow[]> {
+  const res = await fetch("/api/admin/games");
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(typeof data?.error === "string" ? data.error : "Error");
   }
   if (!Array.isArray(data)) return [];
-  return (data as Video[]).map(videoToRow);
+  return (data as Game[]).map(gameToRow);
 }
 
-function getAdminVideosColumns(
+function BoolCell({ value }: { value: boolean }) {
+  return value ? (
+    <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-5 text-green-600" />
+  ) : (
+    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-5 text-red-600" />
+  );
+}
+
+function getAdminGamesColumns(
   t: (key: string, params?: Record<string, string | number>) => string,
-  onEdit: (row: AdminVideoRow) => void,
-  onDelete: (row: AdminVideoRow) => void,
+  onEdit: (row: AdminGameRow) => void,
+  onDelete: (row: AdminGameRow) => void,
 ) {
   return [
-    { key: "title" as const, label: t("dashboard.admin.allVideos.table.title") },
+    { key: "title" as const, label: t("dashboard.admin.allGames.table.title") },
     {
       key: "description" as const,
-      label: t("dashboard.admin.allVideos.table.description"),
+      label: t("dashboard.admin.allGames.table.description"),
       cellClassName:
         "min-w-0 max-w-[11rem] sm:max-w-[15rem] md:max-w-[18rem] whitespace-normal align-top",
-      render: (row: AdminVideoRow) => (
+      render: (row: AdminGameRow) => (
         <span
           className="block w-full min-w-0 wrap-break-word text-muted-foreground"
           title={row.description || undefined}
@@ -66,12 +82,26 @@ function getAdminVideosColumns(
     },
     {
       key: "image" as const,
-      label: t("dashboard.admin.allVideos.table.image"),
-      render: (row: AdminVideoRow) =>
+      label: t("dashboard.admin.allGames.table.image"),
+      render: (row: AdminGameRow) =>
         row.image ? (
           <Button variant="link" size="sm" className="h-auto p-0" asChild>
             <a href={row.image} target="_blank" rel="noopener noreferrer">
-              {t("dashboard.admin.allVideos.table.openLink")}
+              {t("dashboard.admin.allGames.table.openLink")}
+            </a>
+          </Button>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "steam" as const,
+      label: t("dashboard.admin.allGames.table.steam"),
+      render: (row: AdminGameRow) =>
+        row.steam ? (
+          <Button variant="link" size="sm" className="h-auto p-0" asChild>
+            <a href={row.steam} target="_blank" rel="noopener noreferrer">
+              {t("dashboard.admin.allGames.table.openSteam")}
             </a>
           </Button>
         ) : (
@@ -80,12 +110,12 @@ function getAdminVideosColumns(
     },
     {
       key: "link" as const,
-      label: t("dashboard.admin.allVideos.table.link"),
-      render: (row: AdminVideoRow) =>
+      label: t("dashboard.admin.allGames.table.link"),
+      render: (row: AdminGameRow) =>
         row.link ? (
           <Button variant="link" size="sm" className="h-auto p-0" asChild>
             <a href={row.link} target="_blank" rel="noopener noreferrer">
-              {t("dashboard.admin.allVideos.table.openLink")}
+              {t("dashboard.admin.allGames.table.openLink")}
             </a>
           </Button>
         ) : (
@@ -93,9 +123,28 @@ function getAdminVideosColumns(
         ),
     },
     {
+      key: "client" as const,
+      label: t("dashboard.admin.allGames.table.client"),
+      render: (row: AdminGameRow) =>
+        row.client ? (
+          <Button variant="link" size="sm" className="h-auto p-0" asChild>
+            <a href={row.client} target="_blank" rel="noopener noreferrer">
+              {t("dashboard.admin.allGames.table.openLink")}
+            </a>
+          </Button>
+        ) : (
+          "—"
+        ),
+    },
+    {
+      key: "displayed" as const,
+      label: t("dashboard.admin.allGames.table.displayed"),
+      render: (row: AdminGameRow) => <BoolCell value={row.displayed} />,
+    },
+    {
       key: "action" as const,
-      label: t("dashboard.admin.allVideos.table.action"),
-      render: (row: AdminVideoRow) => (
+      label: t("dashboard.admin.allGames.table.action"),
+      render: (row: AdminGameRow) => (
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -119,29 +168,31 @@ function getAdminVideosColumns(
   ];
 }
 
-function AdminVideosTable({
+function AdminGamesTable({
   data = [],
   onEdit,
   onDelete,
 }: {
-  data?: AdminVideoRow[];
-  onEdit: (row: AdminVideoRow) => void;
-  onDelete: (row: AdminVideoRow) => void;
+  data?: AdminGameRow[];
+  onEdit: (row: AdminGameRow) => void;
+  onDelete: (row: AdminGameRow) => void;
 }) {
   const { t } = useTranslations();
   const columns = useMemo(
-    () => getAdminVideosColumns(t, onEdit, onDelete),
+    () => getAdminGamesColumns(t, onEdit, onDelete),
     [t, onEdit, onDelete],
   );
   return <CommonTable columns={columns} data={data} pageSize={12} />;
 }
 
-export function AdminAllVideosPage() {
+export type AdminAllGamesScope = "server" | "shop";
+
+export function AdminAllGamesPage({ scope }: { scope: AdminAllGamesScope }) {
   const { t } = useTranslations();
   const { role, isLoading: roleLoading } = useUserRole();
   const isFounder = role === "founder";
 
-  const [data, setData] = useState<AdminVideoRow[]>([]);
+  const [data, setData] = useState<AdminGameRow[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -149,7 +200,12 @@ export function AdminAllVideosPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshRef = useRef(false);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingRow, setEditingRow] = useState<AdminVideoRow | null>(null);
+  const [editingRow, setEditingRow] = useState<AdminGameRow | null>(null);
+
+  const titleKey =
+    scope === "server"
+      ? "dashboard.admin.allGames.serverTitle"
+      : "dashboard.admin.allGames.shopTitle";
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -158,8 +214,9 @@ export function AdminAllVideosPage() {
       (row) =>
         row.title.toLowerCase().includes(q) ||
         row.description.toLowerCase().includes(q) ||
-        row.link.toLowerCase().includes(q) ||
-        row.image.toLowerCase().includes(q),
+        row.client.toLowerCase().includes(q) ||
+        row.steam.toLowerCase().includes(q) ||
+        row.link.toLowerCase().includes(q),
     );
   }, [data, searchQuery]);
 
@@ -173,11 +230,11 @@ export function AdminAllVideosPage() {
     const isRefresh = refreshRef.current;
     refreshRef.current = false;
 
-    const key = cacheKey("admin-all-videos");
+    const key = cacheKey("admin-all-games");
 
     (async () => {
       if (!isRefresh) {
-        const cached = getCached<AdminVideoRow[]>(key);
+        const cached = getCached<AdminGameRow[]>(key);
         if (cached) {
           if (!cancelled) {
             setData(cached);
@@ -193,7 +250,7 @@ export function AdminAllVideosPage() {
         setProgress(0);
       }
       try {
-        const json = await fetchAdminVideos();
+        const json = await fetchAdminGames();
         if (!cancelled) {
           setCached(key, json);
           setData(json);
@@ -203,7 +260,7 @@ export function AdminAllVideosPage() {
         if (!cancelled) {
           setProgress(0);
           showToast({
-            text: t("dashboard.admin.allVideos.errorLoading"),
+            text: t("dashboard.admin.allGames.errorLoading"),
             variant: "error",
           });
         }
@@ -235,13 +292,13 @@ export function AdminAllVideosPage() {
     setFormOpen(true);
   }, []);
 
-  const onEdit = useCallback((row: AdminVideoRow) => {
+  const onEdit = useCallback((row: AdminGameRow) => {
     setEditingRow(row);
     setFormOpen(true);
   }, []);
 
-  const onDeleteVideo = useCallback(
-    (row: AdminVideoRow) => {
+  const onDeleteGame = useCallback(
+    (row: AdminGameRow) => {
       showPendingDeleteConfirmToast({
         getLine: (sec) =>
           sec > 0
@@ -249,10 +306,10 @@ export function AdminAllVideosPage() {
             : t("common.pendingDeleteApplying"),
         cancelLabel: t("common.pendingDeleteCancel"),
         applyingLabel: t("common.pendingDeleteApplying"),
-        successMessage: t("dashboard.admin.allVideos.deleteSuccess"),
-        errorFallback: t("dashboard.admin.allVideos.deleteError"),
+        successMessage: t("dashboard.admin.allGames.deleteSuccess"),
+        errorFallback: t("dashboard.admin.allGames.deleteError"),
         runDelete: async () => {
-          const res = await fetch(`/api/admin/videos/${row.id}`, {
+          const res = await fetch(`/api/admin/games/${row.id}`, {
             method: "DELETE",
           });
           const json = await res.json().catch(() => ({}));
@@ -260,11 +317,11 @@ export function AdminAllVideosPage() {
             throw new Error(
               typeof json?.error === "string"
                 ? json.error
-                : t("dashboard.admin.allVideos.deleteError"),
+                : t("dashboard.admin.allGames.deleteError"),
             );
           }
-          invalidateCache(cacheKey("admin-all-videos"));
-          invalidateCache(cacheKey("videos"));
+          invalidateCache(cacheKey("admin-all-games"));
+          invalidateCache(cacheKey("games"));
           refreshRef.current = true;
           setRefreshTick((k) => k + 1);
         },
@@ -274,8 +331,8 @@ export function AdminAllVideosPage() {
   );
 
   const handleSaved = useCallback(() => {
-    invalidateCache(cacheKey("admin-all-videos"));
-    invalidateCache(cacheKey("videos"));
+    invalidateCache(cacheKey("admin-all-games"));
+    invalidateCache(cacheKey("games"));
     refreshRef.current = true;
     setRefreshTick((k) => k + 1);
   }, []);
@@ -291,14 +348,14 @@ export function AdminAllVideosPage() {
   if (!isFounder) {
     return (
       <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        {t("dashboard.admin.allVideos.accessDenied")}
+        {t("dashboard.admin.allGames.accessDenied")}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <AdminVideoFormDialog
+      <AdminGameFormDialog
         open={formOpen}
         onOpenChange={setFormOpen}
         editingRow={editingRow}
@@ -306,11 +363,9 @@ export function AdminAllVideosPage() {
       />
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
         <div className="min-w-0 shrink">
-          <h1 className="text-2xl font-semibold">
-            {t("dashboard.admin.allVideos.title")}
-          </h1>
+          <h1 className="text-2xl font-semibold">{t(titleKey)}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("dashboard.admin.allVideos.description")}
+            {t("dashboard.admin.allGames.description")}
           </p>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end md:max-w-xl lg:max-w-2xl">
@@ -321,7 +376,7 @@ export function AdminAllVideosPage() {
             className="shrink-0 gap-2 px-3"
           >
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
-            {t("dashboard.admin.allVideos.addVideo")}
+            {t("dashboard.admin.allGames.addGame")}
           </Button>
           <Button
             size="lg"
@@ -331,14 +386,14 @@ export function AdminAllVideosPage() {
             disabled={loading}
           >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            {t("dashboard.admin.allVideos.refresh")}
+            {t("dashboard.admin.allGames.refresh")}
           </Button>
-          <div className="min-w-0 w-full sm:flex-1">
+          <div className="min-w-0 w-full sm:w-auto sm:max-w-xl">
             <SearchBar
               value={search}
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
-              placeholder={t("dashboard.admin.allVideos.searchPlaceholder")}
+              placeholder={t("dashboard.admin.allGames.searchPlaceholder")}
               className="max-w-none"
             />
           </div>
@@ -349,10 +404,10 @@ export function AdminAllVideosPage() {
           <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : (
-        <AdminVideosTable
+        <AdminGamesTable
           data={filteredData}
           onEdit={onEdit}
-          onDelete={onDeleteVideo}
+          onDelete={onDeleteGame}
         />
       )}
     </div>

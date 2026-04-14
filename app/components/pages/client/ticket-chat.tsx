@@ -68,6 +68,42 @@ interface TicketChatProps {
   onBack: () => void;
 }
 
+const TIMESTAMP_GROUP_MAX_GAP_MS = 3 * 60 * 1000;
+const MESSAGE_SHOW_DATE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/** Afficher l’heure (et la date si > 24 h) uniquement sous le dernier message d’un groupe : même expéditeur, écart ≤ 3 min. */
+function shouldShowTimestampOnMessage(
+  msg: TicketMessageEnriched,
+  next: TicketMessageEnriched | undefined,
+): boolean {
+  if (!next) return true;
+  const tMsg = new Date(msg.created_at).getTime();
+  const tNext = new Date(next.created_at).getTime();
+  if (next.sent_by !== msg.sent_by) return true;
+  if (tNext - tMsg > TIMESTAMP_GROUP_MAX_GAP_MS) return true;
+  return false;
+}
+
+function formatTicketMessageTimestamp(iso: string): string {
+  const d = new Date(iso);
+  const ageMs = Date.now() - d.getTime();
+  if (ageMs > MESSAGE_SHOW_DATE_AFTER_MS) {
+    return d.toLocaleString(undefined, {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  }
+  return d.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** Même largeur qu’un avatar 8 pour garder l’alignement des bulles quand la pp est masquée. */
+function messageAvatarSpacer() {
+  return <div className="mt-0.5 size-8 shrink-0 self-end" aria-hidden />;
+}
+
 function parseMessagesApiPayload(json: unknown): TicketMessagesApiResponse {
   if (Array.isArray(json)) {
     return { messages: json as TicketMessageEnriched[], viewerDiscordId: null };
@@ -112,7 +148,10 @@ function resolveOrderReceivedContent(
   t: (key: string, vars?: Record<string, string>) => string,
 ): string | null {
   const trimmed = content.trim();
-  if (trimmed.includes("[ORDER_RECEIVED]")) return t("tickets.orderReceivedSystem");
+  /** Anciens messages courts ou marqueur seul — le message riche markdown n’est pas remplacé. */
+  if (trimmed === "[ORDER_RECEIVED]" || trimmed === "[ORDER_RECEIVED_V1]") {
+    return t("tickets.orderReceivedSystem");
+  }
   if (/^commande\s+reçue\.?$/i.test(trimmed)) return t("tickets.orderReceivedSystem");
   if (/^order\s+received\.?$/i.test(trimmed)) return t("tickets.orderReceivedSystem");
   return null;
@@ -489,11 +528,11 @@ export function TicketChat({
                 const isOwn =
                   Boolean(viewerDiscordId) && msg.sent_by === viewerDiscordId;
                 const isSystem = msg.type === "system";
-                const prev = messages[i - 1];
-                const showTime =
-                  !prev ||
-                  prev.sent_by !== msg.sent_by ||
-                  new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime() > 60_000;
+                const nextMsg = messages[i + 1];
+                const showMessageTimestamp = shouldShowTimestampOnMessage(
+                  msg,
+                  nextMsg,
+                );
 
                 const isOwnLanguagePickerSent =
                   isSystem &&
@@ -513,17 +552,14 @@ export function TicketChat({
                           {t("tickets.languagePickerSentSelf")}
                         </p>
                       </div>
-                      {showTime && (
+                      {showMessageTimestamp && (
                         <span className="mt-0.5 px-1 text-[10px] text-muted-foreground/60">
-                          {new Date(msg.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatTicketMessageTimestamp(msg.created_at)}
                         </span>
                       )}
                     </div>
                   );
-                  const avatarSelf = (
+                  const avatarSelf = showMessageTimestamp ? (
                     <Avatar className="mt-0.5 size-8 shrink-0 self-end">
                       <AvatarImage
                         src={avatarSrcSelf}
@@ -534,6 +570,8 @@ export function TicketChat({
                         {messageAvatarFallbackLabel(msg)}
                       </AvatarFallback>
                     </Avatar>
+                  ) : (
+                    messageAvatarSpacer()
                   );
                   return (
                     <div
@@ -570,7 +608,10 @@ export function TicketChat({
                   }
 
                   return (
-                    <div key={msg.id} className="my-1 flex justify-center px-1">
+                    <div
+                      key={msg.id}
+                      className="my-1 flex flex-col items-center justify-center px-1"
+                    >
                       <div className="max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-4 py-2.5 text-left text-xs shadow-sm">
                         <ForumMarkdown
                           source={processSystemContent(msg.content, t)}
@@ -579,6 +620,11 @@ export function TicketChat({
                           className="break-words [&_a]:break-all [&_code]:break-all [&_pre]:max-w-full"
                         />
                       </div>
+                      {showMessageTimestamp && (
+                        <span className="mt-1 text-[10px] text-muted-foreground/60">
+                          {formatTicketMessageTimestamp(msg.created_at)}
+                        </span>
+                      )}
                     </div>
                   );
                 }
@@ -611,18 +657,15 @@ export function TicketChat({
                         className="break-words [&_a]:break-all [&_code]:break-all [&_pre]:max-w-full"
                       />
                     </div>
-                    {showTime && (
+                    {showMessageTimestamp && (
                       <span className="mt-0.5 px-1 text-[10px] text-muted-foreground/60">
-                        {new Date(msg.created_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTicketMessageTimestamp(msg.created_at)}
                       </span>
                     )}
                   </div>
                 );
 
-                const avatarEl = (
+                const avatarEl = showMessageTimestamp ? (
                   <Avatar className="mt-0.5 size-8 shrink-0 self-end">
                     <AvatarImage
                       src={avatarSrc}
@@ -633,6 +676,8 @@ export function TicketChat({
                       {messageAvatarFallbackLabel(msg)}
                     </AvatarFallback>
                   </Avatar>
+                ) : (
+                  messageAvatarSpacer()
                 );
 
                 return (
@@ -686,7 +731,7 @@ export function TicketChat({
                 />
                 <Button
                   type="submit"
-                  size="icon"
+                  size="icon-lg"
                   className="shrink-0"
                   disabled={!canSend || isSending || !newMessage.trim()}
                 >

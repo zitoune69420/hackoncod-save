@@ -36,7 +36,7 @@ export function ShopProductCard({ product, onClick }: ShopProductCardProps) {
   const { t } = useTranslations();
 
   return (
-    <Card className="cursor-pointer pt-0 transition-shadow hover:shadow-lg">
+    <Card className="cursor-pointer pt-0 transition-shadow hover:shadow-lg" onClick={onClick}>
       <div className="relative h-48 w-full overflow-hidden rounded-t-xl bg-muted">
         {product.imageUrl ? (
           <Image
@@ -61,11 +61,6 @@ export function ShopProductCard({ product, onClick }: ShopProductCardProps) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle className="line-clamp-1">{product.name}</CardTitle>
-          <Badge variant={product.is_active ? "default" : "secondary"}>
-            {product.is_active
-              ? t("shop.common.active")
-              : t("shop.common.inactive")}
-          </Badge>
         </div>
         {product.description && (
           <CardDescription className="line-clamp-2">

@@ -12,14 +12,14 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminReviewFormDialog } from "@/app/components/pages/client/admin-review-form-dialog";
-import type { AdminReviewRow } from "@/app/components/pages/client/admin-reviews-types";
+import { AdminReviewFormDialog } from "@/app/components/pages/admin/admin-review-form-dialog";
+import type { AdminReviewRow } from "@/app/components/pages/admin/admin-reviews-types";
 import type { Review } from "@/lib/supabase/types";
 import { truncateText } from "@/lib/truncate-text";
 
 const MESSAGE_PREVIEW_CHARS = 100;
 
-export type { AdminReviewRow } from "@/app/components/pages/client/admin-reviews-types";
+export type { AdminReviewRow } from "@/app/components/pages/admin/admin-reviews-types";
 
 function reviewToRow(r: Review): AdminReviewRow {
   return {

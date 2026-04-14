@@ -12,6 +12,9 @@ import type {
   OrderStatus,
   CheatPrice,
   ServicePrice,
+  Sale,
+  SaleAccount,
+  SaleCheat,
 } from "./shop-types";
 
 // ── Prices ──────────────────────────────────────────────────────────
@@ -293,6 +296,133 @@ export async function deleteTicket(orderId: string): Promise<void> {
   await supabase.from("shop_ticket_reads").delete().eq("order_id", orderId);
   await supabase.from("shop_ticket_messages").delete().eq("order_id", orderId);
   await supabase.from("shop_orders").delete().eq("id", orderId);
+}
+
+// ── Sales ────────────────────────────────────────────────────────────
+
+export async function createSale(input: {
+  title: string;
+  price: number;
+  og_price?: number | null;
+  selled_by?: string | null;
+  /** FK uuid vers `users.id` — pas l’ID Discord (snowflake). */
+  buy_by?: string | null;
+  type: string;
+  notes?: string | null;
+}): Promise<Sale | null> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("sale")
+    .insert({
+      title: input.title,
+      price: input.price,
+      og_price: input.og_price ?? null,
+      selled_by: input.selled_by ?? null,
+      buy_by: input.buy_by ?? null,
+      date: now,
+      type: input.type,
+      notes: input.notes ?? null,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+  if (error) {
+    console.error("[createSale]", error);
+    return null;
+  }
+  return data as Sale;
+}
+
+export async function createSaleAccount(
+  saleId: string,
+  account: Omit<SaleAccount, "id" | "sale_id" | "created_at" | "updated_at">,
+): Promise<SaleAccount | null> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("sale_account")
+    .insert({
+      sale_id: saleId,
+      ...account,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+  if (error) {
+    console.error("[createSaleAccount]", error);
+    return null;
+  }
+  return data as SaleAccount;
+}
+
+export async function createSaleCheat(
+  saleId: string,
+  cheat: Omit<SaleCheat, "id" | "sale_id" | "created_at" | "updated_at">,
+): Promise<SaleCheat | null> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("sale_cheat")
+    .insert({
+      sale_id: saleId,
+      ...cheat,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+  if (error) {
+    console.error("[createSaleCheat]", error);
+    return null;
+  }
+  return data as SaleCheat;
+}
+
+export async function createShopOrder(input: {
+  userId: string;
+  productId: string;
+  productType: string;
+  price: number;
+  notes?: string | null;
+  paymentMethod: string;
+  senderFirstName: string;
+  senderLastName: string;
+  senderAccount: string;
+  language?: string | null;
+}): Promise<ShopOrder | null> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("shop_orders")
+    .insert({
+      user_id: input.userId,
+      product_id: input.productId,
+      product_type: input.productType,
+      status: "paid" as OrderStatus,
+      price: input.price,
+      pre_order_data: {
+        payment_method: input.paymentMethod,
+        sender_first_name: input.senderFirstName,
+        sender_last_name: input.senderLastName,
+        sender_account: input.senderAccount,
+        notes: input.notes ?? null,
+      },
+      user_first_name: input.senderFirstName,
+      user_last_name: input.senderLastName,
+      language: input.language ?? null,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+  if (error) {
+    console.error("[createShopOrder]", error);
+    return null;
+  }
+  return data as ShopOrder;
 }
 
 // ── Signed image URL ────────────────────────────────────────────────

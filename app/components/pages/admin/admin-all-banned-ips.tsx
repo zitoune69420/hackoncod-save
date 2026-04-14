@@ -19,7 +19,7 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminBlacklistFormDialog } from "@/app/components/pages/client/admin-blacklist-form-dialog";
+import { AdminBlacklistFormDialog } from "@/app/components/pages/admin/admin-blacklist-form-dialog";
 import type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
 import { truncateText } from "@/lib/truncate-text";
 
