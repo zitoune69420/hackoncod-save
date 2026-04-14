@@ -13,26 +13,44 @@ type Props = {
   className?: string;
   /** Commentaires : marges serrées, sans wrapper typography. */
   compact?: boolean;
+  /** Texte clair sur fond primary (bulles chat, etc.). */
+  inverted?: boolean;
+  /** Texte atténué (messages système sur fond muted, etc.). Incompatible avec inverted. */
+  muted?: boolean;
 };
 
-function createComponents(compact: boolean) {
+type ComponentOpts = {
+  compact: boolean;
+  inverted: boolean;
+  muted: boolean;
+};
+
+function createComponents(opts: ComponentOpts) {
+  const { compact, inverted, muted } = opts;
   const pMb = compact ? "mb-2 last:mb-0" : "mb-3 last:mb-0";
   const blockMb = compact ? "mb-2 last:mb-0" : "mb-3 last:mb-0";
   const imgMy = compact ? "my-2 max-h-96 first:mt-0" : "my-4 max-h-96";
+  const mutedBody = muted && !inverted;
+  const text = inverted
+    ? "text-primary-foreground"
+    : mutedBody
+      ? "text-muted-foreground"
+      : "text-foreground";
 
   return {
     p: ({ ...props }: React.ComponentProps<"p">) => (
       <p
         className={cn(
           pMb,
-          "leading-relaxed text-foreground",
+          "leading-relaxed",
+          text,
           compact && "mt-0",
         )}
         {...props}
       />
     ),
     strong: ({ ...props }: React.ComponentProps<"strong">) => (
-      <strong className="font-semibold text-foreground" {...props} />
+      <strong className={cn("font-semibold", text)} {...props} />
     ),
     a: ({
       href,
@@ -41,7 +59,12 @@ function createComponents(compact: boolean) {
     }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
       <a
         href={href}
-        className="text-primary underline underline-offset-2 hover:opacity-90"
+        className={cn(
+          "underline underline-offset-2 hover:opacity-90",
+          inverted
+            ? "text-primary-foreground"
+            : "text-primary",
+        )}
         target="_blank"
         rel="noopener noreferrer"
         {...props}
@@ -51,20 +74,27 @@ function createComponents(compact: boolean) {
     ),
     ul: ({ ...props }: React.ComponentProps<"ul">) => (
       <ul
-        className={cn(blockMb, "list-disc space-y-1 pl-6 text-foreground")}
+        className={cn(blockMb, "list-disc space-y-1 pl-6", text)}
         {...props}
       />
     ),
     ol: ({ ...props }: React.ComponentProps<"ol">) => (
       <ol
-        className={cn(blockMb, "list-decimal space-y-1 pl-6 text-foreground")}
+        className={cn(blockMb, "list-decimal space-y-1 pl-6", text)}
         {...props}
       />
     ),
     code: ({ className, children, ...props }: React.ComponentProps<"code">) =>
       !className ? (
         <code
-          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em]"
+          className={cn(
+            "rounded px-1.5 py-0.5 font-mono text-[0.9em]",
+            inverted
+              ? "bg-primary-foreground/20 text-primary-foreground"
+              : mutedBody
+                ? "bg-muted/80 text-muted-foreground"
+                : "bg-muted text-foreground",
+          )}
           {...props}
         >
           {children}
@@ -78,7 +108,12 @@ function createComponents(compact: boolean) {
       <pre
         className={cn(
           blockMb,
-          "overflow-x-auto rounded-lg border border-border bg-muted/50 p-3 text-sm",
+          "overflow-x-auto rounded-lg border p-3 text-sm",
+          inverted
+            ? "border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground"
+            : mutedBody
+              ? "border-border bg-muted/50 text-muted-foreground"
+              : "border-border bg-muted/50 text-foreground",
         )}
         {...props}
       />
@@ -98,12 +133,56 @@ function createComponents(compact: boolean) {
   };
 }
 
-const componentsDefault = createComponents(false);
-const componentsCompact = createComponents(true);
+const componentsDefault = createComponents({
+  compact: false,
+  inverted: false,
+  muted: false,
+});
+const componentsDefaultInverted = createComponents({
+  compact: false,
+  inverted: true,
+  muted: false,
+});
+const componentsDefaultMuted = createComponents({
+  compact: false,
+  inverted: false,
+  muted: true,
+});
+const componentsCompact = createComponents({
+  compact: true,
+  inverted: false,
+  muted: false,
+});
+const componentsCompactInverted = createComponents({
+  compact: true,
+  inverted: true,
+  muted: false,
+});
+const componentsCompactMuted = createComponents({
+  compact: true,
+  inverted: false,
+  muted: true,
+});
 
-export function ForumMarkdown({ source, className, compact = false }: Props) {
+export function ForumMarkdown({
+  source,
+  className,
+  compact = false,
+  inverted = false,
+  muted = false,
+}: Props) {
   const normalized = normalizeForumMarkdownSource(source);
-  const components = compact ? componentsCompact : componentsDefault;
+  const components = inverted
+    ? compact
+      ? componentsCompactInverted
+      : componentsDefaultInverted
+    : muted
+      ? compact
+        ? componentsCompactMuted
+        : componentsDefaultMuted
+      : compact
+        ? componentsCompact
+        : componentsDefault;
   return (
     <div
       className={cn(

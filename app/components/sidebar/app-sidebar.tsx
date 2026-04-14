@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { NavMain } from "@/app/components/sidebar/nav-main";
+import { NavSupport } from "@/app/components/sidebar/nav-support";
 import { NavUser } from "@/app/components/sidebar/nav-user";
 import { AppSidebarTitle } from "@/app/components/sidebar/app-sidebar-title";
 import {
@@ -52,10 +53,10 @@ function useNavData() {
           title: t("sidebar.shop"),
           icon: <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />,
           items: [
-            { title: t("sidebar.cheats"), pageId: "content" },
-            { title: t("sidebar.services"), pageId: "content" },
-            { title: t("sidebar.accounts"), pageId: "content" },
-            { title: t("sidebar.reviews"), pageId: "content" },
+            { title: t("sidebar.cheats"), pageId: "shop-cheats" },
+            { title: t("sidebar.services"), pageId: "shop-services" },
+            { title: t("sidebar.accounts"), pageId: "shop-accounts" },
+            { title: t("sidebar.reviews"), pageId: "shop-reviews" },
           ],
         },
       ],
@@ -130,7 +131,14 @@ function useNavData() {
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentPage?: string;
-  onSelectPage?: (pageId: string) => void;
+  /** `orderId` courant quand `page=tickets`. */
+  currentOrderId?: string | null;
+  /** Section Support / tickets (visible uniquement pour staff). */
+  showSupportNav?: boolean;
+  onSelectPage?: (
+    pageId: string,
+    options?: { ticketOrderId?: string | null },
+  ) => void;
   /** Sous-page en cours de navigation RSC (stats / exclusif — spinner dans la sidebar). */
   pendingNavPageId?: string | null;
   navTransitionPending?: boolean;
@@ -140,6 +148,8 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({
   currentPage,
+  currentOrderId,
+  showSupportNav = false,
   onSelectPage,
   pendingNavPageId,
   navTransitionPending,
@@ -163,6 +173,15 @@ export function AppSidebar({
           navTransitionPending={navTransitionPending}
           label={t("sidebar.platform")}
         />
+        {showSupportNav ? (
+          <NavSupport
+            currentPage={currentPage}
+            currentOrderId={currentOrderId ?? null}
+            onSelectPageAction={onSelectPage}
+            pendingNavPageId={pendingNavPageId}
+            navTransitionPending={navTransitionPending}
+          />
+        ) : null}
         <NavMain
           items={data.NavSecondary}
           currentPage={currentPage}

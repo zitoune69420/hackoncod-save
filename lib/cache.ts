@@ -82,6 +82,11 @@ export function cacheKey(
     | "reviews"
     | "vip-cheats"
     | "semivip-cheats"
+    | "shop-cheats"
+    | "shop-services"
+    | "shop-accounts"
+    | "shop-reviews"
+    | "tickets"
     | "admin-all-cheats"
     | "admin-all-games"
     | "admin-all-videos"
@@ -96,6 +101,11 @@ export function cacheKey(
   if (type === "reviews") return "reviews";
   if (type === "vip-cheats") return "vip-cheats-v2";
   if (type === "semivip-cheats") return "semivip-cheats-v2";
+  if (type === "shop-cheats") return "shop-cheats-v1";
+  if (type === "shop-services") return "shop-services-v1";
+  if (type === "shop-accounts") return "shop-accounts-v1";
+  if (type === "shop-reviews") return "shop-reviews-v1";
+  if (type === "tickets") return "shop-tickets-v1";
   if (type === "admin-all-cheats") return "admin-all-cheats-v3";
   if (type === "admin-all-games") return "admin-all-games-v1";
   if (type === "admin-all-videos") return "admin-all-videos-v1";

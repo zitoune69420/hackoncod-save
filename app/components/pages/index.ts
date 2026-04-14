@@ -16,3 +16,8 @@ export { AdminServerReviewsPage } from "./server/admin-server-reviews";
 export { AdminShopReviewsPage } from "./server/admin-shop-reviews";
 export { AdminServerBlacklistPage } from "./server/admin-server-blacklist";
 export { AdminServerBannedIpsPage } from "./server/admin-server-banned-ips";
+export { ShopCheatsPage } from "./server/shop-cheats";
+export { ShopServicesPage } from "./server/shop-services";
+export { ShopAccountsPage } from "./server/shop-accounts";
+export { ShopReviewsPage } from "./server/shop-reviews";
+export { TicketsPage } from "./client/tickets-page";

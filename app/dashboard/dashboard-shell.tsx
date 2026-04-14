@@ -40,7 +40,7 @@ import {
 const ADMIN_BREADCRUMB: Partial<
   Record<
     DashboardPageId,
-    { section: "server" | "shop" | "stats"; sectionFirst: DashboardPageId; pageLabel: string }
+    { section: "server" | "shop" | "stats" | "support"; sectionFirst: DashboardPageId; pageLabel: string }
   >
 > = {
   "admin-server-cheats": {
@@ -72,6 +72,31 @@ const ADMIN_BREADCRUMB: Partial<
     section: "server",
     sectionFirst: "admin-server-cheats",
     pageLabel: "sidebar.bannedIps",
+  },
+  "shop-cheats": {
+    section: "shop",
+    sectionFirst: "shop-cheats",
+    pageLabel: "sidebar.cheats",
+  },
+  "shop-services": {
+    section: "shop",
+    sectionFirst: "shop-cheats",
+    pageLabel: "sidebar.services",
+  },
+  "shop-accounts": {
+    section: "shop",
+    sectionFirst: "shop-cheats",
+    pageLabel: "sidebar.accounts",
+  },
+  "shop-reviews": {
+    section: "shop",
+    sectionFirst: "shop-cheats",
+    pageLabel: "sidebar.reviews",
+  },
+  tickets: {
+    section: "support",
+    sectionFirst: "tickets",
+    pageLabel: "sidebar.tickets",
   },
   "admin-shop-cheats": {
     section: "shop",
@@ -115,10 +140,11 @@ const ADMIN_BREADCRUMB: Partial<
   },
 };
 
-const TRAIL_SECTION_LABEL: Record<"server" | "shop" | "stats", string> = {
+const TRAIL_SECTION_LABEL: Record<"server" | "shop" | "stats" | "support", string> = {
   server: "dashboard.trail.server",
   shop: "dashboard.trail.shop",
   stats: "dashboard.trail.stats",
+  support: "sidebar.support",
 };
 
 /** Première entrée du menu Exclusif (même ordre que la sidebar). */
@@ -199,6 +225,8 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       ? pageParam
       : DASHBOARD_DEFAULT_PAGE;
 
+  const ticketOrderIdParam = searchParams.get("orderId");
+
   useEffect(() => {
     prefetchReviews();
   }, []);
@@ -217,6 +245,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     params.set("page", DASHBOARD_DEFAULT_PAGE);
     params.delete("settings");
     params.delete("from");
+    params.delete("orderId");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [contentPage, pathname, router, role, searchParams, status]);
@@ -228,7 +257,10 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   }, [contentPage, pendingNavPageId]);
 
   const onSelectPage = useCallback(
-    (pageId: string) => {
+    (
+      pageId: string,
+      options?: { ticketOrderId?: string | null },
+    ) => {
       if (!isValidDashboardPageId(pageId)) return;
       if (dashboardPageUsesSidebarNavPending(pageId)) {
         setPendingNavPageId(pageId);
@@ -239,6 +271,13 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       params.set("page", pageId);
       params.delete("settings");
       params.delete("from");
+      if (pageId !== "tickets") {
+        params.delete("orderId");
+      } else if (options?.ticketOrderId) {
+        params.set("orderId", options.ticketOrderId);
+      } else {
+        params.delete("orderId");
+      }
       const qs = params.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       startNavTransition(() => {
@@ -279,6 +318,11 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar
         currentPage={contentPage}
+        currentOrderId={contentPage === "tickets" ? ticketOrderIdParam : null}
+        showSupportNav={
+          status === "resolved" &&
+          (role === "founder" || role === "partner")
+        }
         onSelectPage={onSelectPage}
         pendingNavPageId={pendingNavPageId}
         navTransitionPending={isNavPending && pendingNavPageId != null}

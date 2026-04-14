@@ -21,6 +21,11 @@ import {
   AdminShopReviewsPage,
   AdminServerBlacklistPage,
   AdminServerBannedIpsPage,
+  ShopCheatsPage,
+  ShopServicesPage,
+  ShopAccountsPage,
+  ShopReviewsPage,
+  TicketsPage,
 } from "@/app/components/pages";
 import {
   DASHBOARD_DEFAULT_PAGE,
@@ -28,7 +33,12 @@ import {
   type DashboardPageId,
 } from "@/lib/dashboard-url";
 
-type PageProps = { onSelectPage?: (pageId: string) => void };
+type PageProps = {
+  onSelectPage?: (
+    pageId: string,
+    options?: { ticketOrderId?: string | null },
+  ) => void;
+};
 
 const PAGES: Record<string, ComponentType<PageProps>> = {
   default: DefaultPage,
@@ -41,6 +51,11 @@ const PAGES: Record<string, ComponentType<PageProps>> = {
   "vip-cheats": VipCheatsPage as ComponentType<PageProps>,
   "semivip-cheats": SemiVipCheatsPage as ComponentType<PageProps>,
   partners: PartnersPage as ComponentType<PageProps>,
+  "shop-cheats": ShopCheatsPage as ComponentType<PageProps>,
+  "shop-services": ShopServicesPage as ComponentType<PageProps>,
+  "shop-accounts": ShopAccountsPage as ComponentType<PageProps>,
+  "shop-reviews": ShopReviewsPage as ComponentType<PageProps>,
+  tickets: TicketsPage as ComponentType<PageProps>,
 };
 
 const ADMIN_PAGE_FALLBACK = DefaultPage;
@@ -69,12 +84,22 @@ export function DashboardPagesClient({ contentPage }: Props) {
   const searchParams = useSearchParams();
 
   const onSelectPage = useCallback(
-    (pageId: string) => {
+    (
+      pageId: string,
+      options?: { ticketOrderId?: string | null },
+    ) => {
       if (!isValidDashboardPageId(pageId)) return;
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", pageId);
       params.delete("settings");
       params.delete("from");
+      if (pageId !== "tickets") {
+        params.delete("orderId");
+      } else if (options?.ticketOrderId) {
+        params.set("orderId", options.ticketOrderId);
+      } else {
+        params.delete("orderId");
+      }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
