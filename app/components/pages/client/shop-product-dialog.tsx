@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, type FormEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import {
@@ -29,6 +29,8 @@ import {
   ArrowLeft02Icon,
   ArrowRight02Icon,
   CheckmarkCircle02Icon,
+  DiscordIcon,
+  InformationCircleIcon,
   Loading03Icon,
   Message01Icon,
   ViewIcon,
@@ -45,6 +47,7 @@ import type {
 } from "@/lib/supabase/shop-types";
 import { createOrderAction } from "@/app/actions/shop-order";
 import { cacheKey, invalidateCache } from "@/lib/cache";
+import { authClient } from "@/lib/auth-client";
 
 type Step = "preorder" | "payment" | "confirmation" | "chat";
 
@@ -94,10 +97,13 @@ export function ShopProductDialog({
   const { t } = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const reduceMotion = useReducedMotion();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
   const [currentStep, setCurrentStep] = useState<Step>("preorder");
   const [showProductInfo, setShowProductInfo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
 
   // Pre-order form
   const [formNotes, setFormNotes] = useState("");
@@ -131,7 +137,27 @@ export function ShopProductDialog({
     setConfirmPriceVariation(false);
     setOrderError(null);
     setCreatedOrderId(null);
+    setIsSigningIn(false);
   }, []);
+
+  const signInCallbackUrl = useMemo(() => {
+    const qs = searchParams.toString();
+    return qs ? `${pathname}?${qs}` : pathname;
+  }, [pathname, searchParams]);
+
+  const signInWithDiscord = useCallback(async () => {
+    try {
+      setIsSigningIn(true);
+      await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: signInCallbackUrl,
+      });
+    } catch {
+      /* silencieux */
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [signInCallbackUrl]);
 
   const handleOpenChange = useCallback(
     (o: boolean) => {
@@ -234,6 +260,7 @@ export function ShopProductDialog({
 
   function handlePreorderSubmit(e: FormEvent) {
     e.preventDefault();
+    if (sessionPending || !session?.user) return;
     if (hasPrices && !selectedPriceId) return;
     setShowProductInfo(false);
     setCurrentStep("payment");
@@ -459,6 +486,34 @@ export function ShopProductDialog({
               </div>
             </div>
 
+            {currentStep === "preorder" && !sessionPending && !session?.user && (
+              <div
+                className="flex flex-col gap-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-4 dark:border-sky-400/25 dark:bg-sky-500/10"
+                role="status"
+              >
+                <div className="flex gap-3">
+                  <HugeiconsIcon
+                    icon={InformationCircleIcon}
+                    strokeWidth={2}
+                    className="mt-0.5 size-5 shrink-0 text-sky-600 dark:text-sky-400"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t("shop.common.discordLoginRequired")}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full gap-2 sm:w-auto sm:self-start"
+                  disabled={isSigningIn}
+                  onClick={() => void signInWithDiscord()}
+                >
+                  <HugeiconsIcon icon={DiscordIcon} strokeWidth={2} className="size-4" />
+                  {isSigningIn ? t("common.signingIn") : t("common.signIn")}
+                </Button>
+              </div>
+            )}
+
             <motion.div
               key={currentStep}
               initial={reduceMotion ? false : { opacity: 0, y: -10 }}
@@ -527,7 +582,12 @@ export function ShopProductDialog({
                 <motion.div variants={stepPanelMotion.actions}>
                   <Button
                     type="submit"
-                    disabled={isSubmitting || (hasPrices && !selectedPriceId)}
+                    disabled={
+                      isSubmitting ||
+                      sessionPending ||
+                      !session?.user ||
+                      (hasPrices && !selectedPriceId)
+                    }
                     className="w-full gap-2"
                     size="lg"
                   >
