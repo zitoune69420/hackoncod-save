@@ -30,7 +30,25 @@ function trustedOriginsFromEnv(): string[] | undefined {
 
 const _trustedOrigins = trustedOriginsFromEnv()
 
+function authSecret(): string | undefined {
+  const s = process.env.BETTER_AUTH_SECRET?.trim()
+  return s || undefined
+}
+
+function authBaseURL(): string | undefined {
+  const u =
+    process.env.BETTER_AUTH_URL?.trim() ??
+    process.env.NEXT_PUBLIC_APP_URL?.trim()
+  const v = u?.replace(/\/$/, "")
+  return v || undefined
+}
+
+const _authSecret = authSecret()
+const _authBaseURL = authBaseURL()
+
 export const auth = betterAuth({
+  ...(_authSecret ? { secret: _authSecret } : {}),
+  ...(_authBaseURL ? { baseURL: _authBaseURL } : {}),
   ...(_trustedOrigins ? { trustedOrigins: _trustedOrigins } : {}),
   plugins: [nextCookies()],
   socialProviders: {

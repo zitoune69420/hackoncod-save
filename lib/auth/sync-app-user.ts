@@ -2,8 +2,12 @@ import "server-only";
 
 import type { SyncProfileResult } from "@/lib/banned/site-ban-db";
 import { getOAuthBanOutcome } from "@/lib/banned/site-ban-db";
+import { extractDiscordSnowflakeFromAvatarUrl } from "@/lib/discord/extract-discord-snowflake-from-avatar";
 import { resolveUserRoleForUserId } from "@/lib/permissions-server";
-import { upsertAppUserFromSession } from "@/lib/supabase/app-users";
+import {
+  persistAuthUserDiscordSnowflake,
+  upsertAppUserFromSession,
+} from "@/lib/supabase/app-users";
 
 type SessionUserLike = {
   id: string;
@@ -34,6 +38,11 @@ export async function syncUserProfileAfterLogin(
       saved.message,
     );
   }
+
+  const discordSnowflake =
+    options?.discordAccountId?.trim() ||
+    extractDiscordSnowflakeFromAvatarUrl(user.image);
+  await persistAuthUserDiscordSnowflake(user.id, discordSnowflake);
 
   return getOAuthBanOutcome(user.id, {
     discordAccountId: options?.discordAccountId,

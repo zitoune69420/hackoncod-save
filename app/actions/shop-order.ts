@@ -1,6 +1,5 @@
 "use server";
 
-import { auth } from "@/app/auth";
 import {
   getDiscordUserIdForAuthUser,
 } from "@/lib/permissions-server";
@@ -26,7 +25,9 @@ import {
   resolveOrderWelcomeLocale,
 } from "@/lib/shop/order-welcome-message";
 import { headers } from "next/headers";
-import { getHeadersForBetterAuth } from "@/lib/auth/get-headers-for-better-auth";
+import { getServerAuthSession } from "@/lib/auth/get-server-auth-session";
+import { extractDiscordSnowflakeFromAvatarUrl } from "@/lib/discord/extract-discord-snowflake-from-avatar";
+import { getAuthUserDiscordSnowflake } from "@/lib/supabase/app-users";
 
 export type CreateOrderResult =
   | { ok: true; orderId: string; saleId: string }
@@ -46,9 +47,7 @@ interface CreateOrderInput {
 export async function createOrderAction(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
-  const session = await auth.api.getSession({
-    headers: await getHeadersForBetterAuth(),
-  });
+  const session = await getServerAuthSession();
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
 
@@ -58,6 +57,12 @@ export async function createOrderAction(
   }
   if (!discordId && /^\d{5,24}$/.test(user.id)) {
     discordId = user.id;
+  }
+  if (!discordId) {
+    discordId = extractDiscordSnowflakeFromAvatarUrl(user.image);
+  }
+  if (!discordId) {
+    discordId = await getAuthUserDiscordSnowflake(user.id);
   }
   if (!discordId) return { ok: false, error: "unauthorized" };
 

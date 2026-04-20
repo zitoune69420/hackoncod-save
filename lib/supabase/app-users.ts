@@ -5,7 +5,10 @@
  *
  * ```sql
  * alter table public.users add column if not exists auth_user_id text unique;
+ * alter table public.users add column if not exists discord_user_id text;
  * ```
+ *
+ * `discord_user_id` : snowflake Discord (sans adaptateur DB Better Auth, les comptes OAuth ne sont pas persistés côté BA — on le stocke ici pour les Server Actions / Vercel).
  *
  * Sur `id` : soit `uuid` avec valeur = `session.user.id` (si UUID), soit `default gen_random_uuid()`
  * et liaison uniquement par `auth_user_id`.
@@ -61,6 +64,7 @@ export type AppUserRow = {
   created_at?: string | null;
   updated_at?: string | null;
   auth_user_id?: string | null;
+  discord_user_id?: string | null;
 };
 
 export type UpsertAppUserResult =
@@ -157,6 +161,122 @@ export async function getAppUserTableIdForAuthUser(
     return data?.id ?? null;
   } catch (e) {
     console.error("[app-users] getAppUserTableIdForAuthUser", e);
+    return null;
+  }
+}
+
+const DISCORD_SNOWFLAKE_RE = /^\d{5,24}$/;
+
+function isMissingDiscordUserIdColumn(err: {
+  code?: string;
+  message?: string;
+}): boolean {
+  const msg = err.message ?? "";
+  return (
+    err.code === "42703" ||
+    /discord_user_id/i.test(msg) ||
+    /column.*does not exist/i.test(msg)
+  );
+}
+
+/**
+ * Met à jour le snowflake Discord pour un utilisateur app (colonne optionnelle `discord_user_id`).
+ */
+export async function persistAuthUserDiscordSnowflake(
+  authUserId: string,
+  discordUserId: string | null | undefined,
+): Promise<void> {
+  const id = discordUserId?.trim() ?? "";
+  if (!id || !DISCORD_SNOWFLAKE_RE.test(id)) {
+    return;
+  }
+  try {
+    const supabase = createAdminClient();
+    const now = new Date().toISOString();
+    const patch = { discord_user_id: id, updated_at: now };
+
+    if (isUuid(authUserId)) {
+      const { error } = await supabase
+        .from(TABLE)
+        .update(patch)
+        .eq("id", authUserId);
+      if (error && isMissingDiscordUserIdColumn(error)) {
+        return;
+      }
+      if (error) {
+        logSupabaseError("persistAuthUserDiscordSnowflake.update.id", error);
+      }
+      return;
+    }
+
+    if (process.env.SUPABASE_APP_USERS_SKIP_AUTH_USER_ID === "1") {
+      return;
+    }
+
+    const { error: e2 } = await supabase
+      .from(TABLE)
+      .update(patch)
+      .eq("auth_user_id", authUserId);
+    if (e2 && isMissingDiscordUserIdColumn(e2)) {
+      return;
+    }
+    if (e2) {
+      logSupabaseError("persistAuthUserDiscordSnowflake.update.auth_user_id", e2);
+    }
+  } catch (e) {
+    console.error("[app-users] persistAuthUserDiscordSnowflake", e);
+  }
+}
+
+/**
+ * Snowflake Discord stocké en base pour cet ID Better Auth (repli quand l’adaptateur BA est en mémoire).
+ */
+export async function getAuthUserDiscordSnowflake(
+  authUserId: string,
+): Promise<string | null> {
+  try {
+    const supabase = createAdminClient();
+    if (isUuid(authUserId)) {
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select("discord_user_id")
+        .eq("id", authUserId)
+        .maybeSingle();
+      if (error) {
+        if (isMissingDiscordUserIdColumn(error)) {
+          return null;
+        }
+        logSupabaseError("getAuthUserDiscordSnowflake.select.id", error);
+        return null;
+      }
+      const raw = (data as { discord_user_id?: string | null } | null)
+        ?.discord_user_id;
+      const s = raw?.trim() ?? "";
+      return DISCORD_SNOWFLAKE_RE.test(s) ? s : null;
+    }
+
+    if (process.env.SUPABASE_APP_USERS_SKIP_AUTH_USER_ID === "1") {
+      return null;
+    }
+
+    const { data: data2, error: err2 } = await supabase
+      .from(TABLE)
+      .select("discord_user_id")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle();
+    if (err2) {
+      if (isMissingDiscordUserIdColumn(err2)) {
+        return null;
+      }
+      logSupabaseError("getAuthUserDiscordSnowflake.select.auth_user_id", err2);
+      return null;
+    }
+    const raw = (data2 as { discord_user_id?: string | null } | null)
+      ?.discord_user_id;
+    const s = raw?.trim() ?? "";
+    return DISCORD_SNOWFLAKE_RE.test(s) ? s : null;
+  } catch (e) {
+    console.error("[app-users] getAuthUserDiscordSnowflake", e);
     return null;
   }
 }
