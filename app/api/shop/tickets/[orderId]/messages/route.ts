@@ -10,7 +10,9 @@ import {
   updateOrderLanguage,
 } from "@/lib/supabase/shop-queries";
 import { isUuid } from "@/lib/security/is-uuid";
+import { after } from "next/server";
 import { NextRequest, NextResponse } from "next/server";
+import { notifySellerWhenClientOpensTicketChat } from "@/lib/shop/notify-seller-ticket-opened";
 import type { MessageType, TicketMessage, TicketMessageEnriched } from "@/lib/supabase/shop-types";
 
 async function enrichTicketMessages(messages: TicketMessage[]): Promise<TicketMessageEnriched[]> {
@@ -60,6 +62,16 @@ export async function GET(
 
     if (order.user_id !== discordId && !isAdminOrPartner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const clientOpenedOwnTicket =
+      discordId != null && order.user_id === discordId;
+    if (clientOpenedOwnTicket) {
+      after(() => {
+        void notifySellerWhenClientOpensTicketChat(orderId).catch((err) => {
+          console.error("[notifySellerWhenClientOpensTicketChat]", err);
+        });
+      });
     }
 
     const raw = await getTicketMessages(orderId);

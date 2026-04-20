@@ -16,6 +16,7 @@ export type DiscordWebhookBody = {
 export type DiscordApiEmbed = {
   title?: string
   description?: string
+  author?: { name: string; url?: string; icon_url?: string }
   color?: number
   thumbnail?: { url: string }
   image?: { url: string }

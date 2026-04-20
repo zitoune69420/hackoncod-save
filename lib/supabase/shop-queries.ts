@@ -401,6 +401,30 @@ export async function createSaleCheat(
   return data as SaleCheat;
 }
 
+export async function mergeShopOrderPreOrderData(
+  orderId: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("shop_orders")
+    .select("pre_order_data")
+    .eq("id", orderId)
+    .maybeSingle();
+  const cur =
+    data?.pre_order_data && typeof data.pre_order_data === "object" && data.pre_order_data !== null
+      ? (data.pre_order_data as Record<string, unknown>)
+      : {};
+  const now = new Date().toISOString();
+  await supabase
+    .from("shop_orders")
+    .update({
+      pre_order_data: { ...cur, ...patch },
+      updated_at: now,
+    })
+    .eq("id", orderId);
+}
+
 export async function createShopOrder(input: {
   userId: string;
   productId: string;
