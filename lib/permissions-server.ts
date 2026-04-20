@@ -200,7 +200,7 @@ export async function getDiscordUserIdForAuthUser(
     try {
       const accessToken = await decryptOAuthToken(
         discordAccount.accessToken,
-        context as AuthContext,
+        context as unknown as AuthContext,
       );
 
       if (accessToken) {

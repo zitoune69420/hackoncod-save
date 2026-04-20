@@ -19,7 +19,7 @@ export async function getDiscordDisplayNameFromOAuthAccount(
 
     const token = await decryptOAuthToken(
       discord.accessToken,
-      context as AuthContext,
+      context as unknown as AuthContext,
     )
     if (!token) return null
 
