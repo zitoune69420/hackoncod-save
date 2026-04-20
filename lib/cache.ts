@@ -114,3 +114,8 @@ export function cacheKey(
   if (type === "admin-all-banned-ips") return "admin-all-banned-ips-v2";
   throw new Error("Invalid cache key: cheats requires gameTitle");
 }
+
+/** Liste tickets : une entrée par utilisateur connecté (ne jamais partager entre sessions). */
+export function ticketsListCacheKey(userId: string): string {
+  return `shop-tickets-v2:${userId}`;
+}

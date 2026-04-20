@@ -1,3 +1,4 @@
+import { redirectUnlessFounder } from "@/lib/dashboard-access-guard";
 import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { getSecurityViewModel } from "@/lib/security/demo-model";
 import {
@@ -27,13 +28,7 @@ type Props = { range: SecurityRange };
 
 export async function AdminStatsSecurityServer({ range }: Props) {
   const access = await getCachedDashboardUserAccess("db");
-  if (!access.isAuthenticated || access.role !== "founder") {
-    return (
-      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        Access denied. Founder role required.
-      </div>
-    );
-  }
+  redirectUnlessFounder(access);
 
   const model = getSecurityViewModel(range);
 

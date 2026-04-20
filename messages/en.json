@@ -342,6 +342,8 @@
     "pendingDeleteApplying": "Deleting…",
     "pendingDeleteCancel": "Cancel",
     "loginRequired": "Sign in with Discord to send a suggestion.",
+    "signIn": "Sign in with Discord",
+    "signingIn": "Signing in…",
     "exclusiveDownload": {
       "invalidLink": "Invalid file link.",
       "urlError": "Could not generate the download link.",
@@ -1792,6 +1794,8 @@
     "sidebarUnknownDiscord": "Unknown user",
     "sidebarLoading": "Loading…",
     "sidebarError": "Could not load the list",
+    "guestGateTitle": "Sign in required",
+    "guestGateDescription": "Sign in with Discord to access your tickets and support.",
     "title": "Tickets",
     "archivedTitle": "Archived Tickets",
     "description": "List of your orders with active chat",

@@ -8,10 +8,24 @@ import {
   canAccessPartnerTools,
   canAccessVipCheats,
   hasMinimumRole,
+  type UserRole,
 } from "@/lib/permissions";
 import type { UserAccessSource } from "@/lib/permissions-server";
 
 const SAFE_FALLBACK = "/dashboard?page=cheats" as const;
+
+/** Stats / admin RSC : même règles que `enforceDashboardPageAccess` (fond de défense). */
+export function redirectUnlessFounder(access: {
+  isAuthenticated: boolean;
+  role: UserRole;
+}): void {
+  if (!access.isAuthenticated) {
+    redirect("/");
+  }
+  if (access.role !== "founder") {
+    redirect(SAFE_FALLBACK);
+  }
+}
 
 /**
  * Source du contrôle d’accès dashboard :

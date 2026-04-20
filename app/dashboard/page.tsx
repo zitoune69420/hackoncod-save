@@ -4,6 +4,8 @@ import { DashboardShell } from "@/app/dashboard/dashboard-shell";
 import { DashboardMainContent } from "@/app/dashboard/dashboard-main-content";
 import { DashboardMainAreaSkeleton } from "@/app/dashboard/dashboard-main-area-skeleton";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };

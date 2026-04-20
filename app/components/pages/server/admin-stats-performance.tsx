@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { redirectUnlessFounder } from "@/lib/dashboard-access-guard";
 import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { resolvePerformanceModel } from "@/lib/performance/resolve-performance-model";
 import { cn } from "@/lib/utils";
@@ -198,13 +199,7 @@ export async function AdminStatsPerformanceServer({
   days,
 }: Props) {
   const access = await getCachedDashboardUserAccess("db");
-  if (!access.isAuthenticated || access.role !== "founder") {
-    return (
-      <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        Access denied. Founder role required.
-      </div>
-    );
-  }
+  redirectUnlessFounder(access);
 
   return (
     <div className="mx-auto w-full max-w-[min(100%,92rem)] space-y-8 px-1 sm:px-2">

@@ -8,12 +8,17 @@ import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Loading03Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
+import {
+  DiscordIcon,
+  Loading03Icon,
+  Refresh01Icon,
+} from "@hugeicons/core-free-icons";
 import {
   cacheKey,
   getCached,
   invalidateCache,
   setCached,
+  ticketsListCacheKey,
 } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { getShopImageUrl } from "@/lib/shop-utils";
@@ -31,7 +36,11 @@ import type {
 } from "@/lib/supabase/shop-types";
 
 async function fetchTickets(): Promise<Ticket[]> {
-  const res = await fetch("/api/shop/tickets");
+  const res = await fetch("/api/shop/tickets", { cache: "no-store" });
+  if (res.status === 401) {
+    const err = new Error("unauthorized");
+    throw err;
+  }
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -44,9 +53,13 @@ export function TicketsPage() {
   const searchParams = useSearchParams();
   const orderIdParam = searchParams.get("orderId");
   const reduceMotion = useReducedMotion();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending: sessionPending } = authClient.useSession();
+  const userId = session?.user?.id ?? null;
+  const ticketsCacheKey = userId ? ticketsListCacheKey(userId) : null;
   const { role } = useUserRole();
   const isAdminOrPartner = role === "founder" || role === "partner";
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const legacyTicketsCachePurged = useRef(false);
 
   const syncTicketsUrl = useCallback(
     (orderId: string | null) => {
@@ -102,11 +115,22 @@ export function TicketsPage() {
     );
   }, [tickets, searchQuery]);
 
+  const ticketsSignInCallbackUrl = useMemo(() => {
+    const p = new URLSearchParams();
+    p.set("page", "tickets");
+    if (orderIdParam) p.set("orderId", orderIdParam);
+    return `/dashboard?${p.toString()}`;
+  }, [orderIdParam]);
+
   const loadTickets = useCallback(
     (skipCache = false) => {
-      const key = cacheKey("tickets");
+      if (!ticketsCacheKey) {
+        setTickets([]);
+        setLoading(false);
+        return;
+      }
       if (!skipCache) {
-        const cached = getCached<Ticket[]>(key);
+        const cached = getCached<Ticket[]>(ticketsCacheKey);
         if (cached) {
           setTickets(cached);
           setLoading(false);
@@ -117,21 +141,43 @@ export function TicketsPage() {
       setProgress(0);
       fetchTickets()
         .then((data) => {
-          setCached(key, data);
+          setCached(ticketsCacheKey, data);
           setTickets(data);
           setProgress(100);
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          if (
+            err instanceof Error &&
+            err.message === "unauthorized" &&
+            ticketsCacheKey
+          ) {
+            invalidateCache(ticketsCacheKey);
+          }
           showToast({ text: t("tickets.toastError"), variant: "error" });
         })
         .finally(() => setLoading(false));
     },
-    [t],
+    [t, ticketsCacheKey],
   );
 
   useEffect(() => {
+    if (sessionPending) return;
+    if (!userId) {
+      setTickets([]);
+      setSelectedOrderId(null);
+      setSelectedOrder(null);
+      setChatMessages([]);
+      setViewerDiscordId(null);
+      setChatImageUrl(null);
+      setLoading(false);
+      return;
+    }
+    if (!legacyTicketsCachePurged.current) {
+      legacyTicketsCachePurged.current = true;
+      invalidateCache(cacheKey("tickets"));
+    }
     loadTickets();
-  }, [loadTickets]);
+  }, [sessionPending, userId, loadTickets]);
 
   /** Client : un seul ticket → ouverture directe (pas de liste « tous les tickets »). */
   useEffect(() => {
@@ -143,15 +189,15 @@ export function TicketsPage() {
   }, [isAdminOrPartner, orderIdParam, loading, tickets, syncTicketsUrl]);
 
   useEffect(() => {
-    if (!loading) return;
+    if (!loading && !sessionPending) return;
     const iv = setInterval(() => setProgress((p) => (p >= 90 ? 90 : p + 10)), 200);
     return () => clearInterval(iv);
-  }, [loading]);
+  }, [loading, sessionPending]);
 
   const handleRefresh = useCallback(() => {
-    invalidateCache(cacheKey("tickets"));
+    if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
     loadTickets(true);
-  }, [loadTickets]);
+  }, [loadTickets, ticketsCacheKey]);
 
   const openChat = useCallback(
     async (orderId: string, opts?: { skipUrlSync?: boolean }) => {
@@ -162,12 +208,30 @@ export function TicketsPage() {
       setTicketChatLoading(orderId);
       setSelectedOrderId(orderId);
       try {
-        const [msgJson, ticket] = await Promise.all([
-          fetch(`/api/shop/tickets/${orderId}/messages`).then(
-            (r) => r.json() as Promise<TicketMessagesApiResponse | TicketMessageEnriched[]>,
-          ),
+        const [msgRes, ticket] = await Promise.all([
+          fetch(`/api/shop/tickets/${orderId}/messages`, {
+            cache: "no-store",
+          }),
           Promise.resolve(tickets.find((tk) => tk.order.id === orderId)),
         ]);
+        if (msgRes.status === 401) {
+          if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
+          setSelectedOrderId(null);
+          setSelectedOrder(null);
+          setChatMessages([]);
+          setViewerDiscordId(null);
+          setChatImageUrl(null);
+          syncTicketsUrl(null);
+          showToast({ text: t("tickets.toastError"), variant: "error" });
+          return;
+        }
+        if (!msgRes.ok) {
+          throw new Error(String(msgRes.status));
+        }
+        const msgJson =
+          (await msgRes.json()) as
+            | TicketMessagesApiResponse
+            | TicketMessageEnriched[];
         if (!ticket) {
           setSelectedOrderId(null);
           setSelectedOrder(null);
@@ -203,7 +267,7 @@ export function TicketsPage() {
         setTicketChatLoading(null);
       }
     },
-    [tickets, t, syncTicketsUrl, setTicketChatLoading],
+    [tickets, t, syncTicketsUrl, setTicketChatLoading, ticketsCacheKey],
   );
 
   useEffect(() => {
@@ -211,6 +275,8 @@ export function TicketsPage() {
   }, [orderIdParam]);
 
   useEffect(() => {
+    if (!userId || sessionPending) return;
+
     if (!orderIdParam) {
       if (selectedOrderId != null) {
         setSelectedOrderId(null);
@@ -228,7 +294,7 @@ export function TicketsPage() {
     if (!hasTicket) {
       if (!didRefetchForMissingOrder.current) {
         didRefetchForMissingOrder.current = true;
-        invalidateCache(cacheKey("tickets"));
+        if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
         loadTickets(true);
         return;
       }
@@ -242,6 +308,8 @@ export function TicketsPage() {
     if (selectedOrderId === orderIdParam && selectedOrder) return;
     void openChat(orderIdParam, { skipUrlSync: true });
   }, [
+    userId,
+    sessionPending,
     orderIdParam,
     loading,
     chatLoading,
@@ -252,11 +320,12 @@ export function TicketsPage() {
     syncTicketsUrl,
     t,
     loadTickets,
+    ticketsCacheKey,
   ]);
 
   const handleBack = useCallback(() => {
     if (!isAdminOrPartner && tickets.length === 1) {
-      invalidateCache(cacheKey("tickets"));
+      if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", DASHBOARD_DEFAULT_PAGE);
       params.delete("orderId");
@@ -265,7 +334,7 @@ export function TicketsPage() {
       return;
     }
     syncTicketsUrl(null);
-    invalidateCache(cacheKey("tickets"));
+    if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
     loadTickets(true);
   }, [
     isAdminOrPartner,
@@ -275,7 +344,52 @@ export function TicketsPage() {
     searchParams,
     syncTicketsUrl,
     loadTickets,
+    ticketsCacheKey,
   ]);
+
+  const signInWithDiscord = useCallback(async () => {
+    try {
+      setIsSigningIn(true);
+      await authClient.signIn.social({
+        provider: "discord",
+        callbackURL: ticketsSignInCallbackUrl,
+      });
+    } catch {
+      /* silencieux */
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [ticketsSignInCallbackUrl]);
+
+  if (sessionPending) {
+    return (
+      <div className="flex min-h-48 flex-col items-center justify-center gap-3">
+        <Progress value={progress} className="h-1 w-48" />
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="mx-auto flex max-w-md flex-col gap-4 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
+        <div className="space-y-2">
+          <h1 className="text-xl font-semibold">{t("tickets.guestGateTitle")}</h1>
+          <p className="text-sm text-muted-foreground">
+            {t("tickets.guestGateDescription")}
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="w-full gap-2"
+          disabled={isSigningIn}
+          onClick={() => void signInWithDiscord()}
+        >
+          <HugeiconsIcon icon={DiscordIcon} strokeWidth={2} className="size-4" />
+          {isSigningIn ? t("common.signingIn") : t("common.signIn")}
+        </Button>
+      </div>
+    );
+  }
 
   if (selectedOrderId && selectedOrder && !chatLoading) {
     return (

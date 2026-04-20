@@ -236,6 +236,19 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     if (!contentPage.startsWith("admin-")) {
       return;
     }
+    if (isLoading) {
+      return;
+    }
+    if (!isAuthenticated) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", DASHBOARD_DEFAULT_PAGE);
+      params.delete("settings");
+      params.delete("from");
+      params.delete("orderId");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      return;
+    }
     if (status !== "resolved") {
       return;
     }
@@ -249,7 +262,16 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     params.delete("orderId");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [contentPage, pathname, router, role, searchParams, status]);
+  }, [
+    contentPage,
+    pathname,
+    router,
+    role,
+    searchParams,
+    status,
+    isAuthenticated,
+    isLoading,
+  ]);
 
   useEffect(() => {
     if (pendingNavPageId && contentPage === pendingNavPageId) {

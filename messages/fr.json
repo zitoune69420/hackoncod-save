@@ -335,6 +335,8 @@
     "pendingDeleteApplying": "Suppression…",
     "pendingDeleteCancel": "Annuler",
     "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion.",
+    "signIn": "Connexion avec Discord",
+    "signingIn": "Connexion en cours…",
     "exclusiveDownload": {
       "invalidLink": "Lien de fichier invalide.",
       "urlError": "Impossible de générer le lien de téléchargement.",
@@ -1799,6 +1801,8 @@
     "sidebarUnknownDiscord": "Pseudo inconnu",
     "sidebarLoading": "Chargement…",
     "sidebarError": "Impossible de charger la liste",
+    "guestGateTitle": "Connexion requise",
+    "guestGateDescription": "Connecte-toi avec Discord pour accéder à tes tickets et au support.",
     "title": "Tickets",
     "archivedTitle": "Tickets Archivés",
     "description": "Liste de vos commandes avec chat actif",
