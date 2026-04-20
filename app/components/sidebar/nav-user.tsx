@@ -244,7 +244,7 @@ export function NavUser({
             type="button"
             variant="ghost"
             disabled={isSigningIn}
-            className="h-10 w-full justify-start gap-2 pl-4 font-normal"
+            className="h-10 w-full cursor-pointer justify-start gap-2 pl-4 font-normal disabled:cursor-not-allowed"
             onClick={() => void signInWithDiscord()}
           >
             <HugeiconsIcon
