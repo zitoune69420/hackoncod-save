@@ -26,6 +26,7 @@ import {
   resolveOrderWelcomeLocale,
 } from "@/lib/shop/order-welcome-message";
 import { headers } from "next/headers";
+import { getHeadersForBetterAuth } from "@/lib/auth/get-headers-for-better-auth";
 
 export type CreateOrderResult =
   | { ok: true; orderId: string; saleId: string }
@@ -45,7 +46,9 @@ interface CreateOrderInput {
 export async function createOrderAction(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await auth.api.getSession({
+    headers: await getHeadersForBetterAuth(),
+  });
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
 
