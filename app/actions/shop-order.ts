@@ -2,7 +2,6 @@
 
 import { auth } from "@/app/auth";
 import {
-  getCurrentUserAccess,
   getDiscordUserIdForAuthUser,
 } from "@/lib/permissions-server";
 import {
@@ -48,9 +47,6 @@ export async function createOrderAction(
   const session = await auth.api.getSession({ headers: await headers() });
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
-
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated) return { ok: false, error: "unauthorized" };
 
   const discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
   if (!discordId) return { ok: false, error: "unauthorized" };
