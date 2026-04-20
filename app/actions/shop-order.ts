@@ -4,6 +4,7 @@ import { auth } from "@/app/auth";
 import {
   getDiscordUserIdForAuthUser,
 } from "@/lib/permissions-server";
+import { findDiscordAccountId } from "@/lib/banned/site-ban-db";
 import {
   createSale,
   createSaleAccount,
@@ -48,7 +49,13 @@ export async function createOrderAction(
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
 
-  const discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
+  let discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
+  if (!discordId) {
+    discordId = await findDiscordAccountId(user.id);
+  }
+  if (!discordId && /^\d{5,24}$/.test(user.id)) {
+    discordId = user.id;
+  }
   if (!discordId) return { ok: false, error: "unauthorized" };
 
   const supabase = createAdminClient();
