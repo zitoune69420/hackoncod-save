@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "@/app/components/i18n-provider";
 import {
   Collapsible,
@@ -24,9 +24,38 @@ import type { Ticket } from "@/lib/supabase/shop-types";
 import { useTicketChatLoading } from "@/app/dashboard/ticket-chat-loading-context";
 
 async function fetchTicketsList(): Promise<Ticket[]> {
-  const res = await fetch("/api/shop/tickets");
+  const res = await fetch("/api/shop/tickets", { cache: "no-store" });
   if (!res.ok) throw new Error(String(res.status));
   return res.json();
+}
+
+function UnreadTicketDot({
+  count,
+  label,
+}: {
+  count: number;
+  label: string;
+}) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="size-2 shrink-0 rounded-full bg-destructive"
+      title={label}
+      aria-label={label}
+    />
+  );
+}
+
+/** Pendant l’ouverture du chat, le GET liste peut précéder le POST /read → on force 0 côté UI. */
+function patchTicketsForOpenConversation(
+  list: Ticket[],
+  page: string | undefined,
+  openOrderId: string | null,
+): Ticket[] {
+  if (page !== "tickets" || !openOrderId) return list;
+  return list.map((tk) =>
+    tk.order.id === openOrderId ? { ...tk, unread_count: 0 } : tk,
+  );
 }
 
 function ticketSidebarTitle(ticket: Ticket, tAll: (key: string) => string): string {
@@ -61,25 +90,71 @@ export function NavSupport({
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const firstListLoadRef = useRef(true);
+  const ticketViewRef = useRef<{
+    page: string | undefined;
+    orderId: string | null;
+  }>({ page: currentPage, orderId: currentOrderId ?? null });
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    fetchTicketsList()
-      .then((data) => {
-        if (!cancelled) setTickets(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
+    ticketViewRef.current = {
+      page: currentPage,
+      orderId: currentOrderId ?? null,
     };
-  }, []);
+  }, [currentPage, currentOrderId]);
+
+  const loadTickets = useCallback(
+    async (showSpinner: boolean, lifecycle?: { cancelled: boolean }) => {
+      if (showSpinner) {
+        setLoading(true);
+        setError(false);
+      }
+      try {
+        const data = await fetchTicketsList();
+        if (lifecycle?.cancelled) return;
+        const { page, orderId } = ticketViewRef.current;
+        setTickets(patchTicketsForOpenConversation(data, page, orderId));
+        if (showSpinner) setError(false);
+      } catch {
+        if (lifecycle?.cancelled) return;
+        if (showSpinner) setError(true);
+      } finally {
+        // Toujours arrêter le spinner si on l’a affiché (évite chargement infini si la requête
+        // est annulée au démontage / React Strict Mode).
+        if (showSpinner) setLoading(false);
+      }
+    },
+    [],
+  );
+
+  /** Pastille retirée dès qu’on ouvre une conv (avant la fin du fetch / du POST read). */
+  useEffect(() => {
+    if (currentPage !== "tickets" || !currentOrderId) return;
+    setTickets((prev) =>
+      patchTicketsForOpenConversation(prev, currentPage, currentOrderId),
+    );
+  }, [currentPage, currentOrderId]);
+
+  useEffect(() => {
+    const showSpinner = firstListLoadRef.current;
+    firstListLoadRef.current = false;
+    const lifecycle = { cancelled: false };
+    void loadTickets(showSpinner, lifecycle);
+    return () => {
+      lifecycle.cancelled = true;
+    };
+  }, [currentPage, currentOrderId, loadTickets]);
+
+  useEffect(() => {
+    const id = setInterval(() => void loadTickets(false), 45_000);
+    return () => clearInterval(id);
+  }, [loadTickets]);
+
+  const totalUnread = tickets.reduce((acc, tk) => acc + tk.unread_count, 0);
+  const totalUnreadLabel =
+    totalUnread > 0
+      ? `${totalUnread} ${t("tickets.unread")}`
+      : "";
 
   const isTicketsPage = currentPage === "tickets";
   const allListActive = isTicketsPage && !currentOrderId;
@@ -97,11 +172,14 @@ export function NavSupport({
             <CollapsibleTrigger asChild>
               <SidebarMenuButton tooltip={t("sidebar.tickets")}>
                 <HugeiconsIcon icon={CustomerService01Icon} strokeWidth={2} />
-                <span>{t("sidebar.tickets")}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {t("sidebar.tickets")}
+                </span>
+                <UnreadTicketDot count={totalUnread} label={totalUnreadLabel} />
                 <HugeiconsIcon
                   icon={ArrowRight01Icon}
                   strokeWidth={2}
-                  className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                  className="shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
                 />
               </SidebarMenuButton>
             </CollapsibleTrigger>
@@ -116,7 +194,13 @@ export function NavSupport({
                     {navTransitionPending && pendingNavPageId === "tickets" ? (
                       <Spinner className="size-3.5 shrink-0 text-muted-foreground" />
                     ) : null}
-                    <span>{t("tickets.allTickets")}</span>
+                    <span className="min-w-0 flex-1 truncate">
+                      {t("tickets.allTickets")}
+                    </span>
+                    <UnreadTicketDot
+                      count={totalUnread}
+                      label={totalUnreadLabel}
+                    />
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
                 {loading ? (
@@ -144,6 +228,10 @@ export function NavSupport({
                       (navTransitionPending &&
                         pendingNavPageId === "tickets" &&
                         active);
+                    const rowUnreadLabel =
+                      tk.unread_count > 0
+                        ? `${tk.unread_count} ${t("tickets.unread")}`
+                        : "";
                     return (
                       <SidebarMenuSubItem key={oid}>
                         <SidebarMenuSubButton
@@ -158,9 +246,16 @@ export function NavSupport({
                           {showRowSpinner ? (
                             <Spinner className="size-3.5 shrink-0 text-muted-foreground" />
                           ) : null}
-                          <span className="truncate" title={ticketSidebarTitle(tk, t)}>
+                          <span
+                            className="min-w-0 flex-1 truncate"
+                            title={ticketSidebarTitle(tk, t)}
+                          >
                             {ticketSidebarTitle(tk, t)}
                           </span>
+                          <UnreadTicketDot
+                            count={tk.unread_count}
+                            label={rowUnreadLabel}
+                          />
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     );

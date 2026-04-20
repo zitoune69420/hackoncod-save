@@ -128,6 +128,21 @@ export async function getOrderById(orderId: string): Promise<ShopOrder | null> {
   return resolveProduct(data as ShopOrder);
 }
 
+const TICKET_LIST_PARALLEL_CHUNK = 12;
+
+async function mapInChunks<T, R>(
+  items: T[],
+  chunkSize: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    out.push(...(await Promise.all(chunk.map(fn))));
+  }
+  return out;
+}
+
 export async function getUserTickets(
   userId: string,
   isAdminOrPartner: boolean,
@@ -150,50 +165,43 @@ export async function getUserTickets(
   if (error || !orders) return [];
 
   const orderRows = orders as ShopOrder[];
+  if (orderRows.length === 0) return [];
+
+  const orderIds = orderRows.map((o) => o.id);
   const discordIds = [...new Set(orderRows.map((o) => o.user_id))];
-  let discordDisplayById: Map<string, string>;
-  try {
-    discordDisplayById = await getDiscordDisplayNamesForUserIds(discordIds);
-  } catch {
-    discordDisplayById = new Map();
-  }
 
-  const tickets: Ticket[] = [];
-  for (const raw of orders) {
-    const order = raw as ShopOrder;
-
-    const { data: lastMsgArr } = await supabase
-      .from("shop_ticket_messages")
-      .select("*")
-      .eq("order_id", order.id)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    const last_message = (lastMsgArr?.[0] as TicketMessage | undefined) ?? null;
-
-    const { data: readRow } = await supabase
+  const [discordDisplayById, readsResult] = await Promise.all([
+    getDiscordDisplayNamesForUserIds(discordIds).catch(() => new Map<string, string>()),
+    supabase
       .from("shop_ticket_reads")
-      .select("last_read_at")
-      .eq("order_id", order.id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    const lastReadAt = readRow?.last_read_at ?? null;
+      .select("order_id, last_read_at")
+      .in("order_id", orderIds)
+      .eq("user_id", userId),
+  ]);
 
-    let unread_count = 0;
-    if (lastReadAt) {
-      const senderFilter = isAdminOrPartner ? "client" : undefined;
-      let countQuery = supabase
-        .from("shop_ticket_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("order_id", order.id)
-        .gt("created_at", lastReadAt);
-      if (senderFilter) {
-        countQuery = countQuery.eq("type", senderFilter);
-      } else {
-        countQuery = countQuery.in("type", ["admin", "staff"]);
+  const readMap = new Map<string, string>(
+    (readsResult.data ?? []).map((r) => [r.order_id, r.last_read_at]),
+  );
+
+  const tickets = await mapInChunks(orderRows, TICKET_LIST_PARALLEL_CHUNK, async (raw) => {
+    const order = raw as ShopOrder;
+    const lastReadAt = readMap.get(order.id) ?? null;
+
+    const unreadCountPromise = (async (): Promise<number> => {
+      if (lastReadAt) {
+        let countQuery = supabase
+          .from("shop_ticket_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("order_id", order.id)
+          .gt("created_at", lastReadAt);
+        if (isAdminOrPartner) {
+          countQuery = countQuery.eq("type", "client");
+        } else {
+          countQuery = countQuery.in("type", ["admin", "staff"]);
+        }
+        const { count } = await countQuery;
+        return count ?? 0;
       }
-      const { count } = await countQuery;
-      unread_count = count ?? 0;
-    } else {
       let countQuery = supabase
         .from("shop_ticket_messages")
         .select("id", { count: "exact", head: true })
@@ -204,17 +212,29 @@ export async function getUserTickets(
         countQuery = countQuery.in("type", ["admin", "staff"]);
       }
       const { count } = await countQuery;
-      unread_count = count ?? 0;
-    }
+      return count ?? 0;
+    })();
 
-    await resolveProduct(order);
-    tickets.push({
-      order,
+    const [{ data: lastMsgArr }, unread_count, resolvedOrder] = await Promise.all([
+      supabase
+        .from("shop_ticket_messages")
+        .select("*")
+        .eq("order_id", order.id)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      unreadCountPromise,
+      resolveProduct(order),
+    ]);
+
+    const last_message = (lastMsgArr?.[0] as TicketMessage | undefined) ?? null;
+
+    return {
+      order: resolvedOrder,
       last_message,
       unread_count,
-      client_discord_display: discordDisplayById.get(order.user_id) ?? null,
-    });
-  }
+      client_discord_display: discordDisplayById.get(resolvedOrder.user_id) ?? null,
+    };
+  });
 
   return tickets;
 }

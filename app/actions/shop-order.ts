@@ -1,10 +1,6 @@
 "use server";
 
 import {
-  getDiscordUserIdForAuthUser,
-} from "@/lib/permissions-server";
-import { findDiscordAccountId } from "@/lib/banned/site-ban-db";
-import {
   createSale,
   createSaleAccount,
   createSaleCheat,
@@ -26,8 +22,7 @@ import {
 } from "@/lib/shop/order-welcome-message";
 import { headers } from "next/headers";
 import { getServerAuthSession } from "@/lib/auth/get-server-auth-session";
-import { extractDiscordSnowflakeFromAvatarUrl } from "@/lib/discord/extract-discord-snowflake-from-avatar";
-import { getAuthUserDiscordSnowflake } from "@/lib/supabase/app-users";
+import { resolveViewerDiscordSnowflake } from "@/lib/shop/resolve-viewer-discord-snowflake";
 
 export type CreateOrderResult =
   | { ok: true; orderId: string; saleId: string }
@@ -51,19 +46,7 @@ export async function createOrderAction(
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
 
-  let discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
-  if (!discordId) {
-    discordId = await findDiscordAccountId(user.id);
-  }
-  if (!discordId && /^\d{5,24}$/.test(user.id)) {
-    discordId = user.id;
-  }
-  if (!discordId) {
-    discordId = extractDiscordSnowflakeFromAvatarUrl(user.image);
-  }
-  if (!discordId) {
-    discordId = await getAuthUserDiscordSnowflake(user.id);
-  }
+  const discordId = await resolveViewerDiscordSnowflake(user);
   if (!discordId) return { ok: false, error: "unauthorized" };
 
   const supabase = createAdminClient();

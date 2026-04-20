@@ -210,7 +210,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { role, status } = useUserRole();
+  const { role, status, isAuthenticated, isLoading } = useUserRole();
   const [isNavPending, startNavTransition] = useTransition();
   const [pendingNavPageId, setPendingNavPageId] = useState<string | null>(null);
 
@@ -321,10 +321,7 @@ function DashboardChrome({ children }: { children: ReactNode }) {
       <AppSidebar
         currentPage={contentPage}
         currentOrderId={contentPage === "tickets" ? ticketOrderIdParam : null}
-        showSupportNav={
-          status === "resolved" &&
-          (role === "founder" || role === "partner")
-        }
+        showSupportNav={isAuthenticated && !isLoading}
         onSelectPage={onSelectPage}
         pendingNavPageId={pendingNavPageId}
         navTransitionPending={isNavPending && pendingNavPageId != null}

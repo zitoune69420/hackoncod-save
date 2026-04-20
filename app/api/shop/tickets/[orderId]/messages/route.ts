@@ -1,6 +1,8 @@
 import { auth } from "@/app/auth";
+import { getHeadersForBetterAuth } from "@/lib/auth/get-headers-for-better-auth";
 import { getDiscordUserPresentationsForUserIds } from "@/lib/discord/guild-member-display";
-import { getCurrentUserAccess, getDiscordUserIdForAuthUser } from "@/lib/permissions-server";
+import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { resolveViewerDiscordSnowflake } from "@/lib/shop/resolve-viewer-discord-snowflake";
 import {
   getOrderById,
   getTicketMessages,
@@ -8,7 +10,6 @@ import {
   updateOrderLanguage,
 } from "@/lib/supabase/shop-queries";
 import { isUuid } from "@/lib/security/is-uuid";
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import type { MessageType, TicketMessage, TicketMessageEnriched } from "@/lib/supabase/shop-types";
 
@@ -35,7 +36,9 @@ export async function GET(
   ctx: { params: Promise<{ orderId: string }> },
 ) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({
+      headers: await getHeadersForBetterAuth(),
+    });
     const user = session?.user;
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,7 +54,7 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
+    const discordId = await resolveViewerDiscordSnowflake(user);
     const access = await getCurrentUserAccess({ source: "db" });
     const isAdminOrPartner = access.role === "founder" || access.role === "partner";
 
@@ -76,7 +79,9 @@ export async function POST(
   ctx: { params: Promise<{ orderId: string }> },
 ) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({
+      headers: await getHeadersForBetterAuth(),
+    });
     const user = session?.user;
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -96,7 +101,7 @@ export async function POST(
       return NextResponse.json({ error: "Order not eligible for chat" }, { status: 400 });
     }
 
-    const discordId = await getDiscordUserIdForAuthUser(user.id, user.image);
+    const discordId = await resolveViewerDiscordSnowflake(user);
     const access = await getCurrentUserAccess({ source: "db" });
     const isAdminOrPartner = access.role === "founder" || access.role === "partner";
 

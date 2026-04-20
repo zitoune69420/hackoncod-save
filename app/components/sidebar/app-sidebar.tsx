@@ -133,7 +133,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentPage?: string;
   /** `orderId` courant quand `page=tickets`. */
   currentOrderId?: string | null;
-  /** Section Support / tickets (visible uniquement pour staff). */
+  /** Section Support / tickets (utilisateurs connectés : client, partner, founder, etc.). */
   showSupportNav?: boolean;
   onSelectPage?: (
     pageId: string,

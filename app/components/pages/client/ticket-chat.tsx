@@ -59,7 +59,10 @@ interface TicketChatProps {
   orderId: string;
   order: ShopOrder;
   initialMessages: TicketMessageEnriched[];
-  /** Snowflake Discord du visiteur (pour aligner « mes » messages). */
+  /**
+   * Snowflake Discord du visiteur (enrichissement API / secours).
+   * Ne pas s’en servir seul pour « mes » messages : côté client il est souvent null.
+   */
   viewerDiscordId: string | null;
   /** Image session (souvent l’avatar Discord OAuth) en secours pour ta bulle. */
   viewerAvatarUrl?: string | null;
@@ -71,6 +74,21 @@ interface TicketChatProps {
 const TIMESTAMP_GROUP_MAX_GAP_MS = 3 * 60 * 1000;
 const MESSAGE_SHOW_DATE_AFTER_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Clé d’expéditeur pour le regroupement : sans ça, plusieurs messages avec `sent_by` null
+ * sont traités comme le même expéditeur → une seule pp / heure en bas de bloc.
+ */
+function senderKeyForGrouping(msg: TicketMessageEnriched): string {
+  if (msg.type === "system") {
+    return `system:${msg.id}`;
+  }
+  const sb = msg.sent_by?.trim();
+  if (sb) {
+    return `${msg.type}:${sb}`;
+  }
+  return `${msg.type}:noid:${msg.id}`;
+}
+
 /** Afficher l’heure (et la date si > 24 h) uniquement sous le dernier message d’un groupe : même expéditeur, écart ≤ 3 min. */
 function shouldShowTimestampOnMessage(
   msg: TicketMessageEnriched,
@@ -79,7 +97,7 @@ function shouldShowTimestampOnMessage(
   if (!next) return true;
   const tMsg = new Date(msg.created_at).getTime();
   const tNext = new Date(next.created_at).getTime();
-  if (next.sent_by !== msg.sent_by) return true;
+  if (senderKeyForGrouping(next) !== senderKeyForGrouping(msg)) return true;
   if (tNext - tMsg > TIMESTAMP_GROUP_MAX_GAP_MS) return true;
   return false;
 }
@@ -525,8 +543,9 @@ export function TicketChat({
                 <p className="text-center text-sm text-muted-foreground">{t("tickets.noMessages")}</p>
               )}
               {messages.map((msg, i) => {
-                const isOwn =
-                  Boolean(viewerDiscordId) && msg.sent_by === viewerDiscordId;
+                const isOwn = isAdminOrPartner
+                  ? msg.type === "admin" || msg.type === "staff"
+                  : msg.type === "client";
                 const isSystem = msg.type === "system";
                 const nextMsg = messages[i + 1];
                 const showMessageTimestamp = shouldShowTimestampOnMessage(
@@ -537,8 +556,9 @@ export function TicketChat({
                 const isOwnLanguagePickerSent =
                   isSystem &&
                   msg.content.trim() === LANGUAGE_PICKER_MARKER &&
-                  Boolean(viewerDiscordId) &&
-                  msg.sent_by === viewerDiscordId;
+                  !isAdminOrPartner &&
+                  String(msg.sent_by ?? "").trim() ===
+                    String(order.user_id ?? "").trim();
 
                 if (isOwnLanguagePickerSent) {
                   const avatarSrcSelf = messageAvatarSrc(msg, {
@@ -590,8 +610,9 @@ export function TicketChat({
                   if (msg.content.trim() === LANGUAGE_PICKER_MARKER) {
                     const resolved = isLanguagePickerResolved(msg, messages);
                     const isTicketOwner =
-                      Boolean(viewerDiscordId) &&
-                      order.user_id === viewerDiscordId;
+                      String(order.user_id ?? "").trim() ===
+                        String(viewerDiscordId ?? "").trim() ||
+                      (viewerDiscordId == null && !isAdminOrPartner);
                     return (
                       <div key={msg.id} className="my-1 flex justify-center px-1">
                         <div className="w-full max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-4 py-3 text-left text-xs shadow-sm">
