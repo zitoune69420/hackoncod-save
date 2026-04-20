@@ -1441,7 +1441,8 @@
       "inactive": "Inactive",
       "fromPrice": "From",
       "priceUnavailable": "Price unavailable",
-      "order": "Order"
+      "order": "Order",
+      "discordLoginRequired": "You must be signed in with Discord to place an order: order tracking and post-purchase chat use your Discord account."
     },
     "dialog": {
       "stepPreorder": "Information",

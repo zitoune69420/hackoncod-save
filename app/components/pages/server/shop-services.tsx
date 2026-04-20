@@ -10,6 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
+import { authClient } from "@/lib/auth-client";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
 import { ShopProductCard } from "@/app/components/pages/client/shop-product-card";
 import { ShopProductDialog } from "@/app/components/pages/client/shop-product-dialog";
@@ -23,6 +24,7 @@ async function fetchShopServices(): Promise<ShopService[]> {
 
 export function ShopServicesPage() {
   const { t } = useTranslations();
+  const { data: session } = authClient.useSession();
   const reduceMotion = useReducedMotion();
 
   const blockIn = {
@@ -139,6 +141,13 @@ export function ShopServicesPage() {
   }, [loadData]);
 
   function openDialog(product: ShopService) {
+    if (!session?.user) {
+      showToast({
+        text: t("shop.common.discordLoginRequired"),
+        variant: "info",
+      });
+      return;
+    }
     setSelectedProduct(product);
     setDialogOpen(true);
   }

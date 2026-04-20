@@ -1441,7 +1441,8 @@
       "inactive": "Inactif",
       "fromPrice": "À partir de",
       "priceUnavailable": "Prix non disponible",
-      "order": "Commander"
+      "order": "Commander",
+      "discordLoginRequired": "Tu dois être connecté avec Discord pour commander : le suivi de commande et le chat après achat passent par ton compte Discord."
     },
     "dialog": {
       "stepPreorder": "Informations",
