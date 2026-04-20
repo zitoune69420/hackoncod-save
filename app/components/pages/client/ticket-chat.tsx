@@ -38,6 +38,16 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { showToast } from "@/components/commons/toasts";
+import {
+  buildAccountDeliveryPayload,
+  parseAccountDeliveryContent,
+  TicketAccountDeliveryBlock,
+} from "./ticket-account-delivery";
+import {
+  buildCheatDeliveryPayload,
+  parseCheatDeliveryContent,
+  TicketCheatDeliveryBlock,
+} from "./ticket-cheat-delivery";
 import { TicketInfoPanel } from "./ticket-info-panel";
 import { ForumMarkdown } from "@/app/components/pages/client/forum-markdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -314,8 +324,12 @@ export function TicketChat({
   const [newMessage, setNewMessage] = useState("");
   const [specialKind, setSpecialKind] =
     useState<SpecialMessageKindOrNone>("none");
-  const [accountDraft, setAccountDraft] = useState("");
-  const [cheatDraft, setCheatDraft] = useState("");
+  const [accountIdentifierDraft, setAccountIdentifierDraft] = useState("");
+  const [accountPasswordDraft, setAccountPasswordDraft] = useState("");
+  const [accountEmailDraft, setAccountEmailDraft] = useState("");
+  const [cheatDownloadDraft, setCheatDownloadDraft] = useState("");
+  const [cheatSpooferDraft, setCheatSpooferDraft] = useState("");
+  const [cheatNotesDraft, setCheatNotesDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [order, setOrder] = useState(initialOrder);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -430,17 +444,31 @@ export function TicketChat({
   }
 
   async function sendSpecialAccountSystem() {
-    const ok = await postTicketMessage(accountDraft, { asSystem: true });
+    const payload = buildAccountDeliveryPayload({
+      identifier: accountIdentifierDraft,
+      password: accountPasswordDraft,
+      email: accountEmailDraft,
+    });
+    const ok = await postTicketMessage(payload, { asSystem: true });
     if (ok) {
-      setAccountDraft("");
+      setAccountIdentifierDraft("");
+      setAccountPasswordDraft("");
+      setAccountEmailDraft("");
       closeSpecialPanel();
     }
   }
 
   async function sendSpecialCheatSystem() {
-    const ok = await postTicketMessage(cheatDraft, { asSystem: true });
+    const payload = buildCheatDeliveryPayload({
+      downloadUrl: cheatDownloadDraft,
+      spooferUrl: cheatSpooferDraft,
+      notes: cheatNotesDraft,
+    });
+    const ok = await postTicketMessage(payload, { asSystem: true });
     if (ok) {
-      setCheatDraft("");
+      setCheatDownloadDraft("");
+      setCheatSpooferDraft("");
+      setCheatNotesDraft("");
       closeSpecialPanel();
     }
   }
@@ -536,7 +564,7 @@ export function TicketChat({
           {/* Messages */}
           <div
             ref={containerRef}
-            className="min-h-0 flex-1 overflow-y-auto p-4 [&::-webkit-scrollbar]:hidden"
+            className="min-h-0 flex-1 overflow-y-auto px-5 py-4 [&::-webkit-scrollbar]:hidden"
           >
             <div className="flex flex-col justify-end gap-2" style={{ minHeight: "100%" }}>
               {messages.length === 0 && (
@@ -567,7 +595,7 @@ export function TicketChat({
                   });
                   const bubbleSelf = (
                     <div className="flex min-w-0 flex-col items-end">
-                      <div className="min-w-0 max-w-[min(100%,24rem)] overflow-hidden rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-sm leading-relaxed text-primary-foreground">
+                      <div className="min-w-0 max-w-[min(100%,24rem)] overflow-hidden rounded-2xl rounded-br-md bg-primary px-4 py-2 text-sm leading-relaxed text-primary-foreground">
                         <p className="leading-relaxed">
                           {t("tickets.languagePickerSentSelf")}
                         </p>
@@ -607,6 +635,43 @@ export function TicketChat({
                 }
 
                 if (isSystem) {
+                  const accountDelivery = parseAccountDeliveryContent(msg.content);
+                  if (accountDelivery) {
+                    return (
+                      <div
+                        key={msg.id}
+                        className="my-1 flex flex-col items-center justify-center px-2"
+                      >
+                        <TicketAccountDeliveryBlock
+                          data={accountDelivery}
+                          t={t}
+                        />
+                        {showMessageTimestamp && (
+                          <span className="mt-1 text-[10px] text-muted-foreground/60">
+                            {formatTicketMessageTimestamp(msg.created_at)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  const cheatDelivery = parseCheatDeliveryContent(msg.content);
+                  if (cheatDelivery) {
+                    return (
+                      <div
+                        key={msg.id}
+                        className="my-1 flex flex-col items-center justify-center px-2"
+                      >
+                        <TicketCheatDeliveryBlock data={cheatDelivery} t={t} />
+                        {showMessageTimestamp && (
+                          <span className="mt-1 text-[10px] text-muted-foreground/60">
+                            {formatTicketMessageTimestamp(msg.created_at)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }
+
                   if (msg.content.trim() === LANGUAGE_PICKER_MARKER) {
                     const resolved = isLanguagePickerResolved(msg, messages);
                     const isTicketOwner =
@@ -614,8 +679,8 @@ export function TicketChat({
                         String(viewerDiscordId ?? "").trim() ||
                       (viewerDiscordId == null && !isAdminOrPartner);
                     return (
-                      <div key={msg.id} className="my-1 flex justify-center px-1">
-                        <div className="w-full max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-4 py-3 text-left text-xs shadow-sm">
+                      <div key={msg.id} className="my-1 flex justify-center px-2">
+                        <div className="w-full max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-[1.125rem] py-3 text-left text-xs shadow-sm">
                           <TicketChatLanguagePicker
                             orderId={orderId}
                             resolved={resolved}
@@ -631,9 +696,9 @@ export function TicketChat({
                   return (
                     <div
                       key={msg.id}
-                      className="my-1 flex flex-col items-center justify-center px-1"
+                      className="my-1 flex flex-col items-center justify-center px-2"
                     >
-                      <div className="max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-4 py-2.5 text-left text-xs shadow-sm">
+                      <div className="max-w-[min(100%,22rem)] rounded-xl border border-border/50 bg-muted/90 px-[1.125rem] py-2.5 text-left text-xs shadow-sm">
                         <ForumMarkdown
                           source={processSystemContent(msg.content, t)}
                           compact
@@ -662,7 +727,7 @@ export function TicketChat({
                     }`}
                   >
                     <div
-                      className={`min-w-0 max-w-[min(100%,24rem)] overflow-hidden rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
+                      className={`min-w-0 max-w-[min(100%,24rem)] overflow-hidden rounded-2xl px-4 py-2 text-sm leading-relaxed ${
                         isOwn
                           ? "rounded-br-md bg-primary text-primary-foreground"
                           : "rounded-bl-md bg-muted"
@@ -872,27 +937,68 @@ export function TicketChat({
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {t("tickets.specialMessageAccountHint")}
               </p>
-              <div className="flex flex-col gap-2.5">
-                <Label
-                  htmlFor={`ticket-acc-${orderId}`}
-                  className="text-xs font-semibold leading-none"
-                >
-                  {t("tickets.typeMessage")}
-                </Label>
-                <Textarea
-                  id={`ticket-acc-${orderId}`}
-                  value={accountDraft}
-                  onChange={(e) => setAccountDraft(e.target.value)}
-                  rows={4}
-                  placeholder={t("tickets.typeMessage")}
-                  className="resize-none bg-background/80 text-sm"
-                />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-acc-id-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.accountDelivery.identifier")}
+                  </Label>
+                  <Input
+                    id={`ticket-acc-id-${orderId}`}
+                    value={accountIdentifierDraft}
+                    onChange={(e) => setAccountIdentifierDraft(e.target.value)}
+                    autoComplete="off"
+                    placeholder={t("tickets.accountDelivery.identifierPlaceholder")}
+                    className="bg-background/80 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-acc-pw-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.accountDelivery.password")}
+                  </Label>
+                  <Input
+                    id={`ticket-acc-pw-${orderId}`}
+                    type="password"
+                    value={accountPasswordDraft}
+                    onChange={(e) => setAccountPasswordDraft(e.target.value)}
+                    autoComplete="new-password"
+                    placeholder={t("tickets.accountDelivery.passwordPlaceholder")}
+                    className="bg-background/80 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-acc-em-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.accountDelivery.email")}
+                  </Label>
+                  <Input
+                    id={`ticket-acc-em-${orderId}`}
+                    type="email"
+                    value={accountEmailDraft}
+                    onChange={(e) => setAccountEmailDraft(e.target.value)}
+                    autoComplete="email"
+                    placeholder={t("tickets.accountDelivery.emailPlaceholder")}
+                    className="bg-background/80 text-sm"
+                  />
+                </div>
               </div>
               <Button
                 type="button"
                 size="sm"
                 className="w-full"
-                disabled={isSending || !canSend || !accountDraft.trim()}
+                disabled={
+                  isSending ||
+                  !canSend ||
+                  !accountPasswordDraft.trim() ||
+                  !accountEmailDraft.trim()
+                }
                 onClick={() => void sendSpecialAccountSystem()}
               >
                 {t("tickets.specialMessageSend")}
@@ -905,27 +1011,67 @@ export function TicketChat({
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {t("tickets.specialMessageCheatHint")}
               </p>
-              <div className="flex flex-col gap-2.5">
-                <Label
-                  htmlFor={`ticket-cht-${orderId}`}
-                  className="text-xs font-semibold leading-none"
-                >
-                  {t("tickets.typeMessage")}
-                </Label>
-                <Textarea
-                  id={`ticket-cht-${orderId}`}
-                  value={cheatDraft}
-                  onChange={(e) => setCheatDraft(e.target.value)}
-                  rows={4}
-                  placeholder={t("tickets.typeMessage")}
-                  className="resize-none bg-background/80 text-sm"
-                />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-cht-dl-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.cheatDelivery.downloadUrl")}
+                  </Label>
+                  <Input
+                    id={`ticket-cht-dl-${orderId}`}
+                    type="url"
+                    inputMode="url"
+                    value={cheatDownloadDraft}
+                    onChange={(e) => setCheatDownloadDraft(e.target.value)}
+                    autoComplete="off"
+                    placeholder={t("tickets.cheatDelivery.downloadPlaceholder")}
+                    className="bg-background/80 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-cht-sp-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.cheatDelivery.spooferUrl")}
+                  </Label>
+                  <Input
+                    id={`ticket-cht-sp-${orderId}`}
+                    type="url"
+                    inputMode="url"
+                    value={cheatSpooferDraft}
+                    onChange={(e) => setCheatSpooferDraft(e.target.value)}
+                    autoComplete="off"
+                    placeholder={t("tickets.cheatDelivery.spooferPlaceholder")}
+                    className="bg-background/80 text-sm"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label
+                    htmlFor={`ticket-cht-notes-${orderId}`}
+                    className="text-xs font-semibold leading-none"
+                  >
+                    {t("tickets.cheatDelivery.notes")}
+                  </Label>
+                  <Textarea
+                    id={`ticket-cht-notes-${orderId}`}
+                    value={cheatNotesDraft}
+                    onChange={(e) => setCheatNotesDraft(e.target.value)}
+                    rows={4}
+                    placeholder={t("tickets.cheatDelivery.notesPlaceholder")}
+                    className="resize-none bg-background/80 text-sm"
+                  />
+                </div>
               </div>
               <Button
                 type="button"
                 size="sm"
                 className="w-full"
-                disabled={isSending || !canSend || !cheatDraft.trim()}
+                disabled={
+                  isSending || !canSend || !cheatDownloadDraft.trim()
+                }
                 onClick={() => void sendSpecialCheatSystem()}
               >
                 {t("tickets.specialMessageSend")}

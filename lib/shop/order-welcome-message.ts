@@ -118,5 +118,5 @@ Merci de votre confiance !
 
 ---
 
-**Rappel important :** Pour une communication respectueuse, veuillez inclure les mots de politesse suivants dans vos messages : bonjour, svp, merci, au revoir. Merci de votre compréhension !`;
+**Rappel important :** Pour une communication respectueuse, veuillez inclure les formules de politesse suivantes dans vos messages : bonjour, svp, merci, au revoir. Merci de votre compréhension !`;
 }
