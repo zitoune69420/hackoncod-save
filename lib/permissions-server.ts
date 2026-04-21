@@ -4,6 +4,7 @@ import type { AuthContext } from "@better-auth/core";
 import { decryptOAuthToken } from "better-auth/oauth2";
 import { headers } from "next/headers";
 import { auth } from "@/app/auth";
+import { getDiscordBotToken } from "@/lib/env";
 import { DISCORD_API_BASE, discordFetchBot } from "@/lib/discord/discord-rest";
 import {
   ACCESS_ROLES,
@@ -325,7 +326,7 @@ async function resolveDiscordRoleForUser(
   image: string | null | undefined,
 ): Promise<UserRole> {
   const guildId = getDiscordGuildId();
-  if (!guildId || !process.env.DISCORD_BOT_TOKEN) {
+  if (!guildId || !getDiscordBotToken()) {
     return "user";
   }
 
@@ -365,7 +366,7 @@ export async function getDiscordRoleResolutionDebug(
   user: SessionUserLike | null | undefined,
 ): Promise<DiscordRoleDebugPayload> {
   const guildId = getDiscordGuildId();
-  const botTokenOk = Boolean(process.env.DISCORD_BOT_TOKEN?.trim());
+  const botTokenOk = Boolean(getDiscordBotToken()?.trim());
   const configured = getConfiguredDiscordRoleIds();
   const envRoleConfigured: Partial<Record<Permission, boolean>> = {};
   const envIdSuffixes: Partial<Record<Permission, string>> = {};

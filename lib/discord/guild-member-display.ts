@@ -1,5 +1,6 @@
 import "server-only"
 
+import { getDiscordBotToken } from "@/lib/env"
 import { discordFetchBot } from "./discord-rest"
 
 const SNOWFLAKE_RE = /^\d{5,24}$/
@@ -76,7 +77,7 @@ export async function getDiscordUserPresentationsForUserIds(
   rawIds: readonly string[],
 ): Promise<Map<string, DiscordUserPresentation>> {
   const out = new Map<string, DiscordUserPresentation>()
-  if (!process.env.DISCORD_BOT_TOKEN?.trim()) return out
+  if (!getDiscordBotToken()?.trim()) return out
 
   const guildId = normalizeSnowflake(process.env.DISCORD_GUILD_ID)
 

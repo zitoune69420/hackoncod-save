@@ -1,6 +1,12 @@
+import "server-only"
+
 import { betterAuth } from "better-auth"
 import { createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
+import {
+  getBetterAuthSecret,
+  getDiscordClientSecret,
+} from "@/lib/env"
 import { sendLoginDiscordNotification } from "@/lib/discord/login-notify"
 
 /**
@@ -31,7 +37,7 @@ function trustedOriginsFromEnv(): string[] | undefined {
 const _trustedOrigins = trustedOriginsFromEnv()
 
 function authSecret(): string | undefined {
-  const s = process.env.BETTER_AUTH_SECRET?.trim()
+  const s = getBetterAuthSecret()?.trim()
   return s || undefined
 }
 
@@ -54,7 +60,7 @@ export const auth = betterAuth({
   socialProviders: {
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID as string,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+      clientSecret: getDiscordClientSecret() as string,
     },
   },
   hooks: {

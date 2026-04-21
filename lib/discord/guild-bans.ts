@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDiscordBotToken } from "@/lib/env";
 import { DISCORD_API_BASE, discordFetchBot } from "./discord-rest";
 
 const SNOWFLAKE_RE = /^\d{5,24}$/;
@@ -113,7 +114,7 @@ export async function fetchGuildBanIfAny(
   const guildId = normalizeSnowflake(process.env.DISCORD_GUILD_ID ?? "");
   const userId = normalizeSnowflake(rawUserId);
   if (!guildId || !userId) return null;
-  const token = process.env.DISCORD_BOT_TOKEN?.trim();
+  const token = getDiscordBotToken()?.trim();
   if (!token) return null;
   try {
     const res = await fetch(
@@ -157,7 +158,7 @@ export async function putGuildBanMember(
   if (!guildId || !userId) {
     return { ok: false, status: 0, detail: "missing_guild_or_user_id" };
   }
-  const token = process.env.DISCORD_BOT_TOKEN?.trim();
+  const token = getDiscordBotToken()?.trim();
   if (!token) {
     return { ok: false, status: 0, detail: "missing_bot_token" };
   }

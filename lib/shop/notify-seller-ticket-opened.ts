@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDiscordBotToken } from "@/lib/env";
 import { discordDefaultEmbedAvatarUrl } from "@/lib/discord/discord-embed-avatar-fallback";
 import { sendDirectMessageEmbed } from "@/lib/discord/dm";
 import { getDiscordUserPresentationsForUserIds } from "@/lib/discord/guild-member-display";
@@ -63,7 +64,7 @@ function productCreatedBy(order: ShopOrder): string | null {
 export async function notifySellerWhenClientOpensTicketChat(
   orderId: string,
 ): Promise<void> {
-  if (!process.env.DISCORD_BOT_TOKEN?.trim()) return;
+  if (!getDiscordBotToken()?.trim()) return;
 
   const order = await getOrderById(orderId);
   if (!order) return;

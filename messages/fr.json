@@ -547,7 +547,7 @@
     "description": "Parcourez et téléchargez des cheats pour les jeux Call of Duty",
     "selectGame": "Sélectionner un jeu...",
     "selectGameToViewCheats": "Sélectionnez un jeu pour voir les cheats",
-    "searchPlaceholder": "Rechercher des cheats par nom ou mode...",
+    "searchPlaceholder": "Rechercher des cheats...",
     "refresh": "Actualiser",
     "suggestCheat": "Suggérer un Cheat",
     "tableHeaders": {

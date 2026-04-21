@@ -7,7 +7,10 @@
  * d’environnement — clé **anon** / **publishable** au lieu de **service_role** / **secret**.
  * Sur Vercel : vérifier l’environnement **Production** (pas seulement Preview / Development).
  */
+import "server-only"
+
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { getSupabaseServiceRoleKey } from "@/lib/env"
 
 let adminClient: SupabaseClient | undefined
 
@@ -63,7 +66,7 @@ export function createAdminClient(): SupabaseClient {
   if (adminClient) return adminClient
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  const key = getSupabaseServiceRoleKey()?.trim()
 
   if (!url || !key) {
     throw new Error(

@@ -1,9 +1,13 @@
+import "server-only";
+
+import { getSupabaseServiceRoleKey } from "@/lib/env";
+
 /**
  * Vérif banned_ips par IP via PostgREST (compatible Edge / middleware).
  */
 export async function fetchIsIpBannedEdge(ip: string): Promise<boolean> {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const key = getSupabaseServiceRoleKey()?.trim();
   if (!base || !key || !ip || ip === "unknown") return false;
 
   const safe = encodeURIComponent(ip);

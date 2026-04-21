@@ -1,3 +1,7 @@
+import "server-only"
+
+import { getDiscordBotToken } from "@/lib/env"
+
 /**
  * Point d’entrée serveur pour les appels à l’API REST Discord.
  * Les routes sous `app/api/discord/**` peuvent importer ces helpers.
@@ -9,7 +13,7 @@ export const DISCORD_API_VERSION = "10" as const
 export const DISCORD_API_BASE = `https://discord.com/api/v${DISCORD_API_VERSION}`
 
 export function discordBotHeaders(): HeadersInit {
-  const token = process.env.DISCORD_BOT_TOKEN
+  const token = getDiscordBotToken()
   if (!token) {
     throw new Error("DISCORD_BOT_TOKEN is not set")
   }

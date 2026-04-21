@@ -1,3 +1,6 @@
+import "server-only"
+
+import { getDiscordBotToken } from "@/lib/env"
 import { DISCORD_API_BASE } from "./discord-rest"
 import type { DiscordApiEmbed } from "./webhook"
 
@@ -10,7 +13,7 @@ export async function sendDirectMessageEmbed(
   recipientDiscordUserId: string,
   embeds: DiscordApiEmbed[],
 ): Promise<void> {
-  const token = process.env.DISCORD_BOT_TOKEN
+  const token = getDiscordBotToken()
   if (!token) {
     throw new Error("DISCORD_BOT_TOKEN is not set")
   }
