@@ -334,6 +334,8 @@ export function TicketChat({
   const [order, setOrder] = useState(initialOrder);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  /** Incrémenté après envoi pour remonter l’Input et appliquer autoFocus sans ref (Input ui sans forwardRef). */
+  const [composerRemountKey, setComposerRemountKey] = useState(0);
   const markedAsReadRef = useRef(false);
 
   const scrollToBottom = useCallback((force = false) => {
@@ -412,7 +414,10 @@ export function TicketChat({
       if (!res.ok) throw new Error();
       const msg = (await res.json()) as TicketMessageEnriched;
       setMessages((prev) => [...prev, msg]);
-      if (opts.clearComposer) setNewMessage("");
+      if (opts.clearComposer) {
+        setNewMessage("");
+        setComposerRemountKey((k) => k + 1);
+      }
       setTimeout(() => scrollToBottom(true), 50);
       return true;
     } catch {
@@ -799,6 +804,8 @@ export function TicketChat({
                 className="flex items-center gap-2"
               >
                 <Input
+                  key={composerRemountKey}
+                  autoFocus={composerRemountKey > 0}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder={
