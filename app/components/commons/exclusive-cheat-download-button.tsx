@@ -51,7 +51,10 @@ export function CheatDownloadButton({
         const tok = await issuePublicCheatDownloadToken(cheatId);
         if (!tok.ok) {
           showToast({
-            text: t("common.exclusiveDownload.urlError"),
+            text:
+              tok.error === "rate_limited"
+                ? t("common.exclusiveDownload.rateLimited")
+                : t("common.exclusiveDownload.urlError"),
             variant: "error",
           });
           return;
@@ -75,9 +78,11 @@ export function CheatDownloadButton({
       if (!res.ok || typeof json.url !== "string") {
         showToast({
           text:
-            typeof json.error === "string"
-              ? json.error
-              : t("common.exclusiveDownload.urlError"),
+            res.status === 429
+              ? t("common.exclusiveDownload.rateLimited")
+              : typeof json.error === "string"
+                ? json.error
+                : t("common.exclusiveDownload.urlError"),
           variant: "error",
         });
         return;

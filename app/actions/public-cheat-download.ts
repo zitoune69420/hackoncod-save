@@ -1,21 +1,38 @@
 "use server";
 
+import { headers } from "next/headers";
+import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
 import { getCheatLinkFlagsById } from "@/lib/supabase/queries";
 import { isUuid } from "@/lib/security/is-uuid";
-import { getPublicDownloadHmacSecret } from "@/lib/env";
+import { getCheatDownloadSigningSecret } from "@/lib/env";
 import { signPublicDownloadPayload } from "@/lib/public-download-token";
+import { allowPublicDownloadTokenIssue } from "@/lib/security/public-download-rate-limit";
 
 const TOKEN_TTL_SEC = 300;
 
 export type PublicCheatDownloadTokenResult =
   | { ok: true; exp: number; sig: string }
-  | { ok: false; error: "invalid" | "not_found" | "forbidden" | "no_file" | "misconfigured" };
+  | {
+      ok: false;
+      error:
+        | "invalid"
+        | "not_found"
+        | "forbidden"
+        | "no_file"
+        | "misconfigured"
+        | "rate_limited";
+    };
 
 export async function issuePublicCheatDownloadToken(
   cheatId: string,
 ): Promise<PublicCheatDownloadTokenResult> {
-  if (!getPublicDownloadHmacSecret()) {
+  if (!getCheatDownloadSigningSecret()) {
     return { ok: false, error: "misconfigured" };
+  }
+
+  const ip = getClientIpFromHeaders(await headers());
+  if (!allowPublicDownloadTokenIssue(ip)) {
+    return { ok: false, error: "rate_limited" };
   }
 
   const id = cheatId.trim();

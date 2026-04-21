@@ -347,6 +347,7 @@
     "exclusiveDownload": {
       "invalidLink": "Invalid file link.",
       "urlError": "Could not generate the download link.",
+      "rateLimited": "Too many downloads in a short time. Try again in a minute.",
       "networkError": "Network error."
     },
     "siteBan": {

@@ -16,9 +16,9 @@ export async function GET() {
     return NextResponse.json(data)
   } catch (err) {
     console.error("[api/videos] error", err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    )
+    const message = err instanceof Error ? err.message : String(err)
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message
+    return NextResponse.json({ error: safeMessage }, { status: 500 })
   }
 }

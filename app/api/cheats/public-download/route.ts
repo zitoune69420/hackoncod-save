@@ -1,13 +1,26 @@
+import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
 import { resolveCheatDownloadUrl } from "@/lib/cheat-download-server";
 import { getCheatLinkFlagsById } from "@/lib/supabase/queries";
 import { isUuid } from "@/lib/security/is-uuid";
 import { verifyPublicDownloadPayload } from "@/lib/public-download-token";
-import { getPublicDownloadHmacSecret } from "@/lib/env";
+import { getCheatDownloadSigningSecret } from "@/lib/env";
+import {
+  allowPublicDownloadApiGet,
+  allowPublicDownloadForCheat,
+} from "@/lib/security/public-download-rate-limit";
 import { NextResponse } from "next/server";
 
 const SIGNED_URL_SECONDS = 180;
 
 export async function GET(req: Request) {
+  const ip = getClientIpFromHeaders(req.headers);
+  if (!allowPublicDownloadApiGet(ip)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const cheatId = searchParams.get("cheatId")?.trim() ?? "";
   const expRaw = searchParams.get("exp")?.trim() ?? "";
@@ -17,13 +30,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid cheatId" }, { status: 400 });
   }
 
-  if (!getPublicDownloadHmacSecret()) {
+  if (!getCheatDownloadSigningSecret()) {
     return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
   }
 
   const exp = Number.parseInt(expRaw, 10);
   if (!Number.isFinite(exp) || !sig || !verifyPublicDownloadPayload(cheatId, exp, sig)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!allowPublicDownloadForCheat(ip, cheatId)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
   }
 
   const row = await getCheatLinkFlagsById(cheatId);

@@ -1,12 +1,12 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "crypto";
-import { getPublicDownloadHmacSecret } from "@/lib/env";
+import { getCheatDownloadSigningSecret } from "@/lib/env";
 
 const MAX_SKEW_SEC = 600;
 
 export function signPublicDownloadPayload(cheatId: string, exp: number): string {
-  const secret = getPublicDownloadHmacSecret();
+  const secret = getCheatDownloadSigningSecret();
   if (!secret) return "";
   return createHmac("sha256", secret)
     .update(`${cheatId}|${exp}`)
@@ -18,7 +18,7 @@ export function verifyPublicDownloadPayload(
   exp: number,
   sigHex: string,
 ): boolean {
-  const secret = getPublicDownloadHmacSecret();
+  const secret = getCheatDownloadSigningSecret();
   if (!secret) return false;
   const now = Math.floor(Date.now() / 1000);
   if (exp < now || exp > now + MAX_SKEW_SEC) return false;

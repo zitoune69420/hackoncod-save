@@ -14,9 +14,9 @@ import { authClient } from "@/lib/auth-client";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
 import { ShopProductCard } from "@/app/components/pages/client/shop-product-card";
 import { ShopProductDialog } from "@/app/components/pages/client/shop-product-dialog";
-import type { ShopService, InfoBlock } from "@/lib/supabase/shop-types";
+import type { ShopServicePublic, InfoBlock } from "@/lib/supabase/shop-types";
 
-async function fetchShopServices(): Promise<ShopService[]> {
+async function fetchShopServices(): Promise<ShopServicePublic[]> {
   const res = await fetch("/api/shop/services");
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
@@ -61,14 +61,14 @@ export function ShopServicesPage() {
     },
   };
 
-  const [data, setData] = useState<ShopService[]>([]);
+  const [data, setData] = useState<ShopServicePublic[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ShopService | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ShopServicePublic | null>(null);
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -85,7 +85,7 @@ export function ShopServicesPage() {
     (skipCache = false) => {
       const key = cacheKey("shop-services");
       if (!skipCache) {
-        const cached = getCached<ShopService[]>(key);
+        const cached = getCached<ShopServicePublic[]>(key);
         if (cached) {
           setData(cached);
           setLoading(false);
@@ -140,7 +140,7 @@ export function ShopServicesPage() {
     loadData(true);
   }, [loadData]);
 
-  function openDialog(product: ShopService) {
+  function openDialog(product: ShopServicePublic) {
     if (!session?.user) {
       showToast({
         text: t("shop.common.discordLoginRequired"),
@@ -152,7 +152,7 @@ export function ShopServicesPage() {
     setDialogOpen(true);
   }
 
-  function getMinPrice(product: ShopService): string | null {
+  function getMinPrice(product: ShopServicePublic): string | null {
     if (!product.prices || product.prices.length === 0) return null;
     const min = Math.min(...product.prices.map((p) => p.price));
     return `${min} €`;

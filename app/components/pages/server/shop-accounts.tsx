@@ -14,9 +14,9 @@ import { authClient } from "@/lib/auth-client";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
 import { ShopProductCard } from "@/app/components/pages/client/shop-product-card";
 import { ShopProductDialog } from "@/app/components/pages/client/shop-product-dialog";
-import type { ShopAccount, InfoBlock } from "@/lib/supabase/shop-types";
+import type { ShopAccountPublic, InfoBlock } from "@/lib/supabase/shop-types";
 
-async function fetchShopAccounts(): Promise<ShopAccount[]> {
+async function fetchShopAccounts(): Promise<ShopAccountPublic[]> {
   const res = await fetch("/api/shop/accounts");
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
@@ -61,14 +61,14 @@ export function ShopAccountsPage() {
     },
   };
 
-  const [data, setData] = useState<ShopAccount[]>([]);
+  const [data, setData] = useState<ShopAccountPublic[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ShopAccount | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ShopAccountPublic | null>(null);
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -85,7 +85,7 @@ export function ShopAccountsPage() {
     (skipCache = false) => {
       const key = cacheKey("shop-accounts");
       if (!skipCache) {
-        const cached = getCached<ShopAccount[]>(key);
+        const cached = getCached<ShopAccountPublic[]>(key);
         if (cached) {
           setData(cached);
           setLoading(false);
@@ -140,7 +140,7 @@ export function ShopAccountsPage() {
     loadData(true);
   }, [loadData]);
 
-  function openDialog(product: ShopAccount) {
+  function openDialog(product: ShopAccountPublic) {
     if (!session?.user) {
       showToast({
         text: t("shop.common.discordLoginRequired"),
@@ -152,7 +152,7 @@ export function ShopAccountsPage() {
     setDialogOpen(true);
   }
 
-  function formatPrice(product: ShopAccount): string | null {
+  function formatPrice(product: ShopAccountPublic): string | null {
     if (!product.price) return null;
     const symbol = product.currency === "EUR" ? "€" : (product.currency ?? "");
     return `${product.price} ${symbol}`;

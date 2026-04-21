@@ -1,10 +1,6 @@
-import { getReviews } from "@/lib/supabase/queries"
+import { getEnrichedPublicReviews } from "@/lib/reviews/enriched-public-reviews"
 import { insertReviewDb } from "@/lib/supabase/review-insert"
 import { getDiscordUserIdForAuthUser } from "@/lib/permissions-server"
-import {
-  getDiscordDisplayNamesForUserIds,
-  normalizeDiscordUserIdForLookup,
-} from "@/lib/discord/guild-member-display"
 import { getDiscordDisplayNameFromOAuthAccount } from "@/lib/discord/oauth-self-profile"
 import { auth } from "@/app/auth"
 import { headers } from "next/headers"
@@ -16,22 +12,7 @@ export async function GET(request: NextRequest) {
     const offset = Math.max(0, parseInt(searchParams.get("offset") ?? "0", 10))
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "12", 10)))
 
-    const reviews = await getReviews(offset, limit)
-    const discordIds = reviews
-      .map((r) => r.user_id)
-      .filter((id): id is string => Boolean(id && String(id).trim()))
-    const missingNames = reviews.filter(
-      (r) => !r.author_name?.trim() && r.user_id?.trim(),
-    )
-    const idsForDiscord = missingNames.map((r) => r.user_id)
-    const displayNames = await getDiscordDisplayNamesForUserIds(idsForDiscord)
-    const enriched = reviews.map((r) => {
-      const fromDb = r.author_name?.trim() || null
-      if (fromDb) return { ...r, author_name: fromDb }
-      const key = normalizeDiscordUserIdForLookup(r.user_id)
-      const fromApi = key ? displayNames.get(key) ?? null : null
-      return { ...r, author_name: fromApi }
-    })
+    const enriched = await getEnrichedPublicReviews(offset, limit)
     return NextResponse.json(enriched, {
       headers: {
         "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",

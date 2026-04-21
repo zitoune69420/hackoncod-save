@@ -14,9 +14,9 @@ import { authClient } from "@/lib/auth-client";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
 import { ShopProductCard } from "@/app/components/pages/client/shop-product-card";
 import { ShopProductDialog } from "@/app/components/pages/client/shop-product-dialog";
-import type { ShopCheat, InfoBlock } from "@/lib/supabase/shop-types";
+import type { ShopCheatPublic, InfoBlock } from "@/lib/supabase/shop-types";
 
-async function fetchShopCheats(): Promise<ShopCheat[]> {
+async function fetchShopCheats(): Promise<ShopCheatPublic[]> {
   const res = await fetch("/api/shop/cheats");
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
@@ -61,14 +61,14 @@ export function ShopCheatsPage() {
     },
   };
 
-  const [data, setData] = useState<ShopCheat[]>([]);
+  const [data, setData] = useState<ShopCheatPublic[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [imageUrls, setImageUrls] = useState<Record<string, string | null>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<ShopCheat | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ShopCheatPublic | null>(null);
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -85,7 +85,7 @@ export function ShopCheatsPage() {
     (skipCache = false) => {
       const key = cacheKey("shop-cheats");
       if (!skipCache) {
-        const cached = getCached<ShopCheat[]>(key);
+        const cached = getCached<ShopCheatPublic[]>(key);
         if (cached) {
           setData(cached);
           setLoading(false);
@@ -140,7 +140,7 @@ export function ShopCheatsPage() {
     loadData(true);
   }, [loadData]);
 
-  function openDialog(product: ShopCheat) {
+  function openDialog(product: ShopCheatPublic) {
     if (!session?.user) {
       showToast({
         text: t("shop.common.discordLoginRequired"),
@@ -152,7 +152,7 @@ export function ShopCheatsPage() {
     setDialogOpen(true);
   }
 
-  function getMinPrice(product: ShopCheat): string | null {
+  function getMinPrice(product: ShopCheatPublic): string | null {
     if (!product.prices || product.prices.length === 0) return null;
     const min = Math.min(...product.prices.map((p) => p.price));
     return `${min} €`;

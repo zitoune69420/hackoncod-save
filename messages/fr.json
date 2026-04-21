@@ -340,6 +340,7 @@
     "exclusiveDownload": {
       "invalidLink": "Lien de fichier invalide.",
       "urlError": "Impossible de générer le lien de téléchargement.",
+      "rateLimited": "Trop de téléchargements d’affilée. Réessaie dans une minute.",
       "networkError": "Erreur réseau."
     },
     "siteBan": {

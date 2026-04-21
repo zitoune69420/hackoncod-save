@@ -1,9 +1,9 @@
 import { getDiscordDisplayNamesForUserIds } from "@/lib/discord/guild-member-display";
 import { createAdminClient } from "./admin";
 import type {
-  ShopCheat,
-  ShopService,
-  ShopAccount,
+  ShopCheatPublic,
+  ShopServicePublic,
+  ShopAccountPublic,
   ShopReview,
   ShopOrder,
   TicketMessage,
@@ -47,44 +47,55 @@ export async function getServicePrices(
 
 // ── Products ────────────────────────────────────────────────────────
 
-export async function getActiveShopCheats(): Promise<ShopCheat[]> {
+const SHOP_CHEAT_PUBLIC_SELECT =
+  "id, slug, name, description, game, platform, status, image, requires_spoofer, requires_chat, is_active, created_at, updated_at";
+
+const SHOP_SERVICE_PUBLIC_SELECT =
+  "id, slug, name, description, image, platform, game, is_active, delivery_type, estimated_delivery_minutes, requires_chat, created_at, updated_at";
+
+const SHOP_ACCOUNT_PUBLIC_SELECT =
+  "id, slug, name, description, image, games, region, level, is_ranked, two_fa, last_activity, price, currency, requires_chat, is_active, created_at, updated_at";
+
+/** Catalogue public API : pas de colonnes sensibles (paiements, création, identifiants). */
+export async function getPublicShopCheatsForApi(): Promise<ShopCheatPublic[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("shop_cheats")
-    .select("*")
+    .select(SHOP_CHEAT_PUBLIC_SELECT)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) return [];
-  const cheats = (data ?? []) as ShopCheat[];
+  const cheats = (data ?? []) as ShopCheatPublic[];
   for (const cheat of cheats) {
     cheat.prices = await getCheatPrices(cheat.id);
   }
   return cheats;
 }
 
-export async function getActiveShopServices(): Promise<ShopService[]> {
+export async function getPublicShopServicesForApi(): Promise<ShopServicePublic[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("shop_services")
-    .select("*")
+    .select(SHOP_SERVICE_PUBLIC_SELECT)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) return [];
-  const services = (data ?? []) as ShopService[];
+  const services = (data ?? []) as ShopServicePublic[];
   for (const service of services) {
     service.prices = await getServicePrices(service.id);
   }
   return services;
 }
 
-export async function getActiveShopAccounts(): Promise<ShopAccount[]> {
+export async function getPublicShopAccountsForApi(): Promise<ShopAccountPublic[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("shop_accounts")
-    .select("*")
+    .select(SHOP_ACCOUNT_PUBLIC_SELECT)
+    .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) return [];
-  return (data ?? []) as ShopAccount[];
+  return (data ?? []) as ShopAccountPublic[];
 }
 
 // ── Reviews ──────────────────────────────────────────────────────────

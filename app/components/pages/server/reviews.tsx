@@ -1,4 +1,5 @@
 import { loadMessages, getMessage, DEFAULT_LOCALE } from "@/lib/i18n"
+import { getEnrichedPublicReviews } from "@/lib/reviews/enriched-public-reviews"
 import type { Review } from "@/lib/supabase/types"
 import {
   Card,
@@ -9,20 +10,8 @@ import { HugeiconsIcon } from "@hugeicons/react"
 import { StarIcon, UserIcon } from "@hugeicons/core-free-icons"
 import { ReviewsLoadMore, ReviewDate } from "@/app/components/pages/client/reviews"
 
-function getBaseUrl() {
-  if (typeof window !== "undefined") return ""
-  return process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : `http://localhost:${process.env.PORT || 3000}`
-}
-
 async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
-  const res = await fetch(`${getBaseUrl()}/api/reviews?offset=${offset}&limit=${limit}`, {
-    cache: "no-store",
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data?.error ?? "Error")
-  return Array.isArray(data) ? data : []
+  return getEnrichedPublicReviews(offset, limit)
 }
 
 const PAGE_SIZE = 12

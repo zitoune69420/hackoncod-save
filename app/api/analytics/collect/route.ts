@@ -6,9 +6,26 @@ import {
   parseUserAgent,
   utmFromUrl,
 } from "@/lib/analytics/parse-request";
+import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
 import { insertAnalyticsPageView } from "@/lib/supabase/analytics";
 
 export const runtime = "nodejs";
+
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_PER_WINDOW = 120;
+const rateBuckets = new Map<string, { n: number; reset: number }>();
+
+function allowAnalyticsRate(ip: string): boolean {
+  const now = Date.now();
+  const b = rateBuckets.get(ip);
+  if (!b || now > b.reset) {
+    rateBuckets.set(ip, { n: 1, reset: now + RATE_WINDOW_MS });
+    return true;
+  }
+  if (b.n >= RATE_MAX_PER_WINDOW) return false;
+  b.n += 1;
+  return true;
+}
 
 const MAX_BODY = 12_000;
 const MAX_VISITOR_ID_LEN = 128;
@@ -26,6 +43,11 @@ function shouldSkipPath(pathname: string): boolean {
 export async function POST(req: NextRequest) {
   if (process.env.NEXT_PUBLIC_ANALYTICS_DISABLED === "1") {
     return new NextResponse(null, { status: 204 });
+  }
+
+  const ip = getClientIpFromHeaders(req.headers);
+  if (!allowAnalyticsRate(ip)) {
+    return new NextResponse(null, { status: 429 });
   }
 
   let body: unknown;

@@ -89,6 +89,22 @@ export interface ShopAccount {
   updated_at: string;
 }
 
+/** Données exposées au catalogue (jamais identifiants ni moyens de paiement internes). */
+export type ShopAccountPublic = Omit<
+  ShopAccount,
+  "login" | "email" | "password" | "revolut" | "paypal" | "created_by"
+>;
+
+export type ShopCheatPublic = Omit<
+  ShopCheat,
+  "revolut" | "paypal" | "created_by"
+>;
+
+export type ShopServicePublic = Omit<
+  ShopService,
+  "revolut" | "paypal" | "created_by"
+>;
+
 export interface ShopReview {
   id: string;
   product_type: string;
@@ -167,7 +183,8 @@ export interface Ticket {
   client_discord_display?: string | null;
 }
 
-export type Product = ShopCheat | ShopService | ShopAccount;
+/** Produit affiché catalogue / commande (pas de champs opérateur sensibles). */
+export type Product = ShopCheatPublic | ShopServicePublic | ShopAccountPublic;
 
 /** Block d'information configurable affiche dans le dialog produit. */
 export interface InfoBlock {

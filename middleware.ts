@@ -54,19 +54,17 @@ function hostnameAllowed(host: string | null, allowed: Set<string>): boolean {
 }
 
 /**
- * N’autorise que les appels API issus du site (même origine / même site),
- * sauf routes explicites (auth OAuth, messenger avec secret).
+ * Filtre les appels API : métadonnées Fetch (navigateur) + origine ou referer autorisé.
+ * Sans Sec-Fetch-Site same-origin/same-site → refus (curl/scripts par défaut).
+ * Remarque : un attaquant peut forger ces en-têtes ; chaque route doit toujours valider auth / données.
  */
 function isTrustedApiCaller(req: NextRequest): boolean {
-  const allowed = allowedHostnames(req);
-
   const sfs = req.headers.get("sec-fetch-site");
-  if (sfs === "cross-site") {
+  if (sfs !== "same-origin" && sfs !== "same-site") {
     return false;
   }
-  if (sfs === "same-origin" || sfs === "same-site") {
-    return true;
-  }
+
+  const allowed = allowedHostnames(req);
 
   const origin = req.headers.get("origin");
   if (origin) {

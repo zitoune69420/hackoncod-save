@@ -45,10 +45,14 @@ export function getSupabaseProjectUrl(): string | undefined {
 
 /**
  * HMAC pour `/api/cheats/public-download` (jeton court via Server Action).
- * Dédié ou repli sur BETTER_AUTH_SECRET pour éviter une variable supplémentaire.
+ * Variable **serveur uniquement** (pas de préfixe NEXT_PUBLIC_). Ancien nom
+ * `PUBLIC_CHEAT_DOWNLOAD_SECRET` reste lu pour compat (le préfixe « PUBLIC »
+ * était trompeur : Next.js n’exposait pas cette var au bundle sans NEXT_PUBLIC_).
  */
-export function getPublicDownloadHmacSecret(): string | undefined {
-  const d = process.env.PUBLIC_CHEAT_DOWNLOAD_SECRET?.trim();
-  if (d) return d;
+export function getCheatDownloadSigningSecret(): string | undefined {
+  const primary = process.env.CHEAT_DOWNLOAD_SIGNING_SECRET?.trim();
+  if (primary) return primary;
+  const legacy = process.env.PUBLIC_CHEAT_DOWNLOAD_SECRET?.trim();
+  if (legacy) return legacy;
   return getBetterAuthSecret();
 }
