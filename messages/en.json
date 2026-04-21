@@ -1437,6 +1437,39 @@
       "errorSendingWithMessage": "Error: {{message}}"
     }
   },
+  "demo": {
+    "badge": "Demo",
+    "backToDashboard": "Back to dashboard",
+    "menuLabel": "Demo VIP",
+    "sidebarTag": "Preview",
+    "banner": {
+      "title": "You're viewing a demo",
+      "description": "Preview of the V.I.P dashboard with dummy data. Downloads are locked — they will be unlocked once your V.I.P access is active.",
+      "cta": "Become V.I.P"
+    },
+    "downloadLocked": "Locked",
+    "benefits": {
+      "title": "Why go V.I.P",
+      "subtitle": "What our V.I.P members actually get.",
+      "item1": {
+        "title": "Exclusive cheats",
+        "description": "Access to the V.I.P catalog: private builds, extended undetected status, ranked-ready modes."
+      },
+      "item2": {
+        "title": "Priority updates",
+        "description": "Patches pushed to V.I.P first so you stay playable right after every game update."
+      },
+      "item3": {
+        "title": "Direct support",
+        "description": "Dedicated Discord channel and priority answers for setup and troubleshooting."
+      }
+    },
+    "cta": {
+      "title": "Unlock V.I.P access",
+      "description": "Follow the steps in under 3 minutes to activate your access and download right away.",
+      "goDashboard": "Go to dashboard"
+    }
+  },
   "shop": {
     "common": {
       "active": "Active",

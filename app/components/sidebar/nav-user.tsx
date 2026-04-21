@@ -28,6 +28,7 @@ import {
   DiscordIcon,
   Setting07Icon,
   CrownIcon,
+  Diamond02Icon,
 } from "@hugeicons/core-free-icons";
 import { SettingsModal } from "@/app/components/dialogs/settings";
 import { HowToVipDialog } from "@/app/components/dialogs/how-to-vip";
@@ -35,6 +36,7 @@ import { AccountInfoDialog } from "@/app/components/dialogs/account-info-dialog"
 import { DASHBOARD_DEFAULT_PAGE } from "@/lib/dashboard-url";
 import { hasMinimumRole } from "@/lib/permissions";
 import { useUserRole } from "@/hooks/use-user-role";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 function initialsFromUser(
@@ -81,6 +83,7 @@ export function NavUser({
   const user = session?.user;
   const { role } = useUserRole();
   const showHowToVip = Boolean(user) && !hasMinimumRole(role, "vip");
+  const router = useRouter();
 
   const signInWithDiscord = async () => {
     try {
@@ -98,6 +101,10 @@ export function NavUser({
 
   const handleSignOut = async () => {
     await authClient.signOut();
+  };
+
+  const openDemo = () => {
+    router.push("/demo");
   };
 
   const displayName = user?.name?.trim() || user?.email || "User";
@@ -213,6 +220,10 @@ export function NavUser({
                     <DropdownMenuItem onClick={() => setHowToVipOpen(true)}>
                       <HugeiconsIcon icon={CrownIcon} strokeWidth={2} />
                       {t("vip.howTo.menuLabel")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openDemo()}>
+                      <HugeiconsIcon icon={Diamond02Icon} strokeWidth={2} />
+                      {t("demo.menuLabel")}
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
