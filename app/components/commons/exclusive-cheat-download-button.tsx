@@ -6,26 +6,25 @@ import { useTranslations } from "@/app/components/i18n-provider";
 import { useRouter } from "next/navigation";
 import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths";
 import type { ComponentProps } from "react";
+import { issuePublicCheatDownloadToken } from "@/app/actions/public-cheat-download";
 
 export type CheatDownloadChannel = "public" | "vip" | "semivip";
 
-function downloadApiUrl(cheatId: string, channel: CheatDownloadChannel): string {
-  if (channel === "public") {
-    return `/api/cheats/public-download?cheatId=${encodeURIComponent(cheatId)}`;
-  }
+function modDownloadApiUrl(cheatId: string, channel: CheatDownloadChannel): string {
   return `/api/cheats/mod-download?cheatId=${encodeURIComponent(cheatId)}&kind=${channel}`;
 }
 
 export function CheatDownloadButton({
   cheatId,
-  link,
+  hasFile,
   channel,
   label,
   reviewToastText,
   size = "sm",
 }: {
   cheatId: string;
-  link: string;
+  /** Indique si une entrée `link` existe en base (sans exposer l’URL). */
+  hasFile: boolean;
   channel: CheatDownloadChannel;
   label: string;
   reviewToastText: string;
@@ -33,7 +32,6 @@ export function CheatDownloadButton({
 }) {
   const { t } = useTranslations();
   const router = useRouter();
-  const trimmed = link?.trim() ?? "";
 
   const reviewToast = () =>
     showToast({
@@ -45,11 +43,31 @@ export function CheatDownloadButton({
     });
 
   const onClick = async () => {
-    if (!trimmed) return;
+    if (!hasFile) return;
 
     try {
+      let url: string;
+      if (channel === "public") {
+        const tok = await issuePublicCheatDownloadToken(cheatId);
+        if (!tok.ok) {
+          showToast({
+            text: t("common.exclusiveDownload.urlError"),
+            variant: "error",
+          });
+          return;
+        }
+        const q = new URLSearchParams({
+          cheatId,
+          exp: String(tok.exp),
+          sig: tok.sig,
+        });
+        url = `/api/cheats/public-download?${q.toString()}`;
+      } else {
+        url = modDownloadApiUrl(cheatId, channel);
+      }
+
       /** Toujours via l’API : relit `cheat.link` en base (évite liens obsolètes depuis le cache liste des cheats). */
-      const res = await fetch(downloadApiUrl(cheatId, channel));
+      const res = await fetch(url);
       const json = (await res.json().catch(() => ({}))) as {
         url?: string;
         error?: string;
@@ -79,7 +97,7 @@ export function CheatDownloadButton({
       type="button"
       size={size}
       variant="default"
-      disabled={!trimmed}
+      disabled={!hasFile}
       onClick={() => void onClick()}
     >
       {label}
@@ -90,13 +108,13 @@ export function CheatDownloadButton({
 /** @deprecated Utilisez CheatDownloadButton avec channel — conservé pour imports existants. */
 export function ExclusiveCheatDownloadButton({
   cheatId,
-  link,
+  hasFile,
   kind,
   label,
   reviewToastText,
 }: {
   cheatId: string;
-  link: string;
+  hasFile: boolean;
   kind: "vip" | "semivip";
   label: string;
   reviewToastText: string;
@@ -104,7 +122,7 @@ export function ExclusiveCheatDownloadButton({
   return (
     <CheatDownloadButton
       cheatId={cheatId}
-      link={link}
+      hasFile={hasFile}
       channel={kind}
       label={label}
       reviewToastText={reviewToastText}

@@ -28,7 +28,7 @@ export type SemiVipCheatRow = {
   extension: string;
   crack: boolean;
   client: string;
-  link: string;
+  hasFile: boolean;
   action?: React.ReactNode;
 };
 
@@ -81,7 +81,7 @@ function getSemiVipCheatsColumns(t: (key: string) => string) {
         <div className="flex gap-2">
           <ExclusiveCheatDownloadButton
             cheatId={row.id}
-            link={row.link}
+            hasFile={row.hasFile}
             kind="semivip"
             label={t("semivip.download")}
             reviewToastText={t("common.leaveReviewAfterDownload")}

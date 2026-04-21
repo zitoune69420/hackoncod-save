@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { timingSafeEqualUtf8 } from "@/lib/security/timing-safe-utf8"
 import type { DiscordApiEmbed } from "@/lib/discord/webhook"
 import { executeDiscordWebhook } from "@/lib/discord/webhook"
 import { sendDirectMessageEmbed } from "@/lib/discord/dm"
@@ -43,14 +44,17 @@ function unauthorized() {
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.MESSENGER_API_SECRET
+  const secret = process.env.MESSENGER_API_SECRET?.trim()
   if (!secret) {
     return NextResponse.json({ error: "MESSENGER_API_SECRET not configured" }, { status: 503 })
   }
 
   const auth = req.headers.get("authorization")
-  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null
-  if (token !== secret) {
+  const raw = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : null
+  if (!raw) {
+    return unauthorized()
+  }
+  if (!timingSafeEqualUtf8(raw, secret)) {
     return unauthorized()
   }
 

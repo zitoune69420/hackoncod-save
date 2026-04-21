@@ -24,3 +24,31 @@ export function getBetterAuthSecret(): string | undefined {
 export function getSupabaseServiceRoleKey(): string | undefined {
   return process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
+
+/**
+ * Clé publishable / anon (déjà exposée au navigateur via NEXT_PUBLIC_*).
+ * Utilisation typique : RPC Edge (`is_ip_banned`) sans service_role.
+ */
+export function getSupabasePublishableKey(): string | undefined {
+  const k =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY?.trim() ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  return k || undefined;
+}
+
+/** URL projet Supabase (sans slash final). */
+export function getSupabaseProjectUrl(): string | undefined {
+  const u = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  return u || undefined;
+}
+
+/**
+ * HMAC pour `/api/cheats/public-download` (jeton court via Server Action).
+ * Dédié ou repli sur BETTER_AUTH_SECRET pour éviter une variable supplémentaire.
+ */
+export function getPublicDownloadHmacSecret(): string | undefined {
+  const d = process.env.PUBLIC_CHEAT_DOWNLOAD_SECRET?.trim();
+  if (d) return d;
+  return getBetterAuthSecret();
+}

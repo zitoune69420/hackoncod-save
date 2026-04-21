@@ -50,7 +50,11 @@ export async function POST(req: Request) {
     });
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.message }, { status: 400 });
+      const safeOp =
+        process.env.NODE_ENV === "production"
+          ? "Operation failed"
+          : result.message;
+      return NextResponse.json({ error: safeOp }, { status: 400 });
     }
 
     if (parsed.siteBanned) {
@@ -68,6 +72,8 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[api/admin/site-ban]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }

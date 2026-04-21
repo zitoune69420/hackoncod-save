@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error("[api/reviews] error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message
+    return NextResponse.json({ error: safeMessage }, { status: 500 })
   }
 }
 
@@ -113,6 +115,8 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error("[api/reviews] POST error:", message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message
+    return NextResponse.json({ error: safeMessage }, { status: 500 })
   }
 }

@@ -1,60 +1,100 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { fetchIsIpBannedEdge } from "@/lib/banned/edge-ip-ban";
+import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
+import { timingSafeEqualUtf8 } from "@/lib/security/timing-safe-utf8";
 
 const AUTH_API_PREFIX = "/api/auth";
+const MESSENGER_PATH = "/api/messenger";
 const SITE_BLOCKED = "hackoncod_site_blocked";
 
 function getClientIp(req: NextRequest): string {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) {
-    const first = xff.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return (
-    req.headers.get("x-real-ip") ??
-    req.headers.get("cf-connecting-ip") ??
-    "unknown"
-  );
+  return getClientIpFromHeaders(req.headers);
 }
 
-function isTrustedApiCaller(req: NextRequest): boolean {
-  const host = req.nextUrl.hostname;
+function normalizeHostname(host: string): string {
+  return host.trim().toLowerCase().replace(/:\d+$/, "");
+}
 
-  const sfs = req.headers.get("sec-fetch-site");
-  if (sfs === "same-origin" || sfs === "same-site") {
-    return true;
+function allowedHostnames(req: NextRequest): Set<string> {
+  const out = new Set<string>();
+  const addHost = (h: string | undefined) => {
+    if (!h?.trim()) return;
+    out.add(normalizeHostname(h));
+  };
+
+  addHost(req.nextUrl.hostname);
+
+  for (const raw of [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.BETTER_AUTH_URL,
+  ]) {
+    const u = raw?.trim();
+    if (!u) continue;
+    try {
+      const url = u.includes("://") ? new URL(u) : new URL(`https://${u}`);
+      addHost(url.hostname);
+    } catch {
+      /* ignore invalid URL */
+    }
   }
 
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) {
+    const host = vercel.replace(/^https?:\/\//, "").split("/")[0];
+    addHost(host);
+  }
+
+  return out;
+}
+
+function hostnameAllowed(host: string | null, allowed: Set<string>): boolean {
+  if (!host?.trim()) return false;
+  return allowed.has(normalizeHostname(host));
+}
+
+/**
+ * N’autorise que les appels API issus du site (même origine / même site),
+ * sauf routes explicites (auth OAuth, messenger avec secret).
+ */
+function isTrustedApiCaller(req: NextRequest): boolean {
+  const allowed = allowedHostnames(req);
+
+  const sfs = req.headers.get("sec-fetch-site");
   if (sfs === "cross-site") {
     return false;
+  }
+  if (sfs === "same-origin" || sfs === "same-site") {
+    return true;
   }
 
   const origin = req.headers.get("origin");
   if (origin) {
     try {
-      if (new URL(origin).hostname === host) {
-        return true;
-      }
+      return hostnameAllowed(new URL(origin).hostname, allowed);
     } catch {
       return false;
     }
-    return false;
   }
 
   const referer = req.headers.get("referer");
   if (referer) {
     try {
-      if (new URL(referer).hostname === host) {
-        return true;
-      }
+      return hostnameAllowed(new URL(referer).hostname, allowed);
     } catch {
       return false;
     }
-    return false;
   }
 
-  return true;
+  return false;
+}
+
+function messengerBearerOk(req: NextRequest): boolean {
+  const secret = process.env.MESSENGER_API_SECRET?.trim();
+  if (!secret) return false;
+  const auth = req.headers.get("authorization");
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : null;
+  return Boolean(token && timingSafeEqualUtf8(token, secret));
 }
 
 function redirectToBanned(req: NextRequest, setMarkerCookie: boolean) {
@@ -67,7 +107,7 @@ function redirectToBanned(req: NextRequest, setMarkerCookie: boolean) {
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
-      httpOnly: false,
+      httpOnly: true,
     });
   }
   return res;
@@ -89,6 +129,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
     if (req.method === "OPTIONS") {
+      return NextResponse.next();
+    }
+    if (pathname === MESSENGER_PATH && messengerBearerOk(req)) {
       return NextResponse.next();
     }
     if (!isTrustedApiCaller(req)) {

@@ -29,7 +29,7 @@ export type VipCheatRow = {
   extension: string;
   crack: boolean;
   client: string;
-  link: string;
+  hasFile: boolean;
   action?: React.ReactNode;
 };
 
@@ -82,7 +82,7 @@ function getVipCheatsColumns(t: (key: string) => string) {
         <div className="flex gap-2">
           <ExclusiveCheatDownloadButton
             cheatId={row.id}
-            link={row.link}
+            hasFile={row.hasFile}
             kind="vip"
             label={t("vip.download")}
             reviewToastText={t("common.leaveReviewAfterDownload")}

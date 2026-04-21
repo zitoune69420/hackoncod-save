@@ -46,7 +46,9 @@ export async function GET() {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[api/admin/cheats]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }
 
@@ -94,6 +96,8 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[api/admin/cheats POST]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    const safeMessage =
+      process.env.NODE_ENV === "production" ? "Request failed" : message;
+    return NextResponse.json({ error: safeMessage }, { status: 500 });
   }
 }

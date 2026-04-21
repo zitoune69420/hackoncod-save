@@ -95,12 +95,12 @@ export function cacheKey(
     | "admin-all-banned-ips",
   gameTitle?: string,
 ): string {
-  if (type === "cheats" && gameTitle) return `cheats:v4:${gameTitle}`;
+  if (type === "cheats" && gameTitle) return `cheats:v5:${gameTitle}`;
   if (type === "games") return "games";
   if (type === "videos") return "videos";
   if (type === "reviews") return "reviews";
-  if (type === "vip-cheats") return "vip-cheats-v2";
-  if (type === "semivip-cheats") return "semivip-cheats-v2";
+  if (type === "vip-cheats") return "vip-cheats-v3";
+  if (type === "semivip-cheats") return "semivip-cheats-v3";
   if (type === "shop-cheats") return "shop-cheats-v1";
   if (type === "shop-services") return "shop-services-v1";
   if (type === "shop-accounts") return "shop-accounts-v1";

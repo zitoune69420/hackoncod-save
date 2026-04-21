@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     extension: c.extension,
     crack: c.crack,
     client: c.client,
-    link: c.link,
+    hasFile: Boolean(String(c.link ?? "").trim()),
   }))
 
   return NextResponse.json(tableData)

@@ -25,7 +25,7 @@ export type CheatRow = {
   extension: string;
   crack: boolean;
   client: string;
-  link: string;
+  hasFile: boolean;
   action?: React.ReactNode;
 };
 
@@ -77,7 +77,7 @@ function getCheatsColumns(t: (key: string) => string) {
         <div className="flex gap-2">
           <CheatDownloadButton
             cheatId={row.id}
-            link={row.link}
+            hasFile={row.hasFile}
             channel="public"
             label={t("cheats.download")}
             reviewToastText={t("common.leaveReviewAfterDownload")}
