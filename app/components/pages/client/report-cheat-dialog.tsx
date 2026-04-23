@@ -194,7 +194,7 @@ export function ReportCheatDialog({
                   <SelectTrigger id="report-reason" className="w-full text-left">
                     <SelectValue placeholder={t("cheats.reportDialog.reasonPlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="p-2">
                     {CHEAT_REPORT_REASON_KEYS.map((key) => (
                       <SelectItem key={key} value={key}>
                         {t(`cheats.reportDialog.reasons.${key}`)}
