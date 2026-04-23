@@ -161,7 +161,7 @@ function CommonTableInner<T>({
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_button]:cursor-pointer [&_[data-slot=pagination-link]]:cursor-pointer">
       <Table>
         <TableHeader>
           <TableRow>

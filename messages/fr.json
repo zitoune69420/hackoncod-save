@@ -1831,6 +1831,20 @@
     }
   },
   "tickets": {
+    "supportTicketProductName": "Support général",
+    "createTicket": {
+      "button": "Créer un ticket",
+      "title": "Nouveau ticket",
+      "description": "Une question sans lien avec une commande ? Décris ta demande ; l’équipe te répondra dans ce fil.",
+      "messageLabel": "Ta demande",
+      "placeholder": "Ex. : problème technique, question sur un abonnement, partenariat…",
+      "submit": "Ouvrir le ticket",
+      "cancel": "Annuler",
+      "success": "Ticket créé",
+      "error": "Impossible de créer le ticket",
+      "validationTooShort": "Message trop court (minimum 10 caractères).",
+      "validationTooLong": "Message trop long."
+    },
     "allTickets": "Tous les tickets",
     "sidebarUnknownDiscord": "Pseudo inconnu",
     "sidebarLoading": "Chargement…",

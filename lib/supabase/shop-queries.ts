@@ -16,6 +16,14 @@ import type {
   SaleAccount,
   SaleCheat,
 } from "./shop-types";
+import type { OrderWelcomeLocale } from "@/lib/shop/order-welcome-message";
+
+/**
+ * UUID sentinelle pour `shop_orders.product_id` quand `product_type === "support"`.
+ * Si la table a une FK vers `shop_cheats`, ajoute une ligne avec cet id ou assouplis la contrainte.
+ */
+export const SHOP_GENERAL_SUPPORT_PRODUCT_ID =
+  "00000000-0000-0000-0000-000000000001";
 
 // ── Prices ──────────────────────────────────────────────────────────
 
@@ -116,6 +124,27 @@ export async function getVisibleShopReviews(): Promise<ShopReview[]> {
 const TICKET_STATUSES: OrderStatus[] = ["paid", "in_progress", "waiting_client", "completed"];
 
 async function resolveProduct(order: ShopOrder): Promise<ShopOrder> {
+  if (order.product_type === "support") {
+    const now = order.created_at;
+    const synthetic: ShopCheatPublic = {
+      id: order.product_id,
+      slug: "general-support",
+      name: "Support général",
+      description: null,
+      game: null,
+      platform: null,
+      status: null,
+      image: null,
+      requires_spoofer: false,
+      requires_chat: true,
+      is_active: true,
+      created_at: now,
+      updated_at: order.updated_at ?? now,
+    };
+    order.product = synthetic;
+    return order;
+  }
+
   const supabase = createAdminClient();
   const table =
     order.product_type === "cheat"
@@ -478,6 +507,65 @@ export async function createShopOrder(input: {
     return null;
   }
   return data as ShopOrder;
+}
+
+const GENERAL_SUPPORT_SYSTEM_COPY: Record<OrderWelcomeLocale, string> = {
+  fr: "Demande de support général ouverte depuis le tableau de bord. Décris ta situation ci-dessous — l’équipe te répondra ici.",
+  en: "General support request opened from the dashboard. Describe your issue below — the team will reply here.",
+};
+
+/** Ticket hors achat : une ligne `shop_orders` + message système + premier message client. */
+export async function createGeneralSupportTicket(input: {
+  userId: string;
+  initialMessage: string;
+  welcomeLocale: OrderWelcomeLocale;
+}): Promise<ShopOrder | null> {
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const lang = input.welcomeLocale;
+  const { data, error } = await supabase
+    .from("shop_orders")
+    .insert({
+      user_id: input.userId,
+      product_id: SHOP_GENERAL_SUPPORT_PRODUCT_ID,
+      product_type: "support",
+      status: "in_progress",
+      price: 0,
+      pre_order_data: { source: "general_support" },
+      payment_intent_id: null,
+      paid_at: null,
+      user_email: null,
+      user_first_name: null,
+      user_last_name: null,
+      user_phone: null,
+      ticket_number: null,
+      archived: false,
+      language: lang,
+      created_at: now,
+      updated_at: now,
+    })
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("[createGeneralSupportTicket]", error);
+    return null;
+  }
+
+  const order = data as ShopOrder;
+  await createTicketMessage(order.id, "system", GENERAL_SUPPORT_SYSTEM_COPY[lang]);
+  const msg = await createTicketMessage(
+    order.id,
+    "client",
+    input.initialMessage.trim(),
+    input.userId,
+  );
+  if (!msg) {
+    console.error("[createGeneralSupportTicket] client message insert failed");
+    return null;
+  }
+
+  return resolveProduct(order);
 }
 
 // ── Signed image URL ────────────────────────────────────────────────

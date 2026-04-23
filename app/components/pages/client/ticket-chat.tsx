@@ -546,7 +546,9 @@ export function TicketChat({
                 )}
               </div>
               <p className="truncate text-xs text-muted-foreground">
-                {order.product?.name ?? ""}
+                {order.product_type === "support"
+                  ? t("tickets.supportTicketProductName")
+                  : (order.product?.name ?? "")}
               </p>
             </div>
             {isAdminOrPartner && (

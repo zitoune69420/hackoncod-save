@@ -1,4 +1,4 @@
-export type ProductType = "cheat" | "service" | "account";
+export type ProductType = "cheat" | "service" | "account" | "support";
 
 export interface CheatPrice {
   id: string;

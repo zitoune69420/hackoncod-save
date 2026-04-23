@@ -25,6 +25,10 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 export function TicketInfoPanel({ order, imageUrl }: TicketInfoPanelProps) {
   const { t } = useTranslations();
   const product = order.product;
+  const productDisplayName =
+    order.product_type === "support"
+      ? t("tickets.supportTicketProductName")
+      : (product?.name ?? "—");
   const preOrder = order.pre_order_data as Record<string, unknown> | null;
   const payment = (preOrder?.payment ?? {}) as Record<string, unknown>;
 
@@ -68,7 +72,7 @@ export function TicketInfoPanel({ order, imageUrl }: TicketInfoPanelProps) {
               <div className="relative h-32 w-full overflow-hidden rounded-md bg-muted">
                 <Image
                   src={imageUrl}
-                  alt={product.name}
+                  alt={productDisplayName}
                   className="size-full object-cover"
                   width={400}
                   height={200}
@@ -80,7 +84,7 @@ export function TicketInfoPanel({ order, imageUrl }: TicketInfoPanelProps) {
                 <HugeiconsIcon icon={Image01Icon} className="size-8 text-muted-foreground/40" strokeWidth={1.5} />
               </div>
             )}
-            <InfoRow label={t("tickets.name")} value={product.name} />
+            <InfoRow label={t("tickets.name")} value={productDisplayName} />
             <InfoRow label={t("tickets.type")} value={order.product_type} />
             {"platform" in product && product.platform && (
               <InfoRow label={t("tickets.platform")} value={product.platform as string} />

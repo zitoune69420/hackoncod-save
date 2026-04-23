@@ -1824,6 +1824,20 @@
     }
   },
   "tickets": {
+    "supportTicketProductName": "General support",
+    "createTicket": {
+      "button": "Create ticket",
+      "title": "New ticket",
+      "description": "Need help with something that isn’t tied to an order? Describe your request — the team will reply in this thread.",
+      "messageLabel": "Your request",
+      "placeholder": "e.g. technical issue, subscription question, partnership…",
+      "submit": "Open ticket",
+      "cancel": "Cancel",
+      "success": "Ticket created",
+      "error": "Could not create the ticket",
+      "validationTooShort": "Message too short (minimum 10 characters).",
+      "validationTooLong": "Message too long."
+    },
     "allTickets": "All tickets",
     "sidebarUnknownDiscord": "Unknown user",
     "sidebarLoading": "Loading…",

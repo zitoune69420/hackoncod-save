@@ -18,7 +18,12 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRight01Icon, CustomerService01Icon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  ArrowRight01Icon,
+  CustomerService01Icon,
+} from "@hugeicons/core-free-icons";
+import { CreateGeneralTicketDialog } from "@/app/components/sidebar/create-general-ticket-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import type { Ticket } from "@/lib/supabase/shop-types";
 import { useTicketChatLoading } from "@/app/dashboard/ticket-chat-loading-context";
@@ -90,6 +95,7 @@ export function NavSupport({
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [createTicketOpen, setCreateTicketOpen] = useState(false);
   const firstListLoadRef = useRef(true);
   const ticketViewRef = useRef<{
     page: string | undefined;
@@ -127,6 +133,14 @@ export function NavSupport({
     [],
   );
 
+  const handleGeneralTicketCreated = useCallback(
+    async (orderId: string) => {
+      await loadTickets(false);
+      onSelectPageAction?.("tickets", { ticketOrderId: orderId });
+    },
+    [loadTickets, onSelectPageAction],
+  );
+
   /** Pastille retirée dès qu’on ouvre une conv (avant la fin du fetch / du POST read). */
   useEffect(() => {
     if (currentPage !== "tickets" || !currentOrderId) return;
@@ -161,6 +175,11 @@ export function NavSupport({
 
   return (
     <SidebarGroup>
+      <CreateGeneralTicketDialog
+        open={createTicketOpen}
+        onOpenChange={setCreateTicketOpen}
+        onCreated={handleGeneralTicketCreated}
+      />
       <SidebarGroupLabel>{t("sidebar.support")}</SidebarGroupLabel>
       <SidebarMenu>
         <Collapsible
@@ -185,6 +204,24 @@ export function NavSupport({
             </CollapsibleTrigger>
             <CollapsibleContent>
               <SidebarMenuSub>
+                <SidebarMenuSubItem key="tickets-create">
+                  <SidebarMenuSubButton asChild className="gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCreateTicketOpen(true)}
+                      className="w-full text-left"
+                    >
+                      <HugeiconsIcon
+                        icon={Add01Icon}
+                        strokeWidth={2}
+                        className="size-4 shrink-0"
+                      />
+                      <span className="min-w-0 flex-1 truncate">
+                        {t("tickets.createTicket.button")}
+                      </span>
+                    </button>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
                 <SidebarMenuSubItem key="tickets-all">
                   <SidebarMenuSubButton
                     isActive={allListActive}
