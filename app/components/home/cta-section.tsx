@@ -10,12 +10,12 @@ const caveat = Caveat({
 });
 
 const AVATAR_SRC = [
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-1.webp",
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-2.webp",
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-3.webp",
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-4.webp",
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-5.webp",
-  "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar-6.webp",
+  "/games/icons/cod-bo3.png",
+  "/games/icons/cod-bocw.png",
+  "/games/icons/cod-ghosts.png",
+  "/games/icons/cod-iw.png",
+  "/games/icons/cod4.png",
+  "/games/icons/cod-mw2.png",
 ] as const;
 
 function CtaArrow() {
@@ -57,7 +57,7 @@ export function CtaSection({ titleFontClassName }: CtaSectionProps) {
           {AVATAR_SRC.map((src) => (
             <Avatar
               key={src}
-              className="relative -mr-4 size-14 overflow-hidden rounded-full border border-white/15 ring-2 ring-black"
+              className="relative -mr-4 size-14 p-1 overflow-hidden rounded-full border border-white/15 bg-black ring-2 ring-black"
             >
               <AvatarImage src={src} alt="" />
             </Avatar>
@@ -72,11 +72,10 @@ export function CtaSection({ titleFontClassName }: CtaSectionProps) {
               "text-balance text-4xl font-semibold tracking-tighter text-white lg:text-7xl",
             )}
           >
-            Where strong teams start
+            Get started now
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-center text-lg text-zinc-400 md:text-2xl">
-            Strong teams thrive on trust, collaboration, and shared vision.
-            Together, we can turn ambitious goals into remarkable achievements.
+            Access tools, features and resources through a clean platform. Start free and upgrade anytime.
           </p>
         </header>
 
