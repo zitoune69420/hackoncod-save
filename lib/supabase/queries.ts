@@ -296,6 +296,41 @@ export async function getCheatLinkFlagsById(
   };
 }
 
+/** Cheat listé sur le dashboard public (non VIP / semi-VIP) — pour valider un signalement. */
+export async function getPublicDashboardCheatForReport(
+  cheatId: string,
+): Promise<{ id: string; name: string; gameTitle: string } | null> {
+  const id = cheatId.trim();
+  if (!id) return null;
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("cheat")
+    .select("id, name, vip, semi_vip, game(title)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const row = data as {
+    id: string;
+    name: string;
+    vip?: boolean;
+    semi_vip?: boolean;
+    game?: { title?: string } | { title?: string }[];
+  };
+
+  if (row.vip || row.semi_vip) return null;
+
+  const g = row.game;
+  const titleFromGame = Array.isArray(g) ? g[0]?.title : g?.title;
+  const gameTitle = titleFromGame?.trim() ?? "";
+  const name = String(row.name ?? "").trim();
+  if (!gameTitle || !name) return null;
+
+  return { id: row.id, name, gameTitle };
+}
+
 export async function getDisplayedGames(): Promise<Game[]> {
   const supabase = createAdminClient();
 

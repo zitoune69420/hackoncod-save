@@ -3,6 +3,7 @@ import {
   executeDiscordWebhook,
   type DiscordApiEmbed,
 } from "@/lib/discord/webhook";
+import { getDiscordSuggestionWebhookUrl } from "@/lib/env";
 import { NextResponse } from "next/server";
 
 const MAX_DETAILS = 3900;
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const webhookUrl = process.env.DISCORD_WEBHOOK_SUGGESTION?.trim();
+  const webhookUrl = getDiscordSuggestionWebhookUrl();
   if (!webhookUrl) {
     return NextResponse.json(
       { error: "Suggestions webhook not configured" },

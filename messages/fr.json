@@ -567,6 +567,30 @@
     "noCheatsFound": "Aucun cheat trouvé",
     "download": "Télécharger",
     "report": "Signaler",
+    "reportDialog": {
+      "title": "Signaler un cheat",
+      "descriptionLead": "Indique le problème rencontré. L’équipe est notifiée sur le canal interne dédié.",
+      "cheatContextLabel": "Fichier concerné",
+      "gameContextLabel": "Jeu",
+      "reasonLabel": "Motif",
+      "reasonPlaceholder": "Choisir un motif…",
+      "commentLabel": "Détails (optionnel)",
+      "commentPlaceholder": "Contexte, message d’erreur, version du jeu…",
+      "submit": "Envoyer le signalement",
+      "cancel": "Annuler",
+      "success": "Signalement envoyé. Merci.",
+      "error": "Impossible d’envoyer le signalement.",
+      "mustBeLoggedIn": "Connecte-toi avec Discord pour signaler un cheat.",
+      "pickReason": "Choisis un motif de signalement.",
+      "reasons": {
+        "not_working": "Ne fonctionne pas / introuvable",
+        "outdated_version": "Version ou jeu obsolète",
+        "detection_risk": "Risque de détection",
+        "crash_or_error": "Crash ou erreur",
+        "wrong_instructions": "Instructions ou lien incorrects",
+        "other": "Autre"
+      }
+    },
     "suggestDialog": {
       "title": "Suggérer un {type}",
       "titleGame": "Suggérer un jeu",
@@ -591,28 +615,6 @@
       "errorSelectGame": "Veuillez sélectionner un jeu",
       "success": "Suggestion envoyée avec succès !",
       "error": "Erreur lors de l'envoi de la suggestion"
-    },
-    "reportDialog": {
-      "title": "Signaler un cheat",
-      "description": "Sélectionnez une raison et ajoutez éventuellement des détails. Votre signalement sera examiné par l'équipe.",
-      "reasonLabel": "Raison",
-      "reasonPlaceholder": "Sélectionnez une raison...",
-      "commentLabel": "Détails supplémentaires (optionnel)",
-      "commentPlaceholder": "Décrivez le problème plus en détail...",
-      "cancel": "Annuler",
-      "send": "Envoyer le signalement",
-      "sending": "Envoi...",
-      "errorSelectReason": "Veuillez sélectionner une raison",
-      "errorLogin": "Veuillez vous connecter pour soumettre un signalement",
-      "success": "Signalement envoyé avec succès",
-      "error": "Erreur lors de l'envoi du signalement",
-      "reasons": {
-        "maliciousFile": "Fichier malveillant / virus",
-        "outdated": "Obsolète / ne fonctionne pas",
-        "scam": "Arnaque / paywall",
-        "wrongDescription": "Mauvaise description / jeu",
-        "other": "Autre"
-      }
     },
     "toasts": {
       "errorLoading": "Erreur lors du chargement des cheats",
@@ -1747,6 +1749,8 @@
       "preOrderInfo": "Informations",
       "paymentInfo": "Informations de paiement",
       "confirmation": "Confirmation",
+      "accountType": "Type de compte *",
+      "accountTypePlaceholder": "Ex. : Compte principal, compte secondaire, etc.",
       "games": "Jeux",
       "region": "Région",
       "level": "Niveau",

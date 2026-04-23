@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import { useTranslations } from "@/app/components/i18n-provider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { COD_GAMES } from "@/lib/cod-games";
 import { CheatDownloadButton } from "@/app/components/commons/exclusive-cheat-download-button";
+import { ReportCheatDialog } from "@/app/components/pages/client/report-cheat-dialog";
 import { cn } from "@/lib/utils";
 
 export type CheatRow = {
@@ -29,7 +31,10 @@ export type CheatRow = {
   action?: React.ReactNode;
 };
 
-function getCheatsColumns(t: (key: string) => string) {
+function getCheatsColumns(
+  t: (key: string, params?: Record<string, string | number>) => string,
+  onReport: (row: CheatRow) => void,
+) {
   return [
     { key: "name" as const, label: t("cheats.tableHeaders.name") },
     { key: "mode" as const, label: t("cheats.tableHeaders.mode") },
@@ -83,7 +88,11 @@ function getCheatsColumns(t: (key: string) => string) {
             reviewToastText={t("common.leaveReviewAfterDownload")}
             size="default"
           />
-          <Button variant="outline">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onReport(row)}
+          >
             {t("cheats.report")}
           </Button>
         </div>
@@ -173,14 +182,33 @@ export function CheatsToolbar({
   );
 }
 
-export function CheatsTable({ data = [] }: { data?: CheatRow[] }) {
+export function CheatsTable({
+  data = [],
+  gameTitle,
+}: {
+  data?: CheatRow[];
+  gameTitle: string;
+}) {
   const { t } = useTranslations();
+  const [reportTarget, setReportTarget] = useState<CheatRow | null>(null);
+
   return (
-    <CommonTable
-      columns={getCheatsColumns(t)}
-      data={data}
-      pageSize={10}
-      rowEntranceAnimation
-    />
+    <>
+      <ReportCheatDialog
+        cheatId={reportTarget?.id ?? ""}
+        cheatName={reportTarget?.name ?? ""}
+        gameTitle={gameTitle}
+        open={reportTarget !== null}
+        onOpenChange={(next) => {
+          if (!next) setReportTarget(null);
+        }}
+      />
+      <CommonTable
+        columns={getCheatsColumns(t, (row) => setReportTarget(row))}
+        data={data}
+        pageSize={10}
+        rowEntranceAnimation
+      />
+    </>
   );
 }

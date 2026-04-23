@@ -146,7 +146,7 @@ export function CheatsPage() {
           <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : (
-        <CheatsTable data={filteredData} />
+        <CheatsTable data={filteredData} gameTitle={selectedGame} />
       )}
     </div>
   );

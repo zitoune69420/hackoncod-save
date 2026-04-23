@@ -56,3 +56,9 @@ export function getCheatDownloadSigningSecret(): string | undefined {
   if (legacy) return legacy;
   return getBetterAuthSecret();
 }
+
+/** Webhook Discord des suggestions de jeu / cheat (même canal pour les signalements). */
+export function getDiscordSuggestionWebhookUrl(): string | undefined {
+  const u = process.env.DISCORD_WEBHOOK_SUGGESTION?.trim();
+  return u || undefined;
+}
