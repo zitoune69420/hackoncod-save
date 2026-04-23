@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sidebar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Add01Icon,
   ArrowRight01Icon,
   CustomerService01Icon,
 } from "@hugeicons/core-free-icons";
@@ -205,17 +204,12 @@ export function NavSupport({
             <CollapsibleContent>
               <SidebarMenuSub>
                 <SidebarMenuSubItem key="tickets-create">
-                  <SidebarMenuSubButton asChild className="gap-2">
+                  <SidebarMenuSubButton asChild>
                     <button
                       type="button"
                       onClick={() => setCreateTicketOpen(true)}
                       className="w-full text-left"
                     >
-                      <HugeiconsIcon
-                        icon={Add01Icon}
-                        strokeWidth={2}
-                        className="size-4 shrink-0"
-                      />
                       <span className="min-w-0 flex-1 truncate">
                         {t("tickets.createTicket.button")}
                       </span>

@@ -126,7 +126,7 @@ export function CreateGeneralTicketDialog({
             />
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-3 sm:gap-3">
             <Button
               type="button"
               variant="outline"
