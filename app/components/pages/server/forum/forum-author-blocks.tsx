@@ -1,4 +1,4 @@
-import { ForumPinnedBadge } from "@/app/components/pages/client/forum-labels";
+import { ForumPinnedBadge } from "@/app/components/pages/client/forum/forum-labels";
 import type { ForumAuthorView } from "@/lib/forum/forum-discord-authors";
 import { authorInitials, forumDateOnly } from "@/lib/forum/forum-discord-authors";
 import { cn } from "@/lib/utils";

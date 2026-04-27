@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ForumAddComment } from "@/app/components/pages/client/forum-add-comment";
+import { ForumAddComment } from "@/app/components/pages/client/forum/forum-add-comment";
 import {
   ForumMotionFadeIn,
   ForumMotionListHeader,
   ForumMotionStaggerChildren,
-} from "@/app/components/pages/client/forum-motion";
-import { ForumNewThreadDialog } from "@/app/components/pages/client/forum-new-thread-dialog";
-import { ForumPageHeader } from "@/app/components/pages/client/forum-page-header";
-import { ForumMarkdown } from "@/app/components/pages/client/forum-markdown";
+} from "@/app/components/pages/client/forum/forum-motion";
+import { ForumNewThreadDialog } from "@/app/components/pages/client/forum/forum-new-thread-dialog";
+import { ForumPageHeader } from "@/app/components/pages/client/forum/forum-page-header";
+import { ForumMarkdown } from "@/app/components/pages/client/forum/forum-markdown";
 import { normalizeForumMarkdownSource } from "@/lib/forum/normalize-forum-markdown-source";
 import {
   ForumCommentAuthorRow,
   ForumThreadListAuthorRow,
   ForumThreadPostHeader,
-} from "@/app/components/pages/server/forum-author-blocks";
+} from "@/app/components/pages/server/forum/forum-author-blocks";
 import {
   ForumCommentsHeading,
   ForumNoComments,
   ForumNoThreads,
   ForumPinnedBadge,
   ForumThreadNotFound,
-} from "@/app/components/pages/client/forum-labels";
+} from "@/app/components/pages/client/forum/forum-labels";
 import {
   getForumThreadById,
   listForumCommentsForThread,

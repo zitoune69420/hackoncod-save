@@ -7,11 +7,11 @@ import {
   getDashboardStatsDays,
 } from "@/lib/dashboard-url";
 import { enforceDashboardPageAccess } from "@/lib/dashboard-access-guard";
-import { AdminStatsUsersServer } from "@/app/components/pages/server/admin-stats-users";
-import { AdminStatsPerformanceServer } from "@/app/components/pages/server/admin-stats-performance";
-import { AdminStatsSecurityServer } from "@/app/components/pages/server/admin-stats-security";
+import { AdminStatsUsersServer } from "@/app/components/pages/server/admin/stats-users/admin-stats-users";
+import { AdminStatsPerformanceServer } from "@/app/components/pages/server/admin/stats-performance/admin-stats-performance";
+import { AdminStatsSecurityServer } from "@/app/components/pages/server/admin/stats-security/admin-stats-security";
 import { DashboardPagesClient } from "@/app/dashboard/dashboard-pages-client";
-import { ForumPageServer } from "@/app/components/pages/server/forum-page-server";
+import { ForumPageServer } from "@/app/components/pages/server/forum/forum-page-server";
 
 export async function DashboardMainContent({
   searchParams,

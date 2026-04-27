@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { showToast } from "@/components/commons/toasts";
-import { ForumMarkdown } from "@/app/components/pages/client/forum-markdown";
+import { ForumMarkdown } from "@/app/components/pages/client/forum/forum-markdown";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Download01Icon } from "@hugeicons/core-free-icons";
 

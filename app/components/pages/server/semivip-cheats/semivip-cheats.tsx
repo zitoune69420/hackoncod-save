@@ -1,4 +1,4 @@
-import { SemiVipCheatsPage as SemiVipCheatsClientPage } from "@/app/components/pages/client/semivip-cheats";
+import { SemiVipCheatsPage as SemiVipCheatsClientPage } from "@/app/components/pages/client/semivip-cheats/semivip-cheats";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 
 export async function SemiVipCheatsPage() {

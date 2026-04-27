@@ -12,8 +12,8 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { authClient } from "@/lib/auth-client";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
-import { ShopProductCard } from "@/app/components/pages/client/shop-product-card";
-import { ShopProductDialog } from "@/app/components/pages/client/shop-product-dialog";
+import { ShopProductCard } from "@/app/components/pages/common/shop-product-card";
+import { ShopProductDialog } from "@/app/components/pages/common/shop-product-dialog";
 import type { ShopAccountPublic, InfoBlock } from "@/lib/supabase/shop-types";
 
 async function fetchShopAccounts(): Promise<ShopAccountPublic[]> {

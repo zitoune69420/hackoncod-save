@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { StarIcon, UserIcon } from "@hugeicons/core-free-icons"
-import { ReviewsLoadMore, ReviewDate } from "@/app/components/pages/client/reviews"
+import { ReviewsLoadMore, ReviewDate } from "@/app/components/pages/client/reviews/reviews"
 
 async function fetchReviews(offset: number, limit: number): Promise<Review[]> {
   return getEnrichedPublicReviews(offset, limit)

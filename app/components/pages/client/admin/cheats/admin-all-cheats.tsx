@@ -18,13 +18,13 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminCheatFormDialog } from "@/app/components/pages/admin/admin-cheat-form-dialog";
-import type { AdminCheatRow } from "@/app/components/pages/admin/admin-cheats-types";
+import { AdminCheatFormDialog } from "@/app/components/pages/client/admin/cheats/admin-cheat-form-dialog";
+import type { AdminCheatRow } from "@/app/components/pages/client/admin/cheats/admin-cheats-types";
 import { useRouter } from "next/navigation";
 import { DASHBOARD_REVIEWS_HREF } from "@/lib/site-paths";
-import { AdminOrphanModsDialog } from "@/app/components/pages/admin/admin-orphan-mods-dialog";
+import { AdminOrphanModsDialog } from "@/app/components/pages/client/admin/cheats/admin-orphan-mods-dialog";
 
-export type { AdminCheatRow } from "@/app/components/pages/admin/admin-cheats-types";
+export type { AdminCheatRow } from "@/app/components/pages/client/admin/cheats/admin-cheats-types";
 
 async function fetchAdminCheats(): Promise<AdminCheatRow[]> {
   const res = await fetch("/api/admin/cheats");

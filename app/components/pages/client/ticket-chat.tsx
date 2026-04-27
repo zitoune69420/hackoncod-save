@@ -47,8 +47,8 @@ import {
   buildCheatDeliveryPayload,
   parseCheatDeliveryContent,
   TicketCheatDeliveryBlock,
-} from "./ticket-cheat-delivery";
-import { TicketInfoPanel } from "./ticket-info-panel";
+} from "./tickets/ticket-cheat-delivery";
+import { TicketInfoPanel } from "./tickets/ticket-info-panel";
 import { ForumMarkdown } from "@/app/components/pages/client/forum/forum-markdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { discordDefaultEmbedAvatarUrl } from "@/lib/discord/discord-embed-avatar-fallback";

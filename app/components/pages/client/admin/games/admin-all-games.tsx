@@ -17,14 +17,14 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminGameFormDialog } from "@/app/components/pages/admin/admin-game-form-dialog";
-import type { AdminGameRow } from "@/app/components/pages/admin/admin-games-types";
+import { AdminGameFormDialog } from "@/app/components/pages/client/admin/games/admin-game-form-dialog";
+import type { AdminGameRow } from "@/app/components/pages/client/admin/games/admin-games-types";
 import type { Game } from "@/lib/supabase/types";
 import { truncateText } from "@/lib/truncate-text";
 
 const DESCRIPTION_MAX_CHARS = 100;
 
-export type { AdminGameRow } from "@/app/components/pages/admin/admin-games-types";
+export type { AdminGameRow } from "@/app/components/pages/client/admin/games/admin-games-types";
 
 function gameToRow(g: Game): AdminGameRow {
   return {

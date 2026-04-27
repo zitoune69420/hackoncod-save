@@ -17,8 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatsSecurityToolbar } from "@/app/components/pages/admin/stats-security-toolbar";
-import { StatsSecurityActivityChart } from "@/app/components/pages/admin/stats-security-activity-chart";
+import { StatsSecurityToolbar } from "@/app/components/pages/client/admin/stats-security/stats-security-toolbar";
+import { StatsSecurityActivityChart } from "@/app/components/pages/client/admin/stats-security/stats-security-activity-chart";
 import { countryFlagSrc } from "@/lib/flags/country-flag-src";
 import { formatCompactCount } from "@/lib/format/numbers";
 import { MoreHorizontal, ShieldCheck } from "lucide-react";

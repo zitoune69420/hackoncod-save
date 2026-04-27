@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslations } from "@/app/components/i18n-provider";
-import { useForumMotion } from "@/app/components/pages/client/forum-motion";
+import { useForumMotion } from "@/app/components/pages/client/forum/forum-motion";
 
 type Props = {
   variant: "list" | "thread";

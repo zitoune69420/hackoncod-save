@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
-import { GamesTable, type GameRow } from "@/app/components/pages/client/games";
+import { GamesTable, type GameRow } from "@/app/components/pages/client/games/games";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
-import { SuggestGameDialogTrigger } from "@/app/components/pages/client/content-suggestion-dialogs";
+import { SuggestGameDialogTrigger } from "@/app/components/pages/common/content-suggestion-dialogs";
 
 function fetchGames(): Promise<GameRow[]> {
   return fetch("/api/games").then((res) => res.json());

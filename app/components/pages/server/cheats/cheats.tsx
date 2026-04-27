@@ -8,13 +8,13 @@ import {
   CheatsTable,
   CheatsToolbar,
   type CheatRow,
-} from "@/app/components/pages/client/cheats";
+} from "@/app/components/pages/client/cheats/cheats";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Refresh01Icon } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
-import { SuggestCheatDialogTrigger } from "@/app/components/pages/client/content-suggestion-dialogs";
+import { SuggestCheatDialogTrigger } from "@/app/components/pages/common/content-suggestion-dialogs";
 
 function fetchCheats(game: string): Promise<CheatRow[]> {
   return fetch(`/api/cheats?game=${encodeURIComponent(game)}`).then((res) =>

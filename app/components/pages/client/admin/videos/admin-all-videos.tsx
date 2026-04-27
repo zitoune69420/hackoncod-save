@@ -12,14 +12,14 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { AdminVideoFormDialog } from "@/app/components/pages/admin/admin-video-form-dialog";
-import type { AdminVideoRow } from "@/app/components/pages/admin/admin-videos-types";
+import { AdminVideoFormDialog } from "@/app/components/pages/client/admin/videos/admin-video-form-dialog";
+import type { AdminVideoRow } from "@/app/components/pages/client/admin/videos/admin-videos-types";
 import type { Video } from "@/lib/supabase/types";
 import { truncateText } from "@/lib/truncate-text";
 
 const DESCRIPTION_MAX_CHARS = 100;
 
-export type { AdminVideoRow } from "@/app/components/pages/admin/admin-videos-types";
+export type { AdminVideoRow } from "@/app/components/pages/client/admin/videos/admin-videos-types";
 
 function videoToRow(v: Video): AdminVideoRow {
   return {

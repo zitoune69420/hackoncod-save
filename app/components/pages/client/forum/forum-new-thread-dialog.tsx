@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createForumThreadAction } from "@/app/actions/forum-thread";
 import { useTranslations } from "@/app/components/i18n-provider";
-import { ForumMarkdown } from "@/app/components/pages/client/forum-markdown";
+import { ForumMarkdown } from "@/app/components/pages/client/forum/forum-markdown";
 import { showToast } from "@/components/commons/toasts";
 import { Button } from "@/components/ui/button";
 import {

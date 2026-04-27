@@ -25,7 +25,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { prefetchReviews } from "@/app/components/pages/client/reviews";
+import { prefetchReviews } from "@/app/components/pages/client/reviews/reviews";
 import { useUserRole } from "@/hooks/use-user-role";
 import {
   DASHBOARD_DEFAULT_PAGE,

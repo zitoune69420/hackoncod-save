@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "@/app/components/i18n-provider";
-import { prefetchReviews } from "@/app/components/pages/client/reviews";
+import { prefetchReviews } from "@/app/components/pages/client/reviews/reviews";
 import { useUserRole } from "@/hooks/use-user-role";
 import { canSeeExclusiveNavItem, type UserRole } from "@/lib/permissions";
 import {

@@ -10,11 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { StatsPerformanceToolbar } from "@/app/components/pages/admin/stats-performance-toolbar";
-import { StatsPerformanceScoreChart } from "@/app/components/pages/admin/stats-performance-score-chart";
-import { StatsPerformanceRoutes } from "@/app/components/pages/admin/stats-performance-routes";
-import { StatsPerformanceCountries } from "@/app/components/pages/admin/stats-performance-countries";
-import { AdminStatsPerformanceBodyFallback } from "@/app/components/pages/server/admin-stats-fallbacks";
+import { StatsPerformanceToolbar } from "@/app/components/pages/client/admin/stats-performance/stats-performance-toolbar";
+import { StatsPerformanceScoreChart } from "@/app/components/pages/client/admin/stats-performance/stats-performance-score-chart";
+import { StatsPerformanceRoutes } from "@/app/components/pages/client/admin/stats-performance/stats-performance-routes";
+import { StatsPerformanceCountries } from "@/app/components/pages/client/admin/stats-performance/stats-performance-countries";
+import { AdminStatsPerformanceBodyFallback } from "@/app/components/pages/common/admin-stats-fallbacks";
 import type {
   PerfDevice,
   PerfEnv,

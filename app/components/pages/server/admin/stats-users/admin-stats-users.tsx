@@ -4,10 +4,10 @@ import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import { buildAdminStatsModel } from "@/lib/analytics/build-admin-stats-model";
 import { formatEnInt } from "@/lib/format/numbers";
 import { cn } from "@/lib/utils";
-import { StatsUsersChart } from "@/app/components/pages/admin/stats-users-chart";
-import { StatsUsersRange } from "@/app/components/pages/admin/stats-users-range";
-import { StatsUsersPanels } from "@/app/components/pages/admin/stats-users-panels";
-import { AdminStatsUsersBodyFallback } from "@/app/components/pages/server/admin-stats-fallbacks";
+import { StatsUsersChart } from "@/app/components/pages/client/admin/stats-users/stats-users-chart";
+import { StatsUsersRange } from "@/app/components/pages/client/admin/stats-users/stats-users-range";
+import { StatsUsersPanels } from "@/app/components/pages/client/admin/stats-users/stats-users-panels";
+import { AdminStatsUsersBodyFallback } from "@/app/components/pages/common/admin-stats-fallbacks";
 
 function DeltaBadge({
   pct,

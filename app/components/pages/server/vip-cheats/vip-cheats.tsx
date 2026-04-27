@@ -1,4 +1,4 @@
-import { VipCheatsPage as VipCheatsClientPage } from "@/app/components/pages/client/vip-cheats";
+import { VipCheatsPage as VipCheatsClientPage } from "@/app/components/pages/client/vip-cheats/vip-cheats";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 
 export async function VipCheatsPage() {
