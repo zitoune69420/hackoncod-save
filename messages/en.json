@@ -312,6 +312,21 @@
           "date": "Date",
           "action": "Action"
         }
+      },
+      "shopReviewsAdmin": {
+        "dialogDescription": "Shop review: comment, rating, and visibility on the public reviews page.",
+        "productType": "Product type",
+        "visibleLabel": "Visible on shop reviews page",
+        "accessDenied": "Founders and partners only (partners: reviews for your products).",
+        "table": {
+          "productType": "Type",
+          "productId": "Product id",
+          "comment": "Comment",
+          "visible": "Visible",
+          "userId": "Customer",
+          "date": "Date",
+          "action": "Action"
+        }
       }
     }
   },
@@ -1481,6 +1496,15 @@
       "priceUnavailable": "Price unavailable",
       "order": "Order",
       "discordLoginRequired": "You must be signed in with Discord."
+    },
+    "admin": {
+      "accounts": {
+        "title": "Accounts (shop admin)",
+        "description": "Shop account products. Partners only see rows they own (`created_by`).",
+        "gamesColumn": "Games",
+        "regionColumn": "Region",
+        "priceColumn": "Price"
+      }
     },
     "dialog": {
       "stepPreorder": "Information",

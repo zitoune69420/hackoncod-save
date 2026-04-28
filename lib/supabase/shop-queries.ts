@@ -1,8 +1,11 @@
 import { getDiscordDisplayNamesForUserIds } from "@/lib/discord/guild-member-display";
 import { createAdminClient } from "./admin";
 import type {
+  ShopCheat,
   ShopCheatPublic,
+  ShopService,
   ShopServicePublic,
+  ShopAccount,
   ShopAccountPublic,
   ShopReview,
   ShopOrder,
@@ -568,7 +571,234 @@ export async function createGeneralSupportTicket(input: {
   return resolveProduct(order);
 }
 
-// ── Signed image URL ────────────────────────────────────────────────
+// ── Admin boutique (founder : tout ; partenaire : filtre `created_by`) ──
+
+const ADMIN_SHOP_REVIEWS_LIMIT = 5000;
+
+export type AdminShopScope =
+  | { mode: "founder" }
+  | { mode: "partner"; discordId: string; appUserId: string };
+
+/** Valeurs possibles en base pour `created_by` (snowflake Discord et/ou `users.id`). */
+export function partnerShopCreatedByCandidates(
+  discordId: string,
+  appUserId: string,
+): string[] {
+  return [
+    ...new Set(
+      [discordId, appUserId].filter((s) => typeof s === "string" && s.trim() !== ""),
+    ),
+  ];
+}
+
+export async function getShopCheatsForAdmin(
+  scope: AdminShopScope,
+): Promise<ShopCheat[]> {
+  const supabase = createAdminClient();
+  let q = supabase
+    .from("shop_cheats")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (scope.mode === "partner") {
+    const ids = partnerShopCreatedByCandidates(
+      scope.discordId,
+      scope.appUserId,
+    );
+    q = q.in("created_by", ids);
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error("[getShopCheatsForAdmin]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+  const cheats = (data ?? []) as ShopCheat[];
+  for (const cheat of cheats) {
+    cheat.prices = await getCheatPrices(cheat.id);
+  }
+  return cheats;
+}
+
+export async function getShopServicesForAdmin(
+  scope: AdminShopScope,
+): Promise<ShopService[]> {
+  const supabase = createAdminClient();
+  let q = supabase
+    .from("shop_services")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (scope.mode === "partner") {
+    const ids = partnerShopCreatedByCandidates(
+      scope.discordId,
+      scope.appUserId,
+    );
+    q = q.in("created_by", ids);
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error("[getShopServicesForAdmin]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+  const services = (data ?? []) as ShopService[];
+  for (const service of services) {
+    service.prices = await getServicePrices(service.id);
+  }
+  return services;
+}
+
+export async function getShopAccountsForAdmin(
+  scope: AdminShopScope,
+): Promise<ShopAccount[]> {
+  const supabase = createAdminClient();
+  let q = supabase
+    .from("shop_accounts")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (scope.mode === "partner") {
+    const ids = partnerShopCreatedByCandidates(
+      scope.discordId,
+      scope.appUserId,
+    );
+    q = q.in("created_by", ids);
+  }
+  const { data, error } = await q;
+  if (error) {
+    console.error("[getShopAccountsForAdmin]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+  return (data ?? []) as ShopAccount[];
+}
+
+async function partnerShopProductIds(
+  scope: Extract<AdminShopScope, { mode: "partner" }>,
+): Promise<string[]> {
+  const supabase = createAdminClient();
+  const ids = partnerShopCreatedByCandidates(scope.discordId, scope.appUserId);
+  const [cheatsRes, servicesRes, accountsRes] = await Promise.all([
+    supabase.from("shop_cheats").select("id").in("created_by", ids),
+    supabase.from("shop_services").select("id").in("created_by", ids),
+    supabase.from("shop_accounts").select("id").in("created_by", ids),
+  ]);
+  const out: string[] = [];
+  for (const row of cheatsRes.data ?? []) {
+    const id = (row as { id?: string }).id;
+    if (id) out.push(id);
+  }
+  for (const row of servicesRes.data ?? []) {
+    const id = (row as { id?: string }).id;
+    if (id) out.push(id);
+  }
+  for (const row of accountsRes.data ?? []) {
+    const id = (row as { id?: string }).id;
+    if (id) out.push(id);
+  }
+  return out;
+}
+
+export async function getShopReviewsForAdmin(
+  scope: AdminShopScope,
+): Promise<ShopReview[]> {
+  const supabase = createAdminClient();
+  let q = supabase
+    .from("shop_reviews")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(ADMIN_SHOP_REVIEWS_LIMIT);
+
+  if (scope.mode === "partner") {
+    const pids = await partnerShopProductIds(scope);
+    if (pids.length === 0) return [];
+    q = q.in("product_id", pids);
+  }
+
+  const { data, error } = await q;
+  if (error) {
+    console.error("[getShopReviewsForAdmin]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+  return (data ?? []) as ShopReview[];
+}
+
+export async function getShopReviewById(
+  id: string,
+): Promise<ShopReview | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("shop_reviews")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as ShopReview;
+}
+
+const SHOP_PRODUCT_TABLE_BY_TYPE: Record<string, string> = {
+  cheat: "shop_cheats",
+  service: "shop_services",
+  account: "shop_accounts",
+};
+
+export async function getCreatedByForShopProduct(
+  productType: string,
+  productId: string,
+): Promise<string | null> {
+  const table = SHOP_PRODUCT_TABLE_BY_TYPE[productType];
+  if (!table) return null;
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from(table)
+    .select("created_by")
+    .eq("id", productId)
+    .maybeSingle();
+  const raw = (data as { created_by?: string | null } | null)?.created_by;
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s || null;
+}
+
+export function partnerOwnsCreatedByValue(
+  createdBy: string | null | undefined,
+  discordId: string,
+  appUserId: string,
+): boolean {
+  if (createdBy == null) return false;
+  const c = String(createdBy).trim();
+  return partnerShopCreatedByCandidates(discordId, appUserId).includes(c);
+}
+
+export type ShopReviewAdminPatchRow = {
+  comment?: string | null;
+  rating?: number;
+  is_visible?: boolean;
+};
+
+export async function updateShopReview(
+  id: string,
+  row: ShopReviewAdminPatchRow,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const patch: Record<string, unknown> = {};
+  if ("comment" in row) patch.comment = row.comment;
+  if ("rating" in row) patch.rating = row.rating;
+  if ("is_visible" in row) patch.is_visible = row.is_visible;
+  const { error } = await supabase
+    .from("shop_reviews")
+    .update(patch)
+    .eq("id", id);
+  if (error) {
+    console.error("[updateShopReview]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteShopReview(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("shop_reviews").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteShopReview]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
 
 const MODS_BUCKET = "mods";
 

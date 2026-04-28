@@ -5,6 +5,7 @@ import type { DashboardPageId } from "@/lib/dashboard-url";
 import { isExclusiveDashboardPageId } from "@/lib/dashboard-url";
 import { getCachedDashboardUserAccess } from "@/lib/dashboard-request-access";
 import {
+  canAccessAdminShopSection,
   canAccessPartnerTools,
   canAccessVipCheats,
   hasMinimumRole,
@@ -77,6 +78,15 @@ export async function enforceDashboardPageAccess(
   const { role } = access;
 
   if (isAdminDashboardPage(page)) {
+    if (page.startsWith("admin-shop-")) {
+      if (!canAccessAdminShopSection(role)) {
+        redirect(SAFE_FALLBACK);
+      }
+      if (page === "admin-shop-games" && role !== "founder") {
+        redirect(SAFE_FALLBACK);
+      }
+      return;
+    }
     if (role !== "founder") {
       redirect(SAFE_FALLBACK);
     }

@@ -77,6 +77,14 @@ export function canAccessPartnerTools(roleOrUser: UserRole | unknown): boolean {
 }
 
 /**
+ * Section Administration → Boutique : fondateur (tout) ou partenaire (produits dont `created_by` correspond au compte).
+ */
+export function canAccessAdminShopSection(roleOrUser: UserRole | unknown): boolean {
+  const r = getUserRole(roleOrUser);
+  return r === "partner" || r === "founder";
+}
+
+/**
  * Fil d’ariane / nav « Exclusif » : `requiredRole` sur l’item correspond au feature gate, pas toujours à `hasMinimumRole`.
  */
 export function canSeeExclusiveNavItem(

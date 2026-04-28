@@ -78,11 +78,15 @@ function useNavData() {
         {
           id: "admin-shop",
           title: "Shop",
-          requiredRole: "founder" as const,
+          requiredRole: "partner" as const,
           icon: <HugeiconsIcon icon={ShoppingBag01Icon} strokeWidth={2} />,
           items: [
             { title: "Cheats", pageId: "admin-shop-cheats" },
-            { title: "Games", pageId: "admin-shop-games" },
+            {
+              title: "Games",
+              pageId: "admin-shop-games",
+              requiredRole: "founder" as const,
+            },
             { title: "Services", pageId: "admin-shop-services" },
             { title: "Accounts", pageId: "admin-shop-accounts" },
             { title: "Reviews", pageId: "admin-shop-reviews" },

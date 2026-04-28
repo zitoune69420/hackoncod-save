@@ -1,7 +1,7 @@
 "use client";
 
-import { AdminAllReviewsPage } from "@/app/components/pages/client/admin/reviews/admin-all-reviews";
+import { AdminShopReviewsClientPage } from "@/app/components/pages/client/admin/shop/admin-shop-reviews-client";
 
 export function AdminShopReviewsPage() {
-  return <AdminAllReviewsPage scope="shop" />;
+  return <AdminShopReviewsClientPage />;
 }

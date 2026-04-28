@@ -16,6 +16,8 @@ import {
   AdminShopCheatsPage,
   AdminServerGamesPage,
   AdminShopGamesPage,
+  AdminShopServicesPage,
+  AdminShopAccountsPage,
   AdminServerVideosPage,
   AdminServerReviewsPage,
   AdminShopReviewsPage,
@@ -28,7 +30,6 @@ import {
   TicketsPage,
 } from "@/app/components/pages";
 import {
-  DASHBOARD_DEFAULT_PAGE,
   isValidDashboardPageId,
   type DashboardPageId,
 } from "@/lib/dashboard-url";
@@ -58,23 +59,18 @@ const PAGES: Record<string, ComponentType<PageProps>> = {
   tickets: TicketsPage as ComponentType<PageProps>,
 };
 
-const ADMIN_PAGE_FALLBACK = DefaultPage;
 PAGES["admin-server-cheats"] = AdminServerCheatsPage as ComponentType<PageProps>;
 PAGES["admin-shop-cheats"] = AdminShopCheatsPage as ComponentType<PageProps>;
 PAGES["admin-server-games"] = AdminServerGamesPage as ComponentType<PageProps>;
 PAGES["admin-shop-games"] = AdminShopGamesPage as ComponentType<PageProps>;
+PAGES["admin-shop-services"] = AdminShopServicesPage as ComponentType<PageProps>;
+PAGES["admin-shop-accounts"] = AdminShopAccountsPage as ComponentType<PageProps>;
 PAGES["admin-server-videos"] = AdminServerVideosPage as ComponentType<PageProps>;
 PAGES["admin-server-reviews"] = AdminServerReviewsPage as ComponentType<PageProps>;
 PAGES["admin-shop-reviews"] = AdminShopReviewsPage as ComponentType<PageProps>;
 PAGES["admin-server-blacklist"] = AdminServerBlacklistPage as ComponentType<PageProps>;
 PAGES["admin-server-banned-ips"] =
   AdminServerBannedIpsPage as ComponentType<PageProps>;
-for (const id of [
-  "admin-shop-services",
-  "admin-shop-accounts",
-] as const) {
-  PAGES[id] = ADMIN_PAGE_FALLBACK;
-}
 
 type Props = { contentPage: DashboardPageId };
 

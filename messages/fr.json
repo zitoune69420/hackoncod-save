@@ -312,6 +312,21 @@
           "date": "Date",
           "action": "Action"
         }
+      },
+      "shopReviewsAdmin": {
+        "dialogDescription": "Avis boutique : commentaire, note et visibilité sur la page publique.",
+        "productType": "Type de produit",
+        "visibleLabel": "Visible sur la page avis boutique",
+        "accessDenied": "Accès réservé aux fondateurs et aux partenaires (avis liés à vos produits).",
+        "table": {
+          "productType": "Type",
+          "productId": "Id produit",
+          "comment": "Commentaire",
+          "visible": "Visible",
+          "userId": "Client",
+          "date": "Date",
+          "action": "Action"
+        }
       }
     }
   },
@@ -1481,6 +1496,15 @@
       "priceUnavailable": "Prix non disponible",
       "order": "Commander",
       "discordLoginRequired": "Tu dois être connecté avec Discord pour commander : le suivi de commande et le chat après achat passent par ton compte Discord."
+    },
+    "admin": {
+      "accounts": {
+        "title": "Comptes (admin boutique)",
+        "description": "Liste des comptes boutique : pour les partenaires, uniquement ceux dont le champ « créé par » correspond à ton compte.",
+        "gamesColumn": "Jeux",
+        "regionColumn": "Région",
+        "priceColumn": "Prix"
+      }
     },
     "dialog": {
       "stepPreorder": "Informations",

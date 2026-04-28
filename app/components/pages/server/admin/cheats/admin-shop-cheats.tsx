@@ -1,7 +1,7 @@
 "use client";
 
-import { AdminAllCheatsPage } from "@/app/components/pages/client/admin/cheats/admin-all-cheats";
+import { AdminShopCheatsClientPage } from "@/app/components/pages/client/admin/shop/admin-shop-cheats-client";
 
 export function AdminShopCheatsPage() {
-  return <AdminAllCheatsPage scope="shop" />;
+  return <AdminShopCheatsClientPage />;
 }

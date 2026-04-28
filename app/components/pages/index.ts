@@ -11,6 +11,8 @@ export { AdminServerCheatsPage } from "./server/admin/cheats/admin-server-cheats
 export { AdminShopCheatsPage } from "./server/admin/cheats/admin-shop-cheats";
 export { AdminServerGamesPage } from "./server/admin/games/admin-server-games";
 export { AdminShopGamesPage } from "./server/admin/games/admin-shop-games";
+export { AdminShopServicesPage } from "./server/admin/services/admin-shop-services";
+export { AdminShopAccountsPage } from "./server/admin/accounts/admin-shop-accounts";
 export { AdminServerVideosPage } from "./server/admin/videos/admin-server-videos";
 export { AdminServerReviewsPage } from "./server/admin/reviews/admin-server-reviews";
 export { AdminShopReviewsPage } from "./server/admin/reviews/admin-shop-reviews";

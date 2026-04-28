@@ -92,7 +92,11 @@ export function cacheKey(
     | "admin-all-videos"
     | "admin-all-reviews"
     | "admin-all-blacklist"
-    | "admin-all-banned-ips",
+    | "admin-all-banned-ips"
+    | "admin-shop-cheats-list"
+    | "admin-shop-services-list"
+    | "admin-shop-accounts-list"
+    | "admin-shop-reviews-list",
   gameTitle?: string,
 ): string {
   if (type === "cheats" && gameTitle) return `cheats:v5:${gameTitle}`;
@@ -112,6 +116,13 @@ export function cacheKey(
   if (type === "admin-all-reviews") return "admin-all-reviews-v1";
   if (type === "admin-all-blacklist") return "admin-all-blacklist-v4";
   if (type === "admin-all-banned-ips") return "admin-all-banned-ips-v2";
+  if (type === "admin-shop-cheats-list") return "admin-shop-cheats-list-v1";
+  if (type === "admin-shop-services-list")
+    return "admin-shop-services-list-v1";
+  if (type === "admin-shop-accounts-list")
+    return "admin-shop-accounts-list-v1";
+  if (type === "admin-shop-reviews-list")
+    return "admin-shop-reviews-list-v1";
   throw new Error("Invalid cache key: cheats requires gameTitle");
 }
 
