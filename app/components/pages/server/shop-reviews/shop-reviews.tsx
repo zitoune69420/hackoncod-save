@@ -23,11 +23,11 @@ import {
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { getShopImageUrl, cleanExpiredImageCache } from "@/lib/shop-utils";
-import type { ShopReview } from "@/lib/supabase/shop-types";
+import type { EnrichedShopReview } from "@/lib/supabase/shop-types";
 
 const PAGE_SIZE = 12;
 
-async function fetchShopReviews(): Promise<ShopReview[]> {
+async function fetchShopReviews(): Promise<EnrichedShopReview[]> {
   const res = await fetch("/api/shop/reviews");
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
@@ -86,7 +86,7 @@ export function ShopReviewsPage() {
     },
   };
 
-  const [data, setData] = useState<ShopReview[]>([]);
+  const [data, setData] = useState<EnrichedShopReview[]>([]);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,8 @@ export function ShopReviewsPage() {
     return data.filter(
       (r) =>
         (r.comment ?? "").toLowerCase().includes(q) ||
-        r.product_type.toLowerCase().includes(q),
+        r.product_type.toLowerCase().includes(q) ||
+        (r.author_display_name ?? "").toLowerCase().includes(q),
     );
   }, [data, searchQuery]);
 
@@ -116,7 +117,7 @@ export function ShopReviewsPage() {
     (skipCache = false) => {
       const key = cacheKey("shop-reviews");
       if (!skipCache) {
-        const cached = getCached<ShopReview[]>(key);
+        const cached = getCached<EnrichedShopReview[]>(key);
         if (cached) {
           setData(cached);
           setLoading(false);
@@ -251,37 +252,75 @@ export function ShopReviewsPage() {
           >
             {visibleData.map((review) => (
               <motion.div key={review.id} variants={cardIn} className="min-w-0">
-                <Card className="h-full">
-                  {imageUrls[review.id] && (
-                    <div className="relative h-48 w-full overflow-hidden rounded-t-xl bg-muted">
+                <Card className="flex h-full flex-col gap-0 overflow-hidden p-0 pt-0">
+                  <div className="relative h-48 w-full shrink-0 overflow-hidden bg-muted">
+                    {imageUrls[review.id] ? (
                       <Image
                         src={imageUrls[review.id]!}
-                        alt="Review"
+                        alt=""
                         className="size-full object-cover"
                         width={600}
                         height={300}
                         unoptimized
                       />
-                    </div>
-                  )}
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
+                    ) : (
+                      <div
+                        className="flex h-full items-center justify-center"
+                        aria-hidden
+                      >
+                        <HugeiconsIcon
+                          icon={Image01Icon}
+                          strokeWidth={2}
+                          className="size-12 text-muted-foreground/35"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader className="shrink-0 px-6 pb-2 pt-4">
+                    <div className="flex items-center justify-between gap-2">
                       <StarRating rating={review.rating} />
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="shrink-0">
                         {productTypeBadge(review.product_type)}
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    {review.comment && (
-                      <p className="text-sm leading-relaxed">{review.comment}</p>
-                    )}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <HugeiconsIcon icon={UserIcon} strokeWidth={2} className="size-3" />
-                        <span>{review.user_id ?? t("shop.reviews.anonymous")}</span>
+                  <CardContent className="flex flex-1 flex-col gap-0 px-6 pb-6 pt-0">
+                    <div className="min-h-0 flex-1">
+                      {review.comment ? (
+                        <p className="text-sm leading-relaxed">{review.comment}</p>
+                      ) : null}
+                    </div>
+                    <div className="mt-auto flex shrink-0 items-center justify-between gap-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {review.author_avatar_url ? (
+                          <Image
+                            src={review.author_avatar_url}
+                            alt=""
+                            width={32}
+                            height={32}
+                            unoptimized
+                            className="size-8 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                            <HugeiconsIcon
+                              icon={UserIcon}
+                              strokeWidth={2}
+                              className="size-4 text-muted-foreground"
+                            />
+                          </div>
+                        )}
+                        <span className="truncate font-medium text-foreground">
+                          {review.user_id
+                            ? review.author_display_name?.trim() ||
+                              t("reviews.authorFallback")
+                            : t("shop.reviews.anonymous")}
+                        </span>
                       </div>
-                      <time dateTime={review.created_at}>
+                      <time
+                        className="shrink-0 tabular-nums"
+                        dateTime={review.created_at}
+                      >
                         {new Date(review.created_at).toLocaleDateString()}
                       </time>
                     </div>

@@ -117,6 +117,12 @@ export interface ShopReview {
   image: string | null;
 }
 
+/** Réponse GET `/api/shop/reviews` (champs Discord résolus côté serveur). */
+export type EnrichedShopReview = ShopReview & {
+  author_display_name: string | null;
+  author_avatar_url: string | null;
+};
+
 // ── Orders & Tickets ─────────────────────────────────────────────────
 
 export type OrderStatus = "waiting_payment" | "paid" | "in_progress" | "waiting_client" | "completed";

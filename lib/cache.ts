@@ -104,7 +104,7 @@ export function cacheKey(
   if (type === "shop-cheats") return "shop-cheats-v1";
   if (type === "shop-services") return "shop-services-v1";
   if (type === "shop-accounts") return "shop-accounts-v1";
-  if (type === "shop-reviews") return "shop-reviews-v1";
+  if (type === "shop-reviews") return "shop-reviews-v2";
   if (type === "tickets") return "shop-tickets-v1";
   if (type === "admin-all-cheats") return "admin-all-cheats-v3";
   if (type === "admin-all-games") return "admin-all-games-v1";
