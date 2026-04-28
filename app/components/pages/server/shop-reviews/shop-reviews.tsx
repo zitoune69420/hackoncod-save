@@ -290,7 +290,7 @@ export function ShopReviewsPage() {
                         <p className="text-sm leading-relaxed">{review.comment}</p>
                       ) : null}
                     </div>
-                    <div className="mt-auto flex shrink-0 items-center justify-between gap-3 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                    <div className="mt-auto flex shrink-0 items-center justify-between gap-3 pt-3 text-xs text-muted-foreground">
                       <div className="flex min-w-0 items-center gap-2">
                         {review.author_avatar_url ? (
                           <Image
