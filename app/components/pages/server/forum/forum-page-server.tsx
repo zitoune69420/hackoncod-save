@@ -169,7 +169,7 @@ function ThreadView({
 }) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <ForumThreadPostHeader
           author={author}
           title={thread.title ?? ""}
