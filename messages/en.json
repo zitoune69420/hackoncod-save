@@ -401,6 +401,11 @@
     "pendingDeleteCountdown": "Deleting in {{seconds}} s",
     "pendingDeleteApplying": "Deleting…",
     "pendingDeleteCancel": "Cancel",
+    "errorHandler": {
+      "render": "This section hit an error. You can keep using the rest of the site.",
+      "runtime": "Something went wrong. You can keep browsing.",
+      "retry": "Try again"
+    },
     "loginRequired": "Sign in with Discord to send a suggestion.",
     "signIn": "Sign in with Discord",
     "signingIn": "Signing in…",

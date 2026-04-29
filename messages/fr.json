@@ -394,6 +394,11 @@
     "pendingDeleteCountdown": "Suppression dans {{seconds}} s",
     "pendingDeleteApplying": "Suppression…",
     "pendingDeleteCancel": "Annuler",
+    "errorHandler": {
+      "render": "Cette zone a rencontré une erreur. Tu peux continuer à utiliser le reste du site.",
+      "runtime": "Une erreur inattendue s’est produite. Tu peux continuer à naviguer.",
+      "retry": "Réessayer"
+    },
     "loginRequired": "Connecte-toi avec Discord pour envoyer une suggestion.",
     "signIn": "Connexion avec Discord",
     "signingIn": "Connexion en cours…",
