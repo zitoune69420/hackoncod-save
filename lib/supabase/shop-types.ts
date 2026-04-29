@@ -1,5 +1,11 @@
 export type ProductType = "cheat" | "service" | "account" | "support";
 
+/** Métadonnées Discord résolues pour `created_by` (admin boutique). */
+export type ShopProductCreator = {
+  displayName: string | null;
+  avatarUrl: string | null;
+};
+
 export interface CheatPrice {
   id: string;
   cheat_id: string;

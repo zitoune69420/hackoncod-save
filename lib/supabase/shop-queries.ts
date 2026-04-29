@@ -1,4 +1,8 @@
-import { getDiscordDisplayNamesForUserIds } from "@/lib/discord/guild-member-display";
+import {
+  getDiscordDisplayNamesForUserIds,
+  getDiscordUserPresentationsForUserIds,
+} from "@/lib/discord/guild-member-display";
+import { resolveCreatedByToDiscordSnowflake } from "@/lib/shop/resolve-created-by-discord";
 import { getAppUserTableIdForAuthUser } from "@/lib/supabase/app-users";
 import { createAdminClient } from "./admin";
 import type {
@@ -19,6 +23,7 @@ import type {
   Sale,
   SaleAccount,
   SaleCheat,
+  ShopProductCreator,
 } from "./shop-types";
 import type { OrderWelcomeLocale } from "@/lib/shop/order-welcome-message";
 
@@ -609,9 +614,55 @@ export async function partnerShopCreatedByCandidatesForQuery(
   return base;
 }
 
+export async function attachShopCreatorsToRows<T extends { created_by: string | null }>(
+  rows: readonly T[],
+): Promise<Array<T & { creator: ShopProductCreator | null }>> {
+  const rawList = [
+    ...new Set(
+      rows
+        .map((r) => r.created_by)
+        .filter((v): v is string => v != null && String(v).trim() !== ""),
+    ),
+  ];
+  const snowflakeByRaw = new Map<string, string | null>();
+  await Promise.all(
+    rawList.map(async (raw) => {
+      snowflakeByRaw.set(raw, await resolveCreatedByToDiscordSnowflake(raw));
+    }),
+  );
+  const snowflakes = [
+    ...new Set(
+      [...snowflakeByRaw.values()].filter(
+        (s): s is string => s != null && s.trim() !== "",
+      ),
+    ),
+  ];
+  const pres =
+    snowflakes.length > 0
+      ? await getDiscordUserPresentationsForUserIds(snowflakes)
+      : new Map<string, { displayName: string | null; avatarUrl: string | null }>();
+
+  return rows.map((row) => {
+    const raw = row.created_by;
+    if (raw == null || String(raw).trim() === "") {
+      return { ...row, creator: null };
+    }
+    const key = String(raw).trim();
+    const sf = snowflakeByRaw.get(key) ?? null;
+    const p = sf ? pres.get(sf) : undefined;
+    if (p?.displayName || p?.avatarUrl) {
+      return {
+        ...row,
+        creator: { displayName: p.displayName, avatarUrl: p.avatarUrl },
+      };
+    }
+    return { ...row, creator: null };
+  });
+}
+
 export async function getShopCheatsForAdmin(
   scope: AdminShopScope,
-): Promise<ShopCheat[]> {
+): Promise<Array<ShopCheat & { creator: ShopProductCreator | null }>> {
   const supabase = createAdminClient();
   let q = supabase
     .from("shop_cheats")
@@ -631,15 +682,16 @@ export async function getShopCheatsForAdmin(
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
   const cheats = (data ?? []) as ShopCheat[];
-  for (const cheat of cheats) {
+  const withCreators = await attachShopCreatorsToRows(cheats);
+  for (const cheat of withCreators) {
     cheat.prices = await getCheatPrices(cheat.id);
   }
-  return cheats;
+  return withCreators;
 }
 
 export async function getShopServicesForAdmin(
   scope: AdminShopScope,
-): Promise<ShopService[]> {
+): Promise<Array<ShopService & { creator: ShopProductCreator | null }>> {
   const supabase = createAdminClient();
   let q = supabase
     .from("shop_services")
@@ -659,15 +711,16 @@ export async function getShopServicesForAdmin(
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
   const services = (data ?? []) as ShopService[];
-  for (const service of services) {
+  const withCreators = await attachShopCreatorsToRows(services);
+  for (const service of withCreators) {
     service.prices = await getServicePrices(service.id);
   }
-  return services;
+  return withCreators;
 }
 
 export async function getShopAccountsForAdmin(
   scope: AdminShopScope,
-): Promise<ShopAccount[]> {
+): Promise<Array<ShopAccount & { creator: ShopProductCreator | null }>> {
   const supabase = createAdminClient();
   let q = supabase
     .from("shop_accounts")
@@ -686,7 +739,8 @@ export async function getShopAccountsForAdmin(
     console.error("[getShopAccountsForAdmin]", error);
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
-  return (data ?? []) as ShopAccount[];
+  const accounts = (data ?? []) as ShopAccount[];
+  return attachShopCreatorsToRows(accounts);
 }
 
 async function partnerShopProductIds(
@@ -795,6 +849,94 @@ export type ShopReviewAdminPatchRow = {
   rating?: number;
   is_visible?: boolean;
 };
+
+export async function updateShopCheat(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("shop_cheats")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateShopCheat]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteShopCheat(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error: ep } = await supabase
+    .from("cheat_prices")
+    .delete()
+    .eq("cheat_id", id);
+  if (ep) {
+    console.error("[deleteShopCheat] cheat_prices", ep);
+    throw new Error(`Supabase: ${ep.message} (${ep.code})`);
+  }
+  const { error } = await supabase.from("shop_cheats").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteShopCheat]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function updateShopService(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("shop_services")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateShopService]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteShopService(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error: ep } = await supabase
+    .from("service_prices")
+    .delete()
+    .eq("service_id", id);
+  if (ep) {
+    console.error("[deleteShopService] service_prices", ep);
+    throw new Error(`Supabase: ${ep.message} (${ep.code})`);
+  }
+  const { error } = await supabase.from("shop_services").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteShopService]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function updateShopAccount(
+  id: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("shop_accounts")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateShopAccount]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
+
+export async function deleteShopAccount(id: string): Promise<void> {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("shop_accounts").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteShopAccount]", error);
+    throw new Error(`Supabase: ${error.message} (${error.code})`);
+  }
+}
 
 export async function updateShopReview(
   id: string,

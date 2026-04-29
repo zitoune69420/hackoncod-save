@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { CommonTable } from "@/components/commons/table/table";
+import type { Column } from "@/components/commons/table/types";
+import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
+import { AdminShopCreatorCell } from "@/app/components/pages/client/admin/shop/admin-shop-creator-cell";
+import {
+  AdminShopServiceEditDialog,
+  type AdminShopServiceTableRow,
+} from "@/app/components/pages/client/admin/shop/admin-shop-service-edit-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -16,9 +23,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
-import type { ShopService } from "@/lib/supabase/shop-types";
+import type { ShopProductCreator, ShopService } from "@/lib/supabase/shop-types";
 
-async function fetchShopServicesAdmin(): Promise<ShopService[]> {
+async function fetchShopServicesAdmin(): Promise<
+  Array<ShopService & { creator: ShopProductCreator | null }>
+> {
   const res = await fetch("/api/admin/shop/services");
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -41,7 +50,9 @@ export function AdminShopServicesClientPage() {
   const canAccess = canAccessAdminShopSection(role);
   const isFounder = role === "founder";
 
-  const [data, setData] = useState<ShopService[]>([]);
+  const [data, setData] = useState<AdminShopServiceTableRow[]>([]);
+  const [editRow, setEditRow] = useState<AdminShopServiceTableRow | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -74,10 +85,12 @@ export function AdminShopServicesClientPage() {
 
     (async () => {
       if (isFounder && !isRefresh) {
-        const cached = getCached<ShopService[]>(key);
+        const cached = getCached<
+          Array<ShopService & { creator: ShopProductCreator | null }>
+        >(key);
         if (cached) {
           if (!cancelled) {
-            setData(cached);
+            setData(cached.map((row) => ({ ...row, actions: "" })));
             setLoading(false);
           }
           return;
@@ -94,7 +107,7 @@ export function AdminShopServicesClientPage() {
         const json = await fetchShopServicesAdmin();
         if (!cancelled) {
           if (isFounder) setCached(key, json);
-          setData(json);
+          setData(json.map((row) => ({ ...row, actions: "" })));
           setProgress(100);
         }
       } catch {
@@ -125,43 +138,112 @@ export function AdminShopServicesClientPage() {
     setRefreshTick((k) => k + 1);
   }, []);
 
-  const columns = useMemo(
+  const onEditRow = useCallback((row: AdminShopServiceTableRow) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const onDeleteRow = useCallback(
+    (row: AdminShopServiceTableRow) => {
+      const confirmLine = t("dashboard.admin.shopCatalog.confirmDeleteService", {
+        name: row.name,
+      });
+      showPendingDeleteConfirmToast({
+        getLine: (sec) =>
+          sec > 0
+            ? `${confirmLine} (${sec})`
+            : t("common.pendingDeleteApplying"),
+        cancelLabel: t("common.pendingDeleteCancel"),
+        applyingLabel: t("common.pendingDeleteApplying"),
+        successMessage: t("dashboard.admin.shopCatalog.deleteSuccess"),
+        errorFallback: t("dashboard.admin.shopCatalog.deleteError"),
+        runDelete: async () => {
+          const res = await fetch(`/api/admin/shop/services/${row.id}`, {
+            method: "DELETE",
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(
+              typeof json?.error === "string"
+                ? json.error
+                : t("dashboard.admin.shopCatalog.deleteError"),
+            );
+          }
+          invalidateCache(cacheKey("admin-shop-services-list"));
+          refreshRef.current = true;
+          setRefreshTick((k) => k + 1);
+        },
+      });
+    },
+    [t],
+  );
+
+  const columns = useMemo<Column<AdminShopServiceTableRow>[]>(
     () => [
       {
         key: "name" as const,
         label: t("dashboard.admin.allGames.table.title"),
       },
-      { key: "slug" as const, label: "Slug" },
+      {
+        key: "slug" as const,
+        label: t("dashboard.admin.shopCatalog.fieldSlug"),
+      },
       {
         key: "game" as const,
         label: t("dashboard.admin.allCheats.table.game"),
-        render: (row: ShopService) => row.game ?? "—",
+        render: (row) => row.game ?? "—",
       },
       {
         key: "platform" as const,
         label: t("dashboard.admin.allCheats.table.platform"),
-        render: (row: ShopService) => row.platform ?? "—",
+        render: (row) => row.platform ?? "—",
       },
       {
         key: "is_active" as const,
         label: t("shop.common.active"),
-        render: (row: ShopService) => <BoolCell value={row.is_active} />,
+        render: (row) => <BoolCell value={row.is_active} />,
+      },
+      {
+        key: "created_by" as const,
+        label: t("dashboard.admin.shopCatalog.createdBy"),
+        render: (row) => (
+          <AdminShopCreatorCell
+            creator={row.creator}
+            rawId={row.created_by}
+            unknownLabel={t("dashboard.admin.shopCatalog.creatorUnknown")}
+          />
+        ),
       },
       ...(isFounder
         ? [
             {
-              key: "created_by" as const,
-              label: "created_by",
-              render: (row: ShopService) => (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {row.created_by ?? "—"}
-                </span>
+              key: "actions" as const,
+              label: t("dashboard.admin.shopCatalog.action"),
+              render: (row: AdminShopServiceTableRow) => (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEditRow(row)}
+                  >
+                    {t("dashboard.admin.shopCatalog.edit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDeleteRow(row)}
+                  >
+                    {t("dashboard.admin.shopCatalog.delete")}
+                  </Button>
+                </div>
               ),
             },
           ]
         : []),
     ],
-    [t, isFounder],
+    [t, isFounder, onEditRow, onDeleteRow],
   );
 
   if (roleLoading) {
@@ -182,6 +264,18 @@ export function AdminShopServicesClientPage() {
 
   return (
     <div className="space-y-6">
+      <AdminShopServiceEditDialog
+        open={formOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) setEditRow(null);
+        }}
+        row={editRow}
+        onSaved={() => {
+          invalidateCache(cacheKey("admin-shop-services-list"));
+          handleRefresh();
+        }}
+      />
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">

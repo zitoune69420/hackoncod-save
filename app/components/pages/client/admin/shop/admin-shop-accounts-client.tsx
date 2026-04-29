@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
 import { CommonTable } from "@/components/commons/table/table";
+import type { Column } from "@/components/commons/table/types";
+import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
+import { AdminShopCreatorCell } from "@/app/components/pages/client/admin/shop/admin-shop-creator-cell";
+import {
+  AdminShopAccountEditDialog,
+  type AdminShopAccountTableRow,
+} from "@/app/components/pages/client/admin/shop/admin-shop-account-edit-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -16,9 +23,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
-import type { ShopAccount } from "@/lib/supabase/shop-types";
+import type { ShopAccount, ShopProductCreator } from "@/lib/supabase/shop-types";
 
-async function fetchShopAccountsAdmin(): Promise<ShopAccount[]> {
+async function fetchShopAccountsAdmin(): Promise<
+  Array<ShopAccount & { creator: ShopProductCreator | null }>
+> {
   const res = await fetch("/api/admin/shop/accounts");
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -41,7 +50,9 @@ export function AdminShopAccountsClientPage() {
   const canAccess = canAccessAdminShopSection(role);
   const isFounder = role === "founder";
 
-  const [data, setData] = useState<ShopAccount[]>([]);
+  const [data, setData] = useState<AdminShopAccountTableRow[]>([]);
+  const [editRow, setEditRow] = useState<AdminShopAccountTableRow | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -75,10 +86,12 @@ export function AdminShopAccountsClientPage() {
 
     (async () => {
       if (isFounder && !isRefresh) {
-        const cached = getCached<ShopAccount[]>(key);
+        const cached = getCached<
+          Array<ShopAccount & { creator: ShopProductCreator | null }>
+        >(key);
         if (cached) {
           if (!cancelled) {
-            setData(cached);
+            setData(cached.map((row) => ({ ...row, actions: "" })));
             setLoading(false);
           }
           return;
@@ -95,7 +108,7 @@ export function AdminShopAccountsClientPage() {
         const json = await fetchShopAccountsAdmin();
         if (!cancelled) {
           if (isFounder) setCached(key, json);
-          setData(json);
+          setData(json.map((row) => ({ ...row, actions: "" })));
           setProgress(100);
         }
       } catch {
@@ -126,51 +139,120 @@ export function AdminShopAccountsClientPage() {
     setRefreshTick((k) => k + 1);
   }, []);
 
-  const columns = useMemo(
+  const onEditRow = useCallback((row: AdminShopAccountTableRow) => {
+    setEditRow(row);
+    setFormOpen(true);
+  }, []);
+
+  const onDeleteRow = useCallback(
+    (row: AdminShopAccountTableRow) => {
+      const confirmLine = t("dashboard.admin.shopCatalog.confirmDeleteAccount", {
+        name: row.name,
+      });
+      showPendingDeleteConfirmToast({
+        getLine: (sec) =>
+          sec > 0
+            ? `${confirmLine} (${sec})`
+            : t("common.pendingDeleteApplying"),
+        cancelLabel: t("common.pendingDeleteCancel"),
+        applyingLabel: t("common.pendingDeleteApplying"),
+        successMessage: t("dashboard.admin.shopCatalog.deleteSuccess"),
+        errorFallback: t("dashboard.admin.shopCatalog.deleteError"),
+        runDelete: async () => {
+          const res = await fetch(`/api/admin/shop/accounts/${row.id}`, {
+            method: "DELETE",
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(
+              typeof json?.error === "string"
+                ? json.error
+                : t("dashboard.admin.shopCatalog.deleteError"),
+            );
+          }
+          invalidateCache(cacheKey("admin-shop-accounts-list"));
+          refreshRef.current = true;
+          setRefreshTick((k) => k + 1);
+        },
+      });
+    },
+    [t],
+  );
+
+  const columns = useMemo<Column<AdminShopAccountTableRow>[]>(
     () => [
       {
         key: "name" as const,
         label: t("dashboard.admin.allGames.table.title"),
       },
-      { key: "slug" as const, label: "Slug" },
+      {
+        key: "slug" as const,
+        label: t("dashboard.admin.shopCatalog.fieldSlug"),
+      },
       {
         key: "games" as const,
         label: t("shop.admin.accounts.gamesColumn"),
-        render: (row: ShopAccount) => row.games ?? "—",
+        render: (row) => row.games ?? "—",
       },
       {
         key: "region" as const,
         label: t("shop.admin.accounts.regionColumn"),
-        render: (row: ShopAccount) => row.region ?? "—",
+        render: (row) => row.region ?? "—",
       },
       {
         key: "price" as const,
         label: t("shop.admin.accounts.priceColumn"),
-        render: (row: ShopAccount) =>
+        render: (row) =>
           `${row.price}${row.currency ? ` ${row.currency}` : ""}`,
       },
       {
         key: "is_active" as const,
         label: t("shop.common.active"),
-        render: (row: ShopAccount) => (
+        render: (row) => (
           <BoolCell value={row.is_active !== false} />
+        ),
+      },
+      {
+        key: "created_by" as const,
+        label: t("dashboard.admin.shopCatalog.createdBy"),
+        render: (row) => (
+          <AdminShopCreatorCell
+            creator={row.creator}
+            rawId={row.created_by}
+            unknownLabel={t("dashboard.admin.shopCatalog.creatorUnknown")}
+          />
         ),
       },
       ...(isFounder
         ? [
             {
-              key: "created_by" as const,
-              label: "created_by",
-              render: (row: ShopAccount) => (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {row.created_by ?? "—"}
-                </span>
+              key: "actions" as const,
+              label: t("dashboard.admin.shopCatalog.action"),
+              render: (row: AdminShopAccountTableRow) => (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEditRow(row)}
+                  >
+                    {t("dashboard.admin.shopCatalog.edit")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDeleteRow(row)}
+                  >
+                    {t("dashboard.admin.shopCatalog.delete")}
+                  </Button>
+                </div>
               ),
             },
           ]
         : []),
     ],
-    [t, isFounder],
+    [t, isFounder, onEditRow, onDeleteRow],
   );
 
   if (roleLoading) {
@@ -191,6 +273,18 @@ export function AdminShopAccountsClientPage() {
 
   return (
     <div className="space-y-6">
+      <AdminShopAccountEditDialog
+        open={formOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) setEditRow(null);
+        }}
+        row={editRow}
+        onSaved={() => {
+          invalidateCache(cacheKey("admin-shop-accounts-list"));
+          handleRefresh();
+        }}
+      />
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">

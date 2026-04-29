@@ -5,8 +5,7 @@ import { discordDefaultEmbedAvatarUrl } from "@/lib/discord/discord-embed-avatar
 import { sendDirectMessageEmbed } from "@/lib/discord/dm";
 import { getDiscordUserPresentationsForUserIds } from "@/lib/discord/guild-member-display";
 import type { DiscordApiEmbed } from "@/lib/discord/webhook";
-import { isUuid } from "@/lib/security/is-uuid";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveCreatedByToDiscordSnowflake } from "@/lib/shop/resolve-created-by-discord";
 import {
   getOrderById,
   mergeShopOrderPreOrderData,
@@ -16,28 +15,6 @@ import type { ShopOrder } from "@/lib/supabase/shop-types";
 const NOTIFY_KEY = "_sellerTicketOpenNotifySentAt";
 
 const DISCORD_SNOWFLAKE_RE = /^\d{5,24}$/;
-
-const APP_USERS_TABLE = process.env.SUPABASE_APP_USERS_TABLE?.trim() || "users";
-
-async function resolveCreatedByToDiscordSnowflake(
-  createdBy: string | null | undefined,
-): Promise<string | null> {
-  if (createdBy == null) return null;
-  const s = String(createdBy).trim();
-  if (!s) return null;
-  if (DISCORD_SNOWFLAKE_RE.test(s)) return s;
-  if (!isUuid(s)) return null;
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from(APP_USERS_TABLE)
-    .select("discord_user_id")
-    .eq("id", s)
-    .maybeSingle();
-  if (error || !data) return null;
-  const raw = (data as { discord_user_id?: string | null }).discord_user_id?.trim() ?? "";
-  return DISCORD_SNOWFLAKE_RE.test(raw) ? raw : null;
-}
 
 function productLabel(order: ShopOrder): string {
   const p = order.product;

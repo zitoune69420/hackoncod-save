@@ -59,3 +59,17 @@ export async function requireAdminShopReviewsApiAccess(): Promise<
   }
   return { ok: true, scope: { mode: "founder" } };
 }
+
+/** Mutations boutique (cheat / service / compte) : fondateur uniquement. */
+export async function requireAdminShopFounderApiAccess(): Promise<
+  { ok: false; status: 401 | 403 } | { ok: true }
+> {
+  const access = await getCurrentUserAccess({ source: "db" });
+  if (!access.isAuthenticated) {
+    return { ok: false, status: 401 };
+  }
+  if (access.role !== "founder") {
+    return { ok: false, status: 403 };
+  }
+  return { ok: true };
+}
