@@ -1,10 +1,8 @@
-import { requireAdminShopApiAccess } from "@/lib/admin-shop-access";
+import { requireAdminShopReviewsApiAccess } from "@/lib/admin-shop-access";
 import { isUuid } from "@/lib/security/is-uuid";
 import {
   deleteShopReview,
-  getCreatedByForShopProduct,
   getShopReviewById,
-  partnerOwnsCreatedByValue,
   updateShopReview,
   type ShopReviewAdminPatchRow,
 } from "@/lib/supabase/shop-queries";
@@ -45,26 +43,12 @@ function normalizeShopReviewPatch(raw: unknown): ShopReviewAdminPatchRow | null 
   return Object.keys(out).length ? out : null;
 }
 
-async function canModerateShopReview(
-  gate: Awaited<ReturnType<typeof requireAdminShopApiAccess>> & { ok: true },
-  productType: string,
-  productId: string,
-): Promise<boolean> {
-  if (gate.scope.mode === "founder") return true;
-  const cb = await getCreatedByForShopProduct(productType, productId);
-  return partnerOwnsCreatedByValue(
-    cb,
-    gate.scope.discordId,
-    gate.scope.appUserId,
-  );
-}
-
 export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const gate = await requireAdminShopApiAccess();
+    const gate = await requireAdminShopReviewsApiAccess();
     if (!gate.ok) {
       return NextResponse.json({ error: "Forbidden" }, { status: gate.status });
     }
@@ -78,16 +62,6 @@ export async function PATCH(
     const review = await getShopReviewById(idTrim);
     if (!review) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (
-      !(await canModerateShopReview(
-        gate,
-        review.product_type,
-        review.product_id,
-      ))
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await req.json().catch(() => null);
@@ -112,7 +86,7 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const gate = await requireAdminShopApiAccess();
+    const gate = await requireAdminShopReviewsApiAccess();
     if (!gate.ok) {
       return NextResponse.json({ error: "Forbidden" }, { status: gate.status });
     }
@@ -126,16 +100,6 @@ export async function DELETE(
     const review = await getShopReviewById(idTrim);
     if (!review) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (
-      !(await canModerateShopReview(
-        gate,
-        review.product_type,
-        review.product_id,
-      ))
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     await deleteShopReview(idTrim);

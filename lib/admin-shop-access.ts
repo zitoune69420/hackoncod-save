@@ -43,3 +43,20 @@ export async function requireAdminShopApiAccess(): Promise<AdminShopApiGate> {
     scope: { mode: "partner", discordId, appUserId: u.id },
   };
 }
+
+/**
+ * Modération des avis boutique (GET liste, PATCH, DELETE) : fondateur uniquement.
+ */
+export async function requireAdminShopReviewsApiAccess(): Promise<
+  | { ok: false; status: 401 | 403 }
+  | { ok: true; scope: { mode: "founder" } }
+> {
+  const access = await getCurrentUserAccess({ source: "db" });
+  if (!access.isAuthenticated) {
+    return { ok: false, status: 401 };
+  }
+  if (access.role !== "founder") {
+    return { ok: false, status: 403 };
+  }
+  return { ok: true, scope: { mode: "founder" } };
+}

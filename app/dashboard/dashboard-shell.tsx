@@ -35,6 +35,7 @@ import {
   isValidDashboardPageId,
   type DashboardPageId,
 } from "@/lib/dashboard-url";
+import { canAccessAdminShopSection } from "@/lib/permissions";
 import { TicketChatLoadingProvider } from "@/app/dashboard/ticket-chat-loading-context";
 
 /** Fil d’Ariane admin : [section → première page], libellé de la page courante. */
@@ -255,13 +256,34 @@ function DashboardChrome({ children }: { children: ReactNode }) {
     if (role === "founder") {
       return;
     }
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", DASHBOARD_DEFAULT_PAGE);
-    params.delete("settings");
-    params.delete("from");
-    params.delete("orderId");
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+
+    const replaceToDashboardDefault = () => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", DASHBOARD_DEFAULT_PAGE);
+      params.delete("settings");
+      params.delete("from");
+      params.delete("orderId");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    };
+
+    /** Aligné sur `enforceDashboardPageAccess` : boutique admin = partenaire ou fondateur ; jeux + avis (modération) = fondateur seul. */
+    if (contentPage.startsWith("admin-shop-")) {
+      if (!canAccessAdminShopSection(role)) {
+        replaceToDashboardDefault();
+        return;
+      }
+      if (
+        contentPage === "admin-shop-games" ||
+        contentPage === "admin-shop-reviews"
+      ) {
+        replaceToDashboardDefault();
+        return;
+      }
+      return;
+    }
+
+    replaceToDashboardDefault();
   }, [
     contentPage,
     pathname,

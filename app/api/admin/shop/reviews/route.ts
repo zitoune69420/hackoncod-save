@@ -1,10 +1,10 @@
-import { requireAdminShopApiAccess } from "@/lib/admin-shop-access";
+import { requireAdminShopReviewsApiAccess } from "@/lib/admin-shop-access";
 import { getShopReviewsForAdmin } from "@/lib/supabase/shop-queries";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const gate = await requireAdminShopApiAccess();
+    const gate = await requireAdminShopReviewsApiAccess();
     if (!gate.ok) {
       return NextResponse.json(
         { error: "Forbidden" },

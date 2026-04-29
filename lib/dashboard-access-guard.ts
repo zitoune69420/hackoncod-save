@@ -8,6 +8,7 @@ import {
   canAccessAdminShopSection,
   canAccessPartnerTools,
   canAccessVipCheats,
+  canAccessAdminShopReviewsPage,
   hasMinimumRole,
   type UserRole,
 } from "@/lib/permissions";
@@ -83,6 +84,9 @@ export async function enforceDashboardPageAccess(
         redirect(SAFE_FALLBACK);
       }
       if (page === "admin-shop-games" && role !== "founder") {
+        redirect(SAFE_FALLBACK);
+      }
+      if (page === "admin-shop-reviews" && !canAccessAdminShopReviewsPage(role)) {
         redirect(SAFE_FALLBACK);
       }
       return;

@@ -12,7 +12,7 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
-import { canAccessAdminShopSection } from "@/lib/permissions";
+import { canAccessAdminShopReviewsPage } from "@/lib/permissions";
 import { AdminShopReviewFormDialog } from "@/app/components/pages/client/admin/shop/admin-shop-review-form-dialog";
 import type { Column } from "@/components/commons/table/types";
 import type { ShopReview } from "@/lib/supabase/shop-types";
@@ -75,7 +75,7 @@ function formatDate(iso: string, locale: string) {
 export function AdminShopReviewsClientPage() {
   const { t, locale } = useTranslations();
   const { role, isLoading: roleLoading } = useUserRole();
-  const canAccess = canAccessAdminShopSection(role);
+  const canAccess = canAccessAdminShopReviewsPage(role);
   const isFounder = role === "founder";
 
   const [data, setData] = useState<ShopReview[]>([]);

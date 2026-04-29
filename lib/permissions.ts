@@ -85,6 +85,13 @@ export function canAccessAdminShopSection(roleOrUser: UserRole | unknown): boole
 }
 
 /**
+ * Page Administration → Boutique → Avis (modération) : fondateur uniquement.
+ */
+export function canAccessAdminShopReviewsPage(roleOrUser: UserRole | unknown): boolean {
+  return getUserRole(roleOrUser) === "founder";
+}
+
+/**
  * Fil d’ariane / nav « Exclusif » : `requiredRole` sur l’item correspond au feature gate, pas toujours à `hasMinimumRole`.
  */
 export function canSeeExclusiveNavItem(

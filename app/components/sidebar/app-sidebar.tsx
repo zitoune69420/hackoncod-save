@@ -89,7 +89,7 @@ function useNavData() {
             },
             { title: "Services", pageId: "admin-shop-services" },
             { title: "Accounts", pageId: "admin-shop-accounts" },
-            { title: "Reviews", pageId: "admin-shop-reviews" },
+            { title: "Reviews", pageId: "admin-shop-reviews", requiredRole: "founder" as const },
           ],
         },
         {
