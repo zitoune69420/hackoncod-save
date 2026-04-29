@@ -12,8 +12,9 @@ export type AdminShopApiGate =
   | { ok: true; scope: AdminShopScope };
 
 /**
- * Routes `/api/admin/shop/*` : fondateur (tout) ou partenaire (filtré par `created_by`).
- * Partenaire sans Discord résolu → 403 (pas de périmètre fiable).
+ * Routes `/api/admin/shop/*` (hors avis) : fondateur (tout) ou partenaire (filtré par `created_by`).
+ * Partenaire : au moins `appUserId` session requis ; le snowflake Discord est ajouté aux candidats
+ * `created_by` quand on peut le résoudre (sinon seul l’id session sert — évite un 403 inutile en prod).
  */
 export async function requireAdminShopApiAccess(): Promise<AdminShopApiGate> {
   const access = await getCurrentUserAccess({ source: "db" });
@@ -33,10 +34,8 @@ export async function requireAdminShopApiAccess(): Promise<AdminShopApiGate> {
     return { ok: false, status: 403 };
   }
 
-  const discordId = await getDiscordUserIdForAuthUser(u.id, u.image);
-  if (!discordId) {
-    return { ok: false, status: 403 };
-  }
+  const discordId =
+    (await getDiscordUserIdForAuthUser(u.id, u.image))?.trim() ?? "";
 
   return {
     ok: true,

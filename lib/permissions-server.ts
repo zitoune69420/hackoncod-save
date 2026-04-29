@@ -16,6 +16,7 @@ import {
 } from "@/lib/permissions";
 import {
   getAppUserRole,
+  getAuthUserDiscordSnowflake,
   upsertAppUserFromSession,
 } from "@/lib/supabase/app-users";
 
@@ -195,6 +196,17 @@ export async function getDiscordUserIdForAuthUser(
       );
     }
     return id;
+  }
+
+  const fromPersisted = await getAuthUserDiscordSnowflake(appUserId);
+  if (fromPersisted) {
+    if (discordRolesDebugEnabled()) {
+      console.log(
+        "[discord-roles-debug] user_id Discord ← users.discord_user_id :",
+        fromPersisted,
+      );
+    }
+    return normalizeDiscordSnowflake(fromPersisted);
   }
 
   if (discordAccount?.accessToken) {
