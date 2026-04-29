@@ -1,4 +1,5 @@
 import { getDiscordDisplayNamesForUserIds } from "@/lib/discord/guild-member-display";
+import { getAppUserTableIdForAuthUser } from "@/lib/supabase/app-users";
 import { createAdminClient } from "./admin";
 import type {
   ShopCheat,
@@ -579,7 +580,11 @@ export type AdminShopScope =
   | { mode: "founder" }
   | { mode: "partner"; discordId: string; appUserId: string };
 
-/** Valeurs possibles en base pour `created_by` (snowflake Discord et/ou `users.id`). */
+/**
+ * Sous-ensemble synchrone (snowflake Discord + id Better Auth).
+ * Pour le filtre admin partenaire, utiliser `partnerShopCreatedByCandidatesForQuery`
+ * qui ajoute la PK `public.users.id` lorsque la session est liée via `auth_user_id`.
+ */
 export function partnerShopCreatedByCandidates(
   discordId: string,
   appUserId: string,
@@ -591,6 +596,19 @@ export function partnerShopCreatedByCandidates(
   ];
 }
 
+/** Toutes les valeurs pouvant figurer dans `created_by` pour les produits d’un partenaire. */
+export async function partnerShopCreatedByCandidatesForQuery(
+  discordId: string,
+  appUserId: string,
+): Promise<string[]> {
+  const base = partnerShopCreatedByCandidates(discordId, appUserId);
+  const tablePk = await getAppUserTableIdForAuthUser(appUserId);
+  if (tablePk != null && tablePk.trim() !== "" && !base.includes(tablePk)) {
+    return [...base, tablePk];
+  }
+  return base;
+}
+
 export async function getShopCheatsForAdmin(
   scope: AdminShopScope,
 ): Promise<ShopCheat[]> {
@@ -600,10 +618,11 @@ export async function getShopCheatsForAdmin(
     .select("*")
     .order("created_at", { ascending: false });
   if (scope.mode === "partner") {
-    const ids = partnerShopCreatedByCandidates(
+    const ids = await partnerShopCreatedByCandidatesForQuery(
       scope.discordId,
       scope.appUserId,
     );
+    if (ids.length === 0) return [];
     q = q.in("created_by", ids);
   }
   const { data, error } = await q;
@@ -627,10 +646,11 @@ export async function getShopServicesForAdmin(
     .select("*")
     .order("created_at", { ascending: false });
   if (scope.mode === "partner") {
-    const ids = partnerShopCreatedByCandidates(
+    const ids = await partnerShopCreatedByCandidatesForQuery(
       scope.discordId,
       scope.appUserId,
     );
+    if (ids.length === 0) return [];
     q = q.in("created_by", ids);
   }
   const { data, error } = await q;
@@ -654,10 +674,11 @@ export async function getShopAccountsForAdmin(
     .select("*")
     .order("created_at", { ascending: false });
   if (scope.mode === "partner") {
-    const ids = partnerShopCreatedByCandidates(
+    const ids = await partnerShopCreatedByCandidatesForQuery(
       scope.discordId,
       scope.appUserId,
     );
+    if (ids.length === 0) return [];
     q = q.in("created_by", ids);
   }
   const { data, error } = await q;
@@ -672,7 +693,11 @@ async function partnerShopProductIds(
   scope: Extract<AdminShopScope, { mode: "partner" }>,
 ): Promise<string[]> {
   const supabase = createAdminClient();
-  const ids = partnerShopCreatedByCandidates(scope.discordId, scope.appUserId);
+  const ids = await partnerShopCreatedByCandidatesForQuery(
+    scope.discordId,
+    scope.appUserId,
+  );
+  if (ids.length === 0) return [];
   const [cheatsRes, servicesRes, accountsRes] = await Promise.all([
     supabase.from("shop_cheats").select("id").in("created_by", ids),
     supabase.from("shop_services").select("id").in("created_by", ids),
