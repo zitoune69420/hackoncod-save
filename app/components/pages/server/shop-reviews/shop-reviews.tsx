@@ -214,24 +214,6 @@ export function ShopReviewsPage() {
         </motion.div>
       </motion.div>
 
-      {!loading && data.length > 0 && (
-        <motion.div
-          variants={blockIn}
-          initial="hidden"
-          animate="show"
-          className="flex items-center gap-4 rounded-lg border bg-muted/30 p-4"
-        >
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{avgRating.toFixed(1)}</span>
-            <span className="text-sm text-muted-foreground">/ 5</span>
-          </div>
-          <StarRating rating={Math.round(avgRating)} />
-          <span className="text-sm text-muted-foreground">
-            ({data.length} {t("shop.reviews.reviewCount")})
-          </span>
-        </motion.div>
-      )}
-
       {loading ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-2">
           <Progress value={progress} className="h-1 w-48" />

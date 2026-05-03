@@ -87,7 +87,10 @@ class ErrorHandlerBoundary extends React.Component<BoundaryProps, BoundaryState>
   }
 }
 
-function RuntimeErrorListeners() {
+/**
+ * Erreurs JS globales (hors React) : toast throttlé. À monter une seule fois (ex. layout racine).
+ */
+export function RuntimeErrorListeners() {
   React.useEffect(() => {
     const onWindowError = (event: ErrorEvent) => {
       if (event.defaultPrevented) return;
@@ -116,14 +119,8 @@ type ErrorHandlerProps = {
 };
 
 /**
- * Gestionnaire d’erreurs global côté client : boundary React + erreurs non gérées (throttlées),
- * sans bloquer la navigation ni le reste du site (Toaster reste en dehors de ce wrapper dans le layout).
+ * Boundary React : toast + zone limitée (ex. contenu dashboard). Ne pas entourer la sidebar ni le layout racine.
  */
 export function ErrorHandler({ children }: ErrorHandlerProps) {
-  return (
-    <ErrorHandlerBoundary>
-      <RuntimeErrorListeners />
-      {children}
-    </ErrorHandlerBoundary>
-  );
+  return <ErrorHandlerBoundary>{children}</ErrorHandlerBoundary>;
 }

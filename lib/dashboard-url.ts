@@ -111,6 +111,22 @@ export function getDashboardContentPageFromRaw(
   return isValidDashboardPageId(pageParam) ? pageParam : DASHBOARD_DEFAULT_PAGE;
 }
 
+/**
+ * Clé pour remonter `ErrorHandler` dans la zone contenu : tout changement d’URL pertinent
+ * réinitialise la boundary sans recharger toute la fenêtre (sidebar / shell inchangés).
+ */
+export function getDashboardErrorHandlerResetKey(
+  raw: Record<string, string | string[] | undefined>,
+): string {
+  const entries = Object.entries(raw)
+    .map(([k, v]) => {
+      const val = Array.isArray(v) ? v.join("\x1e") : String(v ?? "");
+      return [k, val] as const;
+    })
+    .sort(([a], [b]) => a.localeCompare(b, "en"));
+  return entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+}
+
 /** Fenêtre analytics admin stats (`statsDays`), pour `?page=admin-stats-users`. */
 export function getDashboardStatsDays(
   raw: Record<string, string | string[] | undefined>,
