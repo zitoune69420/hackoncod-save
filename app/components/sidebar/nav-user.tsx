@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UnfoldMoreIcon,
@@ -66,7 +67,7 @@ export function NavUser({
   onSettingsOpenChangeAction,
 }: NavUserProps) {
   const { t } = useTranslations();
-  const { isMobile } = useSidebar();
+  const { isMobile, state } = useSidebar();
   const [settingsOpenUncontrolled, setSettingsOpenUncontrolled] =
     React.useState(false);
   const [howToVipOpen, setHowToVipOpen] = React.useState(false);
@@ -112,8 +113,36 @@ export function NavUser({
   const avatarUrl = user?.image ?? undefined;
   const fallback = initialsFromUser(user?.name, user?.email);
 
+  const showSupportLoginHint =
+    !sessionPending && !user && (isMobile || state === "expanded");
+
   return (
     <SidebarMenu>
+      {showSupportLoginHint ? (
+        <SidebarMenuItem className="mb-1 px-1">
+          <button
+            type="button"
+            disabled={isSigningIn}
+            onClick={() => void signInWithDiscord()}
+            aria-label={t("sidebar.supportLoginCardAria")}
+            className={cn(
+              "flex w-full flex-col gap-1 rounded-xl bg-sidebar-accent/35 py-2.5 pl-4 pr-3 text-left cursor-pointer",
+              "ring-1 ring-sidebar-border transition-colors",
+              "hover:bg-sidebar-accent/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            )}
+          >
+            <span className="block text-xs font-medium leading-snug text-sidebar-foreground">
+              {t("sidebar.supportLoginCardTitle")}
+            </span>
+            <span className="block text-xs leading-snug text-muted-foreground">
+              {isSigningIn
+                ? t("navUser.signingIn")
+                : t("sidebar.supportLoginCardDescription")}
+            </span>
+          </button>
+        </SidebarMenuItem>
+      ) : null}
       <Link href="https://discord.gg/cod-fr">
         <SidebarMenuItem>
           <SidebarMenuButton className="pl-4">

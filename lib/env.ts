@@ -5,12 +5,22 @@ import "server-only";
  * l'erreur de build dès qu'un Client Component tente d'importer ce module,
  * garantissant que ces valeurs ne fuient jamais dans un bundle navigateur.
  *
- * Les accesseurs retournent la valeur brute (pas de `.trim()`) : chaque
- * appelant conserve la logique de normalisation locale existante.
+ * Les accesseurs exposent des chaînes utilisables ; certains appliquent `.trim()`.
  */
 
 export function getDiscordBotToken(): string | undefined {
   return process.env.DISCORD_BOT_TOKEN;
+}
+
+export function getDiscordGuildId(): string | undefined {
+  const v = process.env.DISCORD_GUILD_ID?.trim();
+  return v || undefined;
+}
+
+/** Rôle app « semi-VIP » (snowflake) — `DISCORD_ROLE_SEMIVIP`. */
+export function getDiscordRoleSemivipId(): string | undefined {
+  const v = process.env.DISCORD_ROLE_SEMIVIP?.trim();
+  return v || undefined;
 }
 
 export function getDiscordClientSecret(): string | undefined {

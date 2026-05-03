@@ -1,3 +1,4 @@
+import { grantSemivipRoleAfterHighRatingReview } from "@/lib/discord/grant-semivip-after-review"
 import { getEnrichedPublicReviews } from "@/lib/reviews/enriched-public-reviews"
 import { insertReviewDb } from "@/lib/supabase/review-insert"
 import { getDiscordUserIdForAuthUser } from "@/lib/permissions-server"
@@ -91,6 +92,9 @@ export async function POST(request: NextRequest) {
       note,
       authorDisplayName,
     )
+    if (note >= 4) {
+      await grantSemivipRoleAfterHighRatingReview(discordUserId)
+    }
     const author_name = review.author_name?.trim() || authorDisplayName
     return NextResponse.json({ ...review, author_name }, { status: 201 })
   } catch (err) {

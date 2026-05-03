@@ -41,3 +41,19 @@ export async function discordFetchBot<T>(path: string, init?: RequestInit): Prom
   }
   return res.json() as Promise<T>
 }
+
+/** PUT sans corps (ex. ajout de rôle membre) ; succès typique = 204 No Content. */
+export async function discordPutBotNoContent(path: string): Promise<void> {
+  const url = path.startsWith("http")
+    ? path
+    : `${DISCORD_API_BASE}${path.startsWith("/") ? path : `/${path}`}`
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: discordBotHeaders(),
+    next: { revalidate: 0 },
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Discord API ${res.status}: ${text}`)
+  }
+}
