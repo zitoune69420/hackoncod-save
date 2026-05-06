@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { buildAdminStatsModel } from "@/lib/analytics/build-admin-stats-model";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated || access.role !== "founder") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const gate = await requireFounderDiscordLive();
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+      { status: gate.status },
+    );
   }
 
   const daysParam = req.nextUrl.searchParams.get("days");

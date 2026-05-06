@@ -6,6 +6,7 @@ import {
   getCurrentUserAccess,
   getDiscordUserIdForAuthUser,
 } from "@/lib/permissions-server";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 
 export type AdminShopApiGate =
   | { ok: false; status: 401 | 403 }
@@ -26,6 +27,8 @@ export async function requireAdminShopApiAccess(): Promise<AdminShopApiGate> {
   }
 
   if (access.role === "founder") {
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) return gate;
     return { ok: true, scope: { mode: "founder" } };
   }
 
@@ -50,26 +53,15 @@ export async function requireAdminShopReviewsApiAccess(): Promise<
   | { ok: false; status: 401 | 403 }
   | { ok: true; scope: { mode: "founder" } }
 > {
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated) {
-    return { ok: false, status: 401 };
-  }
-  if (access.role !== "founder") {
-    return { ok: false, status: 403 };
-  }
+  const gate = await requireFounderDiscordLive();
+  if (!gate.ok) return gate;
   return { ok: true, scope: { mode: "founder" } };
 }
 
-/** Mutations boutique (cheat / service / compte) : fondateur uniquement. */
 export async function requireAdminShopFounderApiAccess(): Promise<
   { ok: false; status: 401 | 403 } | { ok: true }
 > {
-  const access = await getCurrentUserAccess({ source: "db" });
-  if (!access.isAuthenticated) {
-    return { ok: false, status: 401 };
-  }
-  if (access.role !== "founder") {
-    return { ok: false, status: 403 };
-  }
+  const gate = await requireFounderDiscordLive();
+  if (!gate.ok) return gate;
   return { ok: true };
 }

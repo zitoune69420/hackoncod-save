@@ -1,4 +1,4 @@
-import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   buildOrphanRows,
   collectLinkedObjectPathsFromCheats,
@@ -25,9 +25,12 @@ function parseScope(raw: string | null): AdminModsScope | null {
 
 export async function GET(req: Request) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { searchParams } = new URL(req.url);

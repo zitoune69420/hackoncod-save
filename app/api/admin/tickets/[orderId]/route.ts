@@ -1,16 +1,19 @@
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { deleteTicket } from "@/lib/supabase/shop-queries";
 import { isUuid } from "@/lib/security/is-uuid";
 import { NextRequest, NextResponse } from "next/server";
 
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 export async function DELETE(
   _req: NextRequest,
   ctx: { params: Promise<{ orderId: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { orderId } = await ctx.params;

@@ -1,16 +1,19 @@
 import { listAllBannedIpsForAdmin } from "@/lib/banned/site-ban-db";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   getDiscordUserPresentationsForUserIds,
   normalizeDiscordUserIdForLookup,
 } from "@/lib/discord/guild-member-display";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const entries = await listAllBannedIpsForAdmin();

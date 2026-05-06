@@ -152,8 +152,8 @@ export function ShopProductDialog({
         provider: "discord",
         callbackURL: signInCallbackUrl,
       });
-    } catch {
-      /* silencieux */
+    } catch (err) {
+      console.error("[signIn.discord]", err);
     } finally {
       setIsSigningIn(false);
     }

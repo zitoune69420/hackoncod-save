@@ -1,4 +1,4 @@
-import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   getAllCheats,
   insertCheat,
@@ -15,9 +15,12 @@ function gameTitle(g: CheatWithGame["game"]): string {
 
 export async function GET() {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const cheats = await getAllCheats();
@@ -77,9 +80,12 @@ function normalizeBody(raw: unknown): CheatInsertRow | null {
 
 export async function POST(req: Request) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const body = await req.json().catch(() => null);

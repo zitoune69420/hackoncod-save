@@ -354,8 +354,8 @@ export function TicketsPage() {
         provider: "discord",
         callbackURL: ticketsSignInCallbackUrl,
       });
-    } catch {
-      /* silencieux */
+    } catch (err) {
+      console.error("[signIn.discord]", err);
     } finally {
       setIsSigningIn(false);
     }

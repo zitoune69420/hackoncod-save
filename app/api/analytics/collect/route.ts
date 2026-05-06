@@ -12,7 +12,8 @@ import { insertAnalyticsPageView } from "@/lib/supabase/analytics";
 export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 60_000;
-const RATE_MAX_PER_WINDOW = 120;
+/** Aligné sécurité : collecte brute limitée même si RL global contourne cet endpoint. */
+const RATE_MAX_PER_WINDOW = 48;
 const rateBuckets = new Map<string, { n: number; reset: number }>();
 
 function allowAnalyticsRate(ip: string): boolean {

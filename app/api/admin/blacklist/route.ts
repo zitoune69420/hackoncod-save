@@ -1,3 +1,4 @@
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   findDiscordAccountId,
   insertBannedIpRowStrict,
@@ -6,7 +7,6 @@ import {
   buildBlacklistUpsertRow,
   parseBlacklistPostBody,
 } from "@/lib/blacklist/admin-blacklist-write";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import {
   getAllGuildBans,
   presentationFromBanUser,
@@ -28,9 +28,12 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const rows = await getAllBlacklistForAdmin();
@@ -153,12 +156,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
-    const sessionUserId = access.session?.user?.id;
+    const sessionUserId = gate.access.session?.user?.id;
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

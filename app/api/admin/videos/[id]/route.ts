@@ -1,5 +1,5 @@
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { isUuid } from "@/lib/security/is-uuid";
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   deleteVideo,
   type VideoUpsertRow,
@@ -37,9 +37,12 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { id } = await ctx.params;
@@ -70,9 +73,12 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { id } = await ctx.params;

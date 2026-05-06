@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
 import { fetchIsIpBannedEdge } from "@/lib/banned/edge-ip-ban";
 import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
+import { isBlockedAutomationUserAgent } from "@/lib/security/edge-bot-ua";
+import { edgeRateLimitAllow } from "@/lib/security/edge-rate-limit";
+import { isBlockedVpnOrProxyEdge } from "@/lib/security/edge-vpn-check";
 import { timingSafeEqualUtf8 } from "@/lib/security/timing-safe-utf8";
 
 const AUTH_API_PREFIX = "/api/auth";
 const MESSENGER_PATH = "/api/messenger";
+const ANALYTICS_COLLECT = "/api/analytics/collect";
 const SITE_BLOCKED = "hackoncod_site_blocked";
 
 function getClientIp(req: NextRequest): string {
@@ -54,11 +59,18 @@ function hostnameAllowed(host: string | null, allowed: Set<string>): boolean {
 }
 
 /**
- * Filtre les appels API : métadonnées Fetch (navigateur) + origine ou referer autorisé.
- * Sans Sec-Fetch-Site same-origin/same-site → refus (curl/scripts par défaut).
- * Remarque : un attaquant peut forger ces en-têtes ; chaque route doit toujours valider auth / données.
+ * Filtre les appels API : métadonnées Fetch navigateur + origine ou referer autorisé.
+ * Mutations → `Sec-Fetch-Mode: cors` obligatoire.
  */
 function isTrustedApiCaller(req: NextRequest): boolean {
+  const mode = req.headers.get("sec-fetch-mode");
+  const mutates = req.method !== "GET" && req.method !== "HEAD";
+  if (mutates) {
+    if (mode !== "cors") return false;
+  } else if (mode && mode !== "cors" && mode !== "same-origin") {
+    return false;
+  }
+
   const sfs = req.headers.get("sec-fetch-site");
   if (sfs !== "same-origin" && sfs !== "same-site") {
     return false;
@@ -111,8 +123,21 @@ function redirectToBanned(req: NextRequest, setMarkerCookie: boolean) {
   return res;
 }
 
+function jsonForbidden() {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
+function tooMany() {
+  return NextResponse.json(
+    { error: "Too Many Requests" },
+    { status: 429, headers: { "Retry-After": "60" } },
+  );
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const ip = getClientIp(req);
+  const ua = req.headers.get("user-agent");
 
   if (pathname === "/banned" || pathname.startsWith("/banned/")) {
     return NextResponse.next();
@@ -122,30 +147,83 @@ export async function middleware(req: NextRequest) {
     return redirectToBanned(req, false);
   }
 
-  if (pathname.startsWith("/api/")) {
-    if (pathname.startsWith(AUTH_API_PREFIX)) {
-      return NextResponse.next();
-    }
-    if (req.method === "OPTIONS") {
-      return NextResponse.next();
-    }
-    if (pathname === MESSENGER_PATH && messengerBearerOk(req)) {
-      return NextResponse.next();
-    }
-    if (!isTrustedApiCaller(req)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+  const isApi = pathname.startsWith("/api/");
+  const messengerOk = pathname === MESSENGER_PATH && messengerBearerOk(req);
+  const isAuthRoute = pathname.startsWith(AUTH_API_PREFIX);
+  const isOptions = req.method === "OPTIONS";
+  const analyticsOnly =
+    pathname === ANALYTICS_COLLECT ||
+    pathname.startsWith(`${ANALYTICS_COLLECT}/`);
+
+  /** Preflight hors navigateur léger : évite de bloquer OPTIONS sans UA pertinent. */
+  if (isApi && isOptions) {
     return NextResponse.next();
   }
 
-  const ip = getClientIp(req);
+  if (!messengerOk) {
+    if (isBlockedAutomationUserAgent(ua)) {
+      if (isApi) return jsonForbidden();
+      return NextResponse.redirect(new URL("/banned", req.url));
+    }
+  }
+
+  const skipGlobalRl = isAuthRoute || analyticsOnly;
+
+  if (!skipGlobalRl) {
+    if (ip !== "unknown") {
+      const rl = await edgeRateLimitAllow(ip, isApi ? "api" : "page");
+      if (!rl.ok) {
+        return isApi ? tooMany() : NextResponse.redirect(new URL("/banned", req.url));
+      }
+
+      /** Infra messenger / auth : tolère IP type datacenter sans inspection VPN. */
+      const skipVpn = messengerOk || isAuthRoute;
+
+      if (!skipVpn) {
+        try {
+          if (await isBlockedVpnOrProxyEdge(ip)) {
+            return isApi ? jsonForbidden() : redirectToBanned(req, true);
+          }
+        } catch {
+          /* service VPN externe KO : pas de blocage général */
+        }
+      }
+    }
+  }
+
+  if (isApi) {
+    if (isAuthRoute) {
+      return NextResponse.next();
+    }
+
+    if (ip !== "unknown") {
+      try {
+        if (await fetchIsIpBannedEdge(ip)) {
+          return jsonForbidden();
+        }
+      } catch {
+        /* ne pas fermer si Supabase indispo */
+      }
+    }
+
+    if (messengerOk) {
+      return NextResponse.next();
+    }
+
+    if (!isTrustedApiCaller(req)) {
+      return jsonForbidden();
+    }
+
+    return NextResponse.next();
+  }
+
   if (ip !== "unknown") {
     try {
       if (await fetchIsIpBannedEdge(ip)) {
         return redirectToBanned(req, true);
       }
     } catch {
-      /* ne pas bloquer le site si Supabase indisponible */
+      /* ne pas fermer si Supabase indispo */
     }
   }
 

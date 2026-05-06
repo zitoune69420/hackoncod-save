@@ -1,3 +1,4 @@
+import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
   findDiscordAccountId,
   purgeBanSideTablesForDiscordSnowflake,
@@ -6,7 +7,6 @@ import {
   buildBlacklistUpsertRow,
   parseBlacklistWriteBody,
 } from "@/lib/blacklist/admin-blacklist-write";
-import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { isUuid } from "@/lib/security/is-uuid";
 import {
   discordSnowflakeFromBlacklistFields,
@@ -24,9 +24,12 @@ export async function PATCH(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { id } = await ctx.params;
@@ -35,7 +38,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
-    const sessionUserId = access.session?.user?.id;
+    const sessionUserId = gate.access.session?.user?.id;
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -94,9 +97,12 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
-    if (!access.isAuthenticated || access.role !== "founder") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const gate = await requireFounderDiscordLive();
+    if (!gate.ok) {
+      return NextResponse.json(
+        { error: gate.status === 401 ? "Unauthorized" : "Forbidden" },
+        { status: gate.status },
+      );
     }
 
     const { id } = await ctx.params;
