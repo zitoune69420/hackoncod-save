@@ -28,7 +28,8 @@ export function getClientIpFromHeaders(headers: Headers): string {
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
     if (parts.length > 0) {
-      return parts[parts.length - 1]!;
+      // Premier hop = IP client originale ajoutée par le premier proxy de confiance
+      return parts[0]!;
     }
   }
 

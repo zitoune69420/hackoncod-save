@@ -8,7 +8,7 @@ export async function PATCH(
   ctx: { params: Promise<{ orderId: string }> },
 ) {
   try {
-    const access = await getCurrentUserAccess({ source: "db" });
+    const access = await getCurrentUserAccess({ source: "live" });
     if (!access.isAuthenticated || (access.role !== "founder" && access.role !== "partner")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

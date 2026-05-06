@@ -30,8 +30,8 @@ export async function createForumThreadAction(input: {
     return { ok: false, error: "invalid" };
   }
 
-  const title = (input.title ?? "").trim();
-  const content = normalizeForumMarkdownSource(input.content ?? "").trim();
+  const title = (input.title ?? "").trim().slice(0, 200);
+  const content = normalizeForumMarkdownSource(input.content ?? "").trim().slice(0, 20_000);
   if (!title || !content) {
     return { ok: false, error: "invalid" };
   }

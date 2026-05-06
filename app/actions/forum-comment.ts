@@ -42,7 +42,7 @@ export async function postForumCommentAction(input: {
     return { ok: false, error: "invalid" };
   }
 
-  const message = normalizeForumMarkdownSource(input.message ?? "").trim();
+  const message = normalizeForumMarkdownSource(input.message ?? "").trim().slice(0, 10_000);
   if (!message) {
     return { ok: false, error: "invalid" };
   }

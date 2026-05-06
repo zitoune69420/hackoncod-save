@@ -1,6 +1,7 @@
 import { grantSemivipRoleAfterHighRatingReview } from "@/lib/discord/grant-semivip-after-review"
 import { getEnrichedPublicReviews } from "@/lib/reviews/enriched-public-reviews"
 import { insertReviewDb } from "@/lib/supabase/review-insert"
+import { getUserReviewExists } from "@/lib/supabase/queries"
 import { getDiscordUserIdForAuthUser } from "@/lib/permissions-server"
 import { getDiscordDisplayNameFromOAuthAccount } from "@/lib/discord/oauth-self-profile"
 import { auth } from "@/app/auth"
@@ -78,6 +79,14 @@ export async function POST(request: NextRequest) {
             "Could not resolve Discord user id. Ensure you signed in with Discord.",
         },
         { status: 400 },
+      )
+    }
+
+    const alreadyReviewed = await getUserReviewExists(discordUserId)
+    if (alreadyReviewed) {
+      return NextResponse.json(
+        { error: "You have already submitted a review" },
+        { status: 409 },
       )
     }
 

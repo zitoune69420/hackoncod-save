@@ -432,6 +432,16 @@ export async function deleteVideo(id: string): Promise<void> {
 
 const REVIEWS_PAGE_SIZE = 12;
 
+export async function getUserReviewExists(userId: string): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("review")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data != null;
+}
+
 export async function getReviews(
   offset = 0,
   limit = REVIEWS_PAGE_SIZE,
