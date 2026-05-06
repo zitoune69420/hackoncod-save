@@ -12,6 +12,7 @@ import { RuntimeErrorListeners } from "@/components/commons/error-handler";
 import { SiteBanSync } from "@/app/components/site-ban-sync";
 import { PageViewTracker } from "@/app/components/analytics/page-view-tracker";
 import { NotificationSoundUnlock } from "@/app/components/notification-sound-unlock";
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -254,6 +255,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Analytics />
         <ThemeInitScript />
         <ThemeProvider>
           <I18nProvider>
