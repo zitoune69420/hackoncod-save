@@ -13,6 +13,7 @@ import { SiteBanSync } from "@/app/components/site-ban-sync";
 import { PageViewTracker } from "@/app/components/analytics/page-view-tracker";
 import { NotificationSoundUnlock } from "@/app/components/notification-sound-unlock";
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -256,6 +257,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Analytics />
+        <SpeedInsights />
         <ThemeInitScript />
         <ThemeProvider>
           <I18nProvider>
