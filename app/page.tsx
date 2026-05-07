@@ -1,14 +1,7 @@
 import { HomeHero } from '@/app/components/home/home-hero';
 import { LandingNav } from '@/app/components/home/landing-nav';
 import { TrustStrip } from '@/app/components/home/trust-strip';
-import { ValuePillars } from '@/app/components/home/value-pillars';
-import { UxFeelsBetter } from '@/app/components/home/ux-feels-better';
-import { PricingSection } from '@/app/components/home/pricing-section';
-import { SupportSection } from '@/app/components/home/support-section';
-import { SocialProofSection } from '@/app/components/home/social-proof-section';
-import { StatsSection } from '@/app/components/home/stats-section';
-import { FaqSection } from '@/app/components/home/faq-section';
-import { CtaSection } from '@/app/components/home/cta-section';
+import { LazySections } from '@/app/components/home/lazy-sections';
 import { Syne } from 'next/font/google'
 import Link from 'next/link';
 
@@ -36,18 +29,7 @@ export default function Home() {
       </Link>
     </HomeHero>
     <TrustStrip titleFontClassName={syne.className} />
-    <ValuePillars titleFontClassName={syne.className} />
-    <UxFeelsBetter titleFontClassName={syne.className} />
-    <PricingSection titleFontClassName={syne.className} />
-    {/* Black spacer: pushes Support section (border included) with no transparent gap */}
-    <div className="h-24 bg-black sm:h-28 lg:h-32" aria-hidden />
-    <SupportSection titleFontClassName={syne.className} />
-    {/* Spacer before Social proof (black background, no gap between sections) */}
-    <div className="h-20 bg-black sm:h-28 lg:h-36" aria-hidden />
-    <SocialProofSection titleFontClassName={syne.className} />
-    <StatsSection titleFontClassName={syne.className} />
-    <FaqSection titleFontClassName={syne.className} />
-    <CtaSection titleFontClassName={syne.className} />
+    <LazySections titleFontClassName={syne.className} />
     </>
   );
 }

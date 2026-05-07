@@ -1,7 +1,9 @@
 "use client"
 
-import ColorBends from "@/app/components/animated/color-bends"
-import SplitText from "@/app/components/animated/split-text"
+import dynamic from "next/dynamic"
+const ColorBends = dynamic(() => import("@/app/components/animated/color-bends"), { ssr: false })
+const SplitText = dynamic(() => import("@/app/components/animated/split-text"), { ssr: false })
+
 import {
   clearHeroSubtitlePhase,
   HERO_SUBTITLE_START_EVENT,
