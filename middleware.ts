@@ -3,7 +3,10 @@ import type { NextRequest } from "next/server";
 
 import { fetchIsIpBannedEdge } from "@/lib/banned/edge-ip-ban";
 import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
-import { isBlockedAutomationUserAgent } from "@/lib/security/edge-bot-ua";
+import {
+  isBlockedAutomationUserAgent,
+  isTrustedBotUserAgent,
+} from "@/lib/security/edge-bot-ua";
 import { edgeRateLimitAllow } from "@/lib/security/edge-rate-limit";
 import { isBlockedVpnOrProxyEdge } from "@/lib/security/edge-vpn-check";
 import { timingSafeEqualUtf8 } from "@/lib/security/timing-safe-utf8";
@@ -140,6 +143,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
   const ua = req.headers.get("user-agent");
+  const trustedBot = isTrustedBotUserAgent(ua);
 
   if (pathname === "/banned" || pathname.startsWith("/banned/")) {
     return NextResponse.next();
@@ -178,8 +182,8 @@ export async function middleware(req: NextRequest) {
         return isApi ? tooMany() : NextResponse.redirect(new URL("/banned", req.url));
       }
 
-      /** Infra messenger / auth : tolère IP type datacenter sans inspection VPN. */
-      const skipVpn = messengerOk || isAuthRoute;
+      /** Infra messenger / auth + bots de confiance : tolère IP type datacenter sans inspection VPN. */
+      const skipVpn = messengerOk || isAuthRoute || trustedBot;
 
       if (!skipVpn) {
         try {

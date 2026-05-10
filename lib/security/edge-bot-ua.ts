@@ -2,37 +2,79 @@
  * Blocage heuristique bots / scrapeurs / crawl IA (Edge).
  */
 
+/**
+ * Bots de confiance autorisés à crawler le site (SEO, monitoring, previews).
+ * Court-circuite à la fois le filtre UA et le check VPN/proxy
+ * (les IPs Google/Vercel sortent de datacenters et sont sinon flaguées).
+ */
+const TRUSTED_BOT_FRAGMENTS: readonly string[] = [
+  // Google
+  "googlebot",
+  "googleother",
+  "google-inspectiontool",
+  "google-site-verification",
+  "google-pagespeed",
+  "chrome-lighthouse",
+  "adsbot-google",
+  "mediapartners-google",
+  "apis-google",
+  "feedfetcher-google",
+  // Bing / Microsoft
+  "bingbot",
+  "bingpreview",
+  "msnbot",
+  // Yahoo
+  "slurp",
+  // DuckDuckGo
+  "duckduckbot",
+  "duckduckpreview",
+  // Yandex
+  "yandex",
+  // Apple
+  "applebot",
+  // Vercel
+  "vercel-screenshot",
+  "vercel-favicon",
+  "vercel-og-image",
+  "vercel-edge",
+  // Social / chat link previews
+  "discordbot",
+  "facebookexternalhit",
+  "facebot",
+  "twitterbot",
+  "linkedinbot",
+  "slackbot-linkexpanding",
+  "slack-imgproxy",
+  "telegrambot",
+];
+
+export function isTrustedBotUserAgent(ua: string | null): boolean {
+  const s = (ua ?? "").trim().toLowerCase();
+  if (!s) return false;
+  for (const frag of TRUSTED_BOT_FRAGMENTS) {
+    if (s.includes(frag)) return true;
+  }
+  return false;
+}
+
 const BOT_FRAGMENTS: readonly string[] = [
   "amazonbot",
-  "applebot",
   "ahrefsbot",
   "ahrefssiteaudit",
   "baiduspider",
-  "bingbot",
   "bytespider",
   "ccbot",
   "chatgpt-user",
-  "chrome-lighthouse",
   "curl/",
   "dataforseo",
-  "discordbot",
-  "duckduckbot",
-  "duckduckpreview",
-  "facebookexternalhit",
-  "facebot",
   "go-http-client",
   "google-extended",
-  "google-inspectiontool",
-  "googlebot",
-  "google-read-aloud",
-  "googleproducer",
   "gptbot",
   "httpclient",
   "ia_archiver",
   "axios/",
   "java/",
   "wget/",
-  "linkedinbot",
   "meta-externalagent",
   "meta-externalfetcher",
   "mj12bot",
@@ -46,18 +88,11 @@ const BOT_FRAGMENTS: readonly string[] = [
   "perplexity",
   "scrapy",
   "semrushbot",
-  "slackbot-linkexpanding",
   "siteauditbot",
-  "slack-imgproxy",
-  "slurp",
-  "telegrambot",
   "tiktokspider",
-  "twitterbot",
   "urllib",
   "vertex-web-crawler",
-  "yandex",
   "apache-httpclient",
-  "bingpreview",
   "claudebot",
   "claude-web",
   "anthropic-ai",
@@ -66,7 +101,6 @@ const BOT_FRAGMENTS: readonly string[] = [
   "headlesschrome",
   "puppeteer",
   "playwright",
-  "msnbot",
   "ahrefs",
   "semrush",
   "datadog",
@@ -79,6 +113,7 @@ function norm(ua: string | null): string {
 
 /** true = bloqué (politique « zéro bot » heuristique). */
 export function isBlockedAutomationUserAgent(ua: string | null): boolean {
+  if (isTrustedBotUserAgent(ua)) return false;
   const s = norm(ua);
   if (!s) return true;
   if (s.length < 28) return true;
