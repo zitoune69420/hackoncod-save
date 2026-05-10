@@ -123,8 +123,10 @@ function redirectToBanned(req: NextRequest, setMarkerCookie: boolean) {
   return res;
 }
 
-function jsonForbidden() {
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+function jsonForbidden(reason?: string) {
+  const res = NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (reason) res.headers.set("x-mw-block", reason);
+  return res;
 }
 
 function tooMany() {
@@ -162,7 +164,7 @@ export async function middleware(req: NextRequest) {
 
   if (!messengerOk) {
     if (isBlockedAutomationUserAgent(ua)) {
-      if (isApi) return jsonForbidden();
+      if (isApi) return jsonForbidden("bot-ua");
       return NextResponse.redirect(new URL("/banned", req.url));
     }
   }
@@ -182,7 +184,7 @@ export async function middleware(req: NextRequest) {
       if (!skipVpn) {
         try {
           if (await isBlockedVpnOrProxyEdge(ip)) {
-            return isApi ? jsonForbidden() : redirectToBanned(req, true);
+            return isApi ? jsonForbidden("vpn-or-proxy") : redirectToBanned(req, true);
           }
         } catch {
           /* service VPN externe KO : pas de blocage général */
@@ -199,7 +201,7 @@ export async function middleware(req: NextRequest) {
     if (ip !== "unknown") {
       try {
         if (await fetchIsIpBannedEdge(ip)) {
-          return jsonForbidden();
+          return jsonForbidden("ip-banned");
         }
       } catch {
         /* ne pas fermer si Supabase indispo */
@@ -211,7 +213,7 @@ export async function middleware(req: NextRequest) {
     }
 
     if (!isTrustedApiCaller(req)) {
-      return jsonForbidden();
+      return jsonForbidden("untrusted-caller");
     }
 
     return NextResponse.next();
