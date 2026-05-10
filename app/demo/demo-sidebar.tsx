@@ -117,7 +117,7 @@ export function DemoSidebar() {
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Hack on COD</span>
                   <span className="text-xs text-muted-foreground">
-                    v3.0.1 · {t("demo.sidebarTag")}
+                    v3.1.0 · {t("demo.sidebarTag")}
                   </span>
                 </div>
               </Link>
