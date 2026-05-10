@@ -71,7 +71,7 @@ const SHOP_SERVICE_PUBLIC_SELECT =
   "id, slug, name, description, image, platform, game, is_active, delivery_type, estimated_delivery_minutes, requires_chat, created_at, updated_at";
 
 const SHOP_ACCOUNT_PUBLIC_SELECT =
-  "id, slug, name, description, image, games, region, level, is_ranked, two_fa, last_activity, price, currency, requires_chat, is_active, created_at, updated_at";
+  "id, slug, name, description, image, games, region, level, is_ranked, two_fa, last_activity, price, currency, requires_chat, created_at, updated_at";
 
 /** Catalogue public API : pas de colonnes sensibles (paiements, création, identifiants). */
 export async function getPublicShopCheatsForApi(): Promise<ShopCheatPublic[]> {
@@ -109,7 +109,6 @@ export async function getPublicShopAccountsForApi(): Promise<ShopAccountPublic[]
   const { data, error } = await supabase
     .from("shop_accounts")
     .select(SHOP_ACCOUNT_PUBLIC_SELECT)
-    .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) return [];
   return (data ?? []) as ShopAccountPublic[];
