@@ -20,6 +20,11 @@ function getClientIp(req: NextRequest): string {
   return getClientIpFromHeaders(req.headers);
 }
 
+/** Loopback : présent uniquement en dev local, jamais derrière un reverse proxy en prod. */
+function isLoopbackIp(ip: string): boolean {
+  return ip === "::1" || ip === "127.0.0.1" || ip.startsWith("127.");
+}
+
 function normalizeHostname(host: string): string {
   return host.trim().toLowerCase().replace(/:\d+$/, "");
 }
@@ -176,7 +181,7 @@ export async function middleware(req: NextRequest) {
   const skipGlobalRl = isAuthRoute || analyticsOnly;
 
   if (!skipGlobalRl) {
-    if (ip !== "unknown") {
+    if (ip !== "unknown" && !isLoopbackIp(ip)) {
       const rl = await edgeRateLimitAllow(ip, isApi ? "api" : "page");
       if (!rl.ok) {
         return isApi ? tooMany() : NextResponse.redirect(new URL("/banned", req.url));
@@ -202,7 +207,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    if (ip !== "unknown") {
+    if (ip !== "unknown" && !isLoopbackIp(ip)) {
       try {
         if (await fetchIsIpBannedEdge(ip)) {
           return jsonForbidden("ip-banned");
@@ -223,7 +228,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (ip !== "unknown") {
+  if (ip !== "unknown" && !isLoopbackIp(ip)) {
     try {
       if (await fetchIsIpBannedEdge(ip)) {
         return redirectToBanned(req, true);

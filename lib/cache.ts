@@ -50,13 +50,33 @@ function removeFromStorage(key: string): void {
   }
 }
 
+function looksLikeErrorPayload(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    "error" in (value as Record<string, unknown>)
+  );
+}
+
 export function getCached<T>(key: string): T | undefined {
   const fromMem = memory.get(key);
-  if (fromMem && Date.now() <= fromMem.expiresAt) return fromMem.value as T;
+  if (fromMem && Date.now() <= fromMem.expiresAt) {
+    if (looksLikeErrorPayload(fromMem.value)) {
+      memory.delete(key);
+      removeFromStorage(key);
+    } else {
+      return fromMem.value as T;
+    }
+  }
   if (fromMem) memory.delete(key);
 
   const fromStorage = getFromStorage<T>(key);
   if (fromStorage !== undefined) {
+    if (looksLikeErrorPayload(fromStorage.value)) {
+      removeFromStorage(key);
+      return undefined;
+    }
     memory.set(key, fromStorage);
     return fromStorage.value;
   }
@@ -64,6 +84,7 @@ export function getCached<T>(key: string): T | undefined {
 }
 
 export function setCached<T>(key: string, data: T): void {
+  if (looksLikeErrorPayload(data)) return;
   const expiresAt = Date.now() + TTL_MS;
   memory.set(key, { value: data, expiresAt });
   setToStorage(key, data);

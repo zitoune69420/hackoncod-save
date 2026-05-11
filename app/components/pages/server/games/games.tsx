@@ -12,8 +12,11 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { SuggestGameDialogTrigger } from "@/app/components/pages/common/content-suggestion-dialogs";
 
-function fetchGames(): Promise<GameRow[]> {
-  return fetch("/api/games").then((res) => res.json());
+async function fetchGames(): Promise<GameRow[]> {
+  const res = await fetch("/api/games");
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  const json = await res.json();
+  return Array.isArray(json) ? json : [];
 }
 
 export function GamesPage() {

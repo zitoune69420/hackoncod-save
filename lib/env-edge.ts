@@ -27,5 +27,5 @@ export function getSecurityStrictPageRatePerMinute(): number {
 export function getSecurityStrictApiRatePerMinute(): number {
   const n = Number(process.env.SECURITY_API_RL_PER_MIN?.trim());
   if (Number.isFinite(n) && n >= 3 && n <= 300) return Math.floor(n);
-  return 12;
+  return 90;
 }

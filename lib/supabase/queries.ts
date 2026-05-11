@@ -1,22 +1,60 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createAdminClient } from "./admin";
-import type { CheatWithGame } from "./types";
+import type { Cheat, CheatWithGame } from "./types";
 import type { Game } from "./types";
 import type { Video } from "./types";
 import type { Review } from "./types";
 import type { BlacklistEntry } from "./types";
 
+const CHEAT_COLUMNS =
+  "id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at";
+
+/**
+ * Enrichit chaque cheat avec `{ game: { title } | null }` en faisant un second
+ * fetch sur la table game (au lieu de l’embed PostgREST `game(title)` qui peut
+ * casser silencieusement si la FK n’est pas dans le schema cache PostgREST).
+ */
+async function attachGameTitles(
+  supabase: SupabaseClient,
+  cheats: Cheat[],
+): Promise<CheatWithGame[]> {
+  if (cheats.length === 0) return [];
+
+  const ids = [...new Set(cheats.map((c) => c.game_id).filter((id) => id))];
+  if (ids.length === 0) {
+    return cheats.map((c) => ({ ...c, game: null }) as CheatWithGame);
+  }
+
+  const { data: games, error } = await supabase
+    .from("game")
+    .select("id, title")
+    .in("id", ids);
+
+  if (error) {
+    console.error("[queries] attachGameTitles error:", error);
+    return cheats.map((c) => ({ ...c, game: null }) as CheatWithGame);
+  }
+
+  const titles = new Map<string, string>(
+    (games ?? []).map((g) => [g.id as string, (g.title as string) ?? ""]),
+  );
+
+  return cheats.map(
+    (c) =>
+      ({
+        ...c,
+        game: titles.has(c.game_id) ? { title: titles.get(c.game_id)! } : null,
+      }) as CheatWithGame,
+  );
+}
+
 export async function getSemiVipCheats(): Promise<CheatWithGame[]> {
   const supabase = createAdminClient();
-  console.log("[queries] getSemiVipCheats");
 
   const { data, error } = await supabase
     .from("cheat")
-    .select(
-      `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
-      game(title)
-    `,
-    )
+    .select(CHEAT_COLUMNS)
     .eq("semi_vip", true)
     .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
@@ -26,22 +64,15 @@ export async function getSemiVipCheats(): Promise<CheatWithGame[]> {
     return [];
   }
 
-  console.log("[queries] getSemiVipCheats result count:", data?.length ?? 0);
-  return (data ?? []) as unknown as CheatWithGame[];
+  return attachGameTitles(supabase, (data ?? []) as unknown as Cheat[]);
 }
 
 export async function getVipCheats(): Promise<CheatWithGame[]> {
   const supabase = createAdminClient();
-  console.log("[queries] getVipCheats");
 
   const { data, error } = await supabase
     .from("cheat")
-    .select(
-      `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
-      game(title)
-    `,
-    )
+    .select(CHEAT_COLUMNS)
     .eq("vip", true)
     .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
@@ -51,37 +82,25 @@ export async function getVipCheats(): Promise<CheatWithGame[]> {
     return [];
   }
 
-  console.log("[queries] getVipCheats result count:", data?.length ?? 0);
-  return (data ?? []) as unknown as CheatWithGame[];
+  return attachGameTitles(supabase, (data ?? []) as unknown as Cheat[]);
 }
 
 export async function getCheatsByGameTitle(
   gameTitle: string,
 ): Promise<CheatWithGame[]> {
   const supabase = createAdminClient();
-  console.log("[queries] getCheatsByGameTitle", { gameTitle });
 
-  const { data: game, error: gameError } = await supabase
+  const { data: game } = await supabase
     .from("game")
-    .select("id")
+    .select("id, title")
     .eq("title", gameTitle)
-    .single();
+    .maybeSingle();
 
-  console.log("[queries] game lookup:", { game, gameError });
-
-  if (!game) {
-    console.log("[queries] no game found for title:", gameTitle);
-    return [];
-  }
+  if (!game) return [];
 
   const { data, error } = await supabase
     .from("cheat")
-    .select(
-      `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
-      game(title)
-    `,
-    )
+    .select(CHEAT_COLUMNS)
     .eq("game_id", game.id)
     .eq("vip", false)
     .eq("semi_vip", false)
@@ -93,11 +112,9 @@ export async function getCheatsByGameTitle(
     return [];
   }
 
-  console.log(
-    "[queries] getCheatsByGameTitle result count:",
-    data?.length ?? 0,
+  return ((data ?? []) as unknown as Cheat[]).map(
+    (c) => ({ ...c, game: { title: game.title as string } }) as CheatWithGame,
   );
-  return (data ?? []) as unknown as CheatWithGame[];
 }
 
 /** Tous les cheats (admin) — avec titre du jeu lié. */
@@ -106,12 +123,7 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
 
   const { data, error } = await supabase
     .from("cheat")
-    .select(
-      `
-      id, name, game_id, mode, platform, crack, client, extension, link, statut, vip, semi_vip, pinned, created_at, updated_at,
-      game(title)
-    `,
-    )
+    .select(CHEAT_COLUMNS)
     .order("pinned", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -120,7 +132,7 @@ export async function getAllCheats(): Promise<CheatWithGame[]> {
     throw new Error(`Supabase: ${error.message} (${error.code})`);
   }
 
-  return (data ?? []) as unknown as CheatWithGame[];
+  return attachGameTitles(supabase, (data ?? []) as unknown as Cheat[]);
 }
 
 /** Tous les jeux (admin) — tableau + listes (id/titre dérivables côté client). */
@@ -306,7 +318,7 @@ export async function getPublicDashboardCheatForReport(
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("cheat")
-    .select("id, name, vip, semi_vip, game(title)")
+    .select("id, name, game_id, vip, semi_vip")
     .eq("id", id)
     .maybeSingle();
 
@@ -315,18 +327,24 @@ export async function getPublicDashboardCheatForReport(
   const row = data as {
     id: string;
     name: string;
+    game_id: string;
     vip?: boolean;
     semi_vip?: boolean;
-    game?: { title?: string } | { title?: string }[];
   };
 
   if (row.vip || row.semi_vip) return null;
 
-  const g = row.game;
-  const titleFromGame = Array.isArray(g) ? g[0]?.title : g?.title;
-  const gameTitle = titleFromGame?.trim() ?? "";
   const name = String(row.name ?? "").trim();
-  if (!gameTitle || !name) return null;
+  if (!name || !row.game_id) return null;
+
+  const { data: game } = await supabase
+    .from("game")
+    .select("title")
+    .eq("id", row.game_id)
+    .maybeSingle();
+
+  const gameTitle = (game?.title as string | undefined)?.trim() ?? "";
+  if (!gameTitle) return null;
 
   return { id: row.id, name, gameTitle };
 }

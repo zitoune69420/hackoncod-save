@@ -95,16 +95,18 @@ function CommonTableInner<T>({
   const searchParams = useSearchParams()
   const reduceMotion = useReducedMotion()
 
+  const safeData: T[] = Array.isArray(data) ? data : []
+
   const [page, setPage] = React.useState(1)
-  const totalPages = Math.ceil(data.length / pageSize) || 1
-  const paginatedData = data.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.ceil(safeData.length / pageSize) || 1
+  const paginatedData = safeData.slice((page - 1) * pageSize, page * pageSize)
 
   const paginatedRowsKey = React.useMemo(() => {
-    const slice = data.slice((page - 1) * pageSize, page * pageSize)
+    const slice = safeData.slice((page - 1) * pageSize, page * pageSize)
     return `${page}:${slice
       .map((row) => (row as { id?: string }).id ?? "")
       .join("|")}`
-  }, [data, page, pageSize])
+  }, [safeData, page, pageSize])
 
   const useRowEntrance = rowEntranceAnimation && !reduceMotion
 
@@ -129,11 +131,11 @@ function CommonTableInner<T>({
   /** Réinitialise la page quand les données changent (pas au premier montage). */
   React.useEffect(() => {
     if (prevDataLengthRef.current === null) {
-      prevDataLengthRef.current = data.length
+      prevDataLengthRef.current = safeData.length
       return
     }
-    if (prevDataLengthRef.current === data.length) return
-    prevDataLengthRef.current = data.length
+    if (prevDataLengthRef.current === safeData.length) return
+    prevDataLengthRef.current = safeData.length
 
     setPage(1)
     const params = new URLSearchParams(searchParams.toString())
@@ -142,7 +144,7 @@ function CommonTableInner<T>({
       const qs = params.toString()
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
     }
-  }, [data.length, pathname, router, searchParams])
+  }, [safeData.length, pathname, router, searchParams])
 
   const setPageAndUrl = React.useCallback(
     (next: number) => {
@@ -214,7 +216,7 @@ function CommonTableInner<T>({
         )}
       </Table>
 
-      {data.length > pageSize && (
+      {safeData.length > pageSize && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>

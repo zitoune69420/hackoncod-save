@@ -16,10 +16,11 @@ import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { SuggestCheatDialogTrigger } from "@/app/components/pages/common/content-suggestion-dialogs";
 
-function fetchCheats(game: string): Promise<CheatRow[]> {
-  return fetch(`/api/cheats?game=${encodeURIComponent(game)}`).then((res) =>
-    res.json(),
-  );
+async function fetchCheats(game: string): Promise<CheatRow[]> {
+  const res = await fetch(`/api/cheats?game=${encodeURIComponent(game)}`);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  const json = await res.json();
+  return Array.isArray(json) ? json : [];
 }
 
 export function CheatsPage() {

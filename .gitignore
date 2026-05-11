@@ -42,3 +42,10 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# DB dumps & restore logs (root only ; les migrations SQL versionnées doivent rester)
+/*.sql
+/*.log
+
+# Supabase CLI cache
+/supabase/.temp/
