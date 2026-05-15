@@ -2,6 +2,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 import {
+  getSecurityStrictApiAuthRatePerMinute,
   getSecurityStrictApiRatePerMinute,
   getSecurityStrictPageRatePerMinute,
   getUpstashRedisRestToken,
@@ -38,15 +39,17 @@ async function memLimit(key: string, limit: number): Promise<{ ok: boolean }> {
 
 let pageLm: Ratelimit | null = null;
 let apiLm: Ratelimit | null = null;
+let apiAuthLm: Ratelimit | null = null;
 
 function upstashLimiters() {
   const url = getUpstashRedisRestUrl();
   const token = getUpstashRedisRestToken();
   if (!url || !token) return null;
-  if (pageLm && apiLm) return { pageLm, apiLm };
+  if (pageLm && apiLm && apiAuthLm) return { pageLm, apiLm, apiAuthLm };
   const redis = new Redis({ url, token });
   const pagePerMin = getSecurityStrictPageRatePerMinute();
   const apiPerMin = getSecurityStrictApiRatePerMinute();
+  const apiAuthPerMin = getSecurityStrictApiAuthRatePerMinute();
   pageLm = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(pagePerMin, "1 m"),
@@ -59,26 +62,35 @@ function upstashLimiters() {
     prefix: "rl:api",
     analytics: false,
   });
-  return { pageLm, apiLm };
+  apiAuthLm = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(apiAuthPerMin, "1 m"),
+    prefix: "rl:api-auth",
+    analytics: false,
+  });
+  return { pageLm, apiLm, apiAuthLm };
 }
 
-export type EdgeRateKind = "page" | "api";
+export type EdgeRateKind = "page" | "api" | "api-auth";
 
 export async function edgeRateLimitAllow(
-  ip: string,
+  identifier: string,
   kind: EdgeRateKind,
 ): Promise<{ ok: boolean }> {
-  const safeIp = ip.trim().slice(0, 64) || "unknown";
-  const key = `${kind}:${safeIp}`;
+  const safeId = identifier.trim().slice(0, 64) || "unknown";
+  const key = `${kind}:${safeId}`;
   const up = upstashLimiters();
   if (up) {
-    const lm = kind === "page" ? up.pageLm : up.apiLm;
+    const lm =
+      kind === "page" ? up.pageLm : kind === "api" ? up.apiLm : up.apiAuthLm;
     const { success } = await lm.limit(key);
     return { ok: success };
   }
   const lim =
     kind === "page"
       ? getSecurityStrictPageRatePerMinute()
-      : getSecurityStrictApiRatePerMinute();
+      : kind === "api"
+        ? getSecurityStrictApiRatePerMinute()
+        : getSecurityStrictApiAuthRatePerMinute();
   return memLimit(key, lim);
 }

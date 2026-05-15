@@ -29,3 +29,24 @@ export function getSecurityStrictApiRatePerMinute(): number {
   if (Number.isFinite(n) && n >= 3 && n <= 300) return Math.floor(n);
   return 90;
 }
+
+/** Limite API pour utilisateurs authentifiés (clé = session cookie, pas IP). */
+export function getSecurityStrictApiAuthRatePerMinute(): number {
+  const n = Number(process.env.SECURITY_API_AUTH_RL_PER_MIN?.trim());
+  if (Number.isFinite(n) && n >= 3 && n <= 600) return Math.floor(n);
+  return 120;
+}
+
+/**
+ * Clé service_role Supabase pour les écritures Edge sensibles (propagation ban).
+ * Non préfixée NEXT_PUBLIC_ → jamais bundlée côté client.
+ */
+export function getSupabaseServiceRoleKeyEdge(): string | undefined {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined;
+}
+
+/** URL projet Supabase (sans slash final), version Edge. */
+export function getSupabaseProjectUrlEdge(): string | undefined {
+  const u = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  return u || undefined;
+}

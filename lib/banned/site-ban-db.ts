@@ -230,6 +230,45 @@ export async function isIpInBanList(ip: string): Promise<boolean> {
   return data != null;
 }
 
+const FP_ALLOWED = /^[A-Za-z0-9._:\-+/=]+$/;
+
+export async function isFingerprintInBanList(fp: string): Promise<boolean> {
+  const safe = fp?.trim() ?? "";
+  if (!safe || safe.length > 256 || !FP_ALLOWED.test(safe)) return false;
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("banned_fingerprints")
+    .select("id")
+    .eq("fingerprint", safe)
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    if (error.code === "42P01") return false;
+    console.error("[site-ban-db] isFingerprintInBanList", error.message);
+    return false;
+  }
+  return data != null;
+}
+
+export async function insertBannedFingerprintRow(input: {
+  fingerprint: string;
+  discord_id: string | null;
+  reason: string | null;
+}): Promise<void> {
+  const safe = input.fingerprint?.trim() ?? "";
+  if (!safe || safe.length > 256 || !FP_ALLOWED.test(safe)) return;
+  if (await isFingerprintInBanList(safe)) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("banned_fingerprints").insert({
+    fingerprint: safe,
+    discord_id: input.discord_id?.slice(0, 64) ?? null,
+    reason: input.reason?.slice(0, 500) ?? null,
+  });
+  if (error && error.code !== "42P01") {
+    console.error("[site-ban-db] insertBannedFingerprintRow", error.message);
+  }
+}
+
 export type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
 
 export async function listAllBannedIpsForAdmin(): Promise<BannedIpAdminRow[]> {
@@ -372,6 +411,11 @@ export async function resolveSessionBanStatus(input: {
 }): Promise<BanStatusPayload> {
   const ip = getClientIpFromHeaders(input.requestHeaders);
   if (await isIpInBanList(ip)) {
+    return { banned: true, reason: null };
+  }
+
+  const fp = input.requestHeaders.get("x-client-fingerprint")?.trim();
+  if (fp && (await isFingerprintInBanList(fp))) {
     return { banned: true, reason: null };
   }
 

@@ -116,6 +116,31 @@ export const auth = betterAuth({
           )
           return { response }
         }
+        /* OAuth Discord OK : pose le cookie signé `hackoncod_did` lu par le middleware Edge. */
+        if (discordAccountId) {
+          try {
+            const secret = _authSecret
+            if (secret) {
+              const { signDiscordIdCookieValue, DISCORD_ID_COOKIE, DISCORD_ID_COOKIE_MAX_AGE } = await import(
+                "@/lib/auth/discord-id-cookie"
+              )
+              const value = await signDiscordIdCookieValue(discordAccountId, secret)
+              if (value) {
+                const { cookies } = await import("next/headers")
+                const jar = await cookies()
+                jar.set(DISCORD_ID_COOKIE, value, {
+                  path: "/",
+                  maxAge: DISCORD_ID_COOKIE_MAX_AGE,
+                  sameSite: "lax",
+                  httpOnly: true,
+                  secure: process.env.NODE_ENV === "production",
+                })
+              }
+            }
+          } catch (e) {
+            console.error("[auth] set discord-id cookie", e)
+          }
+        }
       } catch (err) {
         console.error("[auth] sync-app-user", err)
       }

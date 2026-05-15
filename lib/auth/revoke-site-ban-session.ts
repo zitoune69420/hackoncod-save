@@ -3,6 +3,7 @@ import "server-only";
 import { deleteSessionCookie } from "better-auth/cookies";
 import {
   getClientIpFromHeaders,
+  insertBannedFingerprintRow,
   insertBannedIpRow,
 } from "@/lib/banned/site-ban-db";
 import { tryGuildBanMemberForBlock } from "@/lib/discord/guild-bans";
@@ -42,6 +43,20 @@ export async function buildSiteBanOAuthResponse(
     discord_id: discordId,
     reason: reason?.trim() || "site_banned",
   });
+
+  /**
+   * Capture aussi le fingerprint si le header est présent. En pratique le callback
+   * OAuth est un redirect Discord -> notre app sans `X-Client-Fingerprint`,
+   * mais on garde la branche pour les flows où Better Auth est appelé via fetch().
+   */
+  const fp = headers?.get("x-client-fingerprint")?.trim();
+  if (fp) {
+    await insertBannedFingerprintRow({
+      fingerprint: fp,
+      discord_id: discordId,
+      reason: reason?.trim() || "site_banned",
+    });
+  }
 
   await tryGuildBanMemberForBlock(
     discordId,
