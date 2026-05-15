@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { isDiscordIdBanWhitelisted } from "@/lib/auth/ban-whitelist";
 import {
   DISCORD_ID_COOKIE,
   verifyDiscordIdCookieValue,
@@ -26,6 +27,19 @@ const FINGERPRINT_HEADER = "x-client-fingerprint";
 
 function getClientIp(req: NextRequest): string {
   return getClientIpFromHeaders(req.headers);
+}
+
+/**
+ * Récupère le Discord ID prouvé par le cookie HMAC (ou null si absent/forgé).
+ * Utilisé pour la whitelist côté Edge avant tout check DB.
+ */
+async function verifiedDiscordIdFromRequest(
+  req: NextRequest,
+): Promise<string | null> {
+  const raw = req.cookies.get(DISCORD_ID_COOKIE)?.value;
+  if (!raw) return null;
+  const secret = process.env.BETTER_AUTH_SECRET?.trim();
+  return verifyDiscordIdCookieValue(raw, secret);
 }
 
 /** Loopback : présent uniquement en dev local, jamais derrière un reverse proxy en prod. */
@@ -274,6 +288,20 @@ export async function middleware(req: NextRequest) {
   /** Preflight hors navigateur léger : évite de bloquer OPTIONS sans UA pertinent. */
   if (isApi && isOptions) {
     return NextResponse.next();
+  }
+
+  /**
+   * 0. Whitelist ban-proof : Discord IDs définis dans
+   *    `HACKONCOD_BAN_WHITELIST_DISCORD_IDS`. Court-circuit total, efface au passage
+   *    le cookie SITE_BLOCKED si présent pour nettoyer un état "fantôme".
+   */
+  const verifiedDid = await verifiedDiscordIdFromRequest(req);
+  if (verifiedDid && isDiscordIdBanWhitelisted(verifiedDid)) {
+    const res = NextResponse.next();
+    if (req.cookies.get(SITE_BLOCKED)?.value) {
+      res.cookies.set(SITE_BLOCKED, "", { path: "/", maxAge: 0 });
+    }
+    return res;
   }
 
   /**

@@ -2,6 +2,7 @@ import "server-only";
 
 import type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
 import { auth } from "@/app/auth";
+import { isDiscordIdBanWhitelisted } from "@/lib/auth/ban-whitelist";
 import { fetchGuildBanIfAny } from "@/lib/discord/guild-bans";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
@@ -371,6 +372,14 @@ export async function getOAuthBanOutcome(
   authUserId: string,
   options?: { discordAccountId?: string | null },
 ): Promise<SyncProfileResult> {
+  const hint = options?.discordAccountId?.trim() || "";
+  const discordId = hint || (await findDiscordAccountId(authUserId));
+
+  /** Whitelist : bypass total, court-circuite tous les checks. */
+  if (discordId && isDiscordIdBanWhitelisted(discordId)) {
+    return { ok: true };
+  }
+
   const row = await getSiteBanRowForAuthUser(authUserId);
   if (row?.site_banned) {
     return {
@@ -380,9 +389,6 @@ export async function getOAuthBanOutcome(
     };
   }
 
-  const hint = options?.discordAccountId?.trim() || "";
-  const discordId =
-    hint || (await findDiscordAccountId(authUserId));
   if (discordId) {
     const retard = await findRetardBanForDiscord(discordId);
     if (retard) {
@@ -409,6 +415,13 @@ export async function resolveSessionBanStatus(input: {
   authUserId: string;
   requestHeaders: Headers;
 }): Promise<BanStatusPayload> {
+  const discordId = await findDiscordAccountId(input.authUserId);
+
+  /** Whitelist : bypass total avant tout check DB ou Discord API. */
+  if (discordId && isDiscordIdBanWhitelisted(discordId)) {
+    return { banned: false, reason: null };
+  }
+
   const ip = getClientIpFromHeaders(input.requestHeaders);
   if (await isIpInBanList(ip)) {
     return { banned: true, reason: null };
@@ -419,7 +432,6 @@ export async function resolveSessionBanStatus(input: {
     return { banned: true, reason: null };
   }
 
-  const discordId = await findDiscordAccountId(input.authUserId);
   if (discordId && (await isDiscordIdInBanList(discordId))) {
     return { banned: true, reason: null };
   }
@@ -449,6 +461,13 @@ export async function setUserSiteBan(input: {
   reason: string | null;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
+    /** Refuse de site-ban un user whitelisté (le ban serait ignoré partout ailleurs). */
+    if (input.siteBanned) {
+      const did = await findDiscordAccountId(input.authUserId);
+      if (did && isDiscordIdBanWhitelisted(did)) {
+        return { ok: false, message: "Cet utilisateur est whitelisté." };
+      }
+    }
     const supabase = createAdminClient();
     const patch = {
       site_banned: input.siteBanned,
