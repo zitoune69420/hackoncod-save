@@ -14,7 +14,7 @@ export function AppSidebarTitle() {
                         </div>
                         <div className="flex flex-col gap-0.5 leading-none">
                             <span className="font-semibold">Hack on COD</span>
-                            <span className="">v3.2.2</span>
+                            <span className="">v3.2.3</span>
                         </div>
                     </Link>
                 </SidebarMenuButton>
