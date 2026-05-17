@@ -69,6 +69,8 @@ interface TicketChatProps {
   orderId: string;
   order: ShopOrder;
   initialMessages: TicketMessageEnriched[];
+  /** Fetch des messages en cours : affiche un squelette plutôt que "Aucun message". */
+  messagesLoading?: boolean;
   /**
    * Snowflake Discord du visiteur (enrichissement API / secours).
    * Ne pas s’en servir seul pour « mes » messages : côté client il est souvent null.
@@ -79,6 +81,45 @@ interface TicketChatProps {
   isAdminOrPartner: boolean;
   imageUrl?: string | null;
   onBack: () => void;
+}
+
+/** Bulles squelettes pour combler la zone messages pendant le fetch initial. */
+function MessagesSkeleton() {
+  /* Tableau statique : largeurs / alignements pré-définis pour un aspect "discussion". */
+  const rows: { side: "left" | "right"; w: string }[] = [
+    { side: "left", w: "w-[60%]" },
+    { side: "right", w: "w-[40%]" },
+    { side: "left", w: "w-[70%]" },
+    { side: "right", w: "w-[35%]" },
+    { side: "left", w: "w-[50%]" },
+  ];
+  return (
+    <div className="flex flex-col gap-3" aria-hidden>
+      {rows.map((r, i) => (
+        <div
+          key={i}
+          className={cn(
+            "flex items-end gap-2",
+            r.side === "right" ? "justify-end" : "justify-start",
+          )}
+        >
+          {r.side === "left" && (
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+          )}
+          <div
+            className={cn(
+              "h-10 animate-pulse rounded-2xl bg-muted",
+              r.w,
+              r.side === "right" ? "rounded-br-md" : "rounded-bl-md",
+            )}
+          />
+          {r.side === "right" && (
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const TIMESTAMP_GROUP_MAX_GAP_MS = 3 * 60 * 1000;
@@ -310,6 +351,7 @@ export function TicketChat({
   orderId,
   order: initialOrder,
   initialMessages,
+  messagesLoading = false,
   viewerDiscordId: viewerDiscordIdProp,
   viewerAvatarUrl,
   isAdminOrPartner,
@@ -574,7 +616,8 @@ export function TicketChat({
             className="min-h-0 flex-1 overflow-y-auto px-5 py-4 [&::-webkit-scrollbar]:hidden"
           >
             <div className="flex flex-col justify-end gap-2" style={{ minHeight: "100%" }}>
-              {messages.length === 0 && (
+              {messages.length === 0 && messagesLoading && <MessagesSkeleton />}
+              {messages.length === 0 && !messagesLoading && (
                 <p className="text-center text-sm text-muted-foreground">{t("tickets.noMessages")}</p>
               )}
               {messages.map((msg, i) => {

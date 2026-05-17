@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   DiscordIcon,
-  Loading03Icon,
   Refresh01Icon,
 } from "@hugeicons/core-free-icons";
 import {
@@ -99,7 +98,17 @@ export function TicketsPage() {
   const [chatMessages, setChatMessages] = useState<TicketMessageEnriched[]>([]);
   const [viewerDiscordId, setViewerDiscordId] = useState<string | null>(null);
   const [chatImageUrl, setChatImageUrl] = useState<string | null>(null);
-  const [chatLoading, setChatLoading] = useState(false);
+  const [chatMessagesLoading, setChatMessagesLoading] = useState(false);
+  /**
+   * Cache mémoire (pas de localStorage : messages potentiellement sensibles).
+   * Permet de réouvrir un ticket déjà vu sans flash de squelette.
+   */
+  const messagesCacheRef = useRef<
+    Map<
+      string,
+      { messages: TicketMessageEnriched[]; viewerDiscordId: string | null }
+    >
+  >(new Map());
 
   /** Un rechargement API si l’URL contient un orderId pas encore dans la liste (ex. commande fraîche). */
   const didRefetchForMissingOrder = useRef(false);
@@ -200,71 +209,89 @@ export function TicketsPage() {
   }, [loadTickets, ticketsCacheKey]);
 
   const openChat = useCallback(
-    async (orderId: string, opts?: { skipUrlSync?: boolean }) => {
+    (orderId: string, opts?: { skipUrlSync?: boolean }) => {
       if (!opts?.skipUrlSync) {
         syncTicketsUrl(orderId);
       }
-      setChatLoading(true);
-      setTicketChatLoading(orderId);
+
+      /** Lookup local (déjà chargé) : header, prix, statut, etc. dispos instant. */
+      const ticket = tickets.find((tk) => tk.order.id === orderId);
+      if (!ticket) {
+        showToast({ text: t("tickets.toastError"), variant: "error" });
+        syncTicketsUrl(null);
+        return;
+      }
+
+      /** Render immédiat du scaffold ticket. Les messages arrivent dans un 2e temps. */
       setSelectedOrderId(orderId);
-      try {
-        const [msgRes, ticket] = await Promise.all([
-          fetch(`/api/shop/tickets/${orderId}/messages`, {
-            cache: "no-store",
-          }),
-          Promise.resolve(tickets.find((tk) => tk.order.id === orderId)),
-        ]);
-        if (msgRes.status === 401) {
-          if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
-          setSelectedOrderId(null);
-          setSelectedOrder(null);
-          setChatMessages([]);
-          setViewerDiscordId(null);
-          setChatImageUrl(null);
-          syncTicketsUrl(null);
-          showToast({ text: t("tickets.toastError"), variant: "error" });
-          return;
-        }
-        if (!msgRes.ok) {
-          throw new Error(String(msgRes.status));
-        }
-        const msgJson =
-          (await msgRes.json()) as
+      setSelectedOrder(ticket.order);
+      setChatImageUrl(null);
+
+      /** Cache hit : messages instantanés, on rafraîchit quand même en arrière-plan. */
+      const cached = messagesCacheRef.current.get(orderId);
+      if (cached) {
+        setChatMessages(cached.messages);
+        setViewerDiscordId(cached.viewerDiscordId);
+        setChatMessagesLoading(false);
+      } else {
+        setChatMessages([]);
+        setViewerDiscordId(null);
+        setChatMessagesLoading(true);
+      }
+      setTicketChatLoading(orderId);
+
+      /** Fetch 1 — messages (indépendant de l'image). */
+      void (async () => {
+        try {
+          const msgRes = await fetch(
+            `/api/shop/tickets/${orderId}/messages`,
+            { cache: "no-store" },
+          );
+          if (msgRes.status === 401) {
+            if (ticketsCacheKey) invalidateCache(ticketsCacheKey);
+            setSelectedOrderId(null);
+            setSelectedOrder(null);
+            setChatMessages([]);
+            setViewerDiscordId(null);
+            setChatImageUrl(null);
+            syncTicketsUrl(null);
+            showToast({ text: t("tickets.toastError"), variant: "error" });
+            return;
+          }
+          if (!msgRes.ok) throw new Error(String(msgRes.status));
+          const msgJson = (await msgRes.json()) as
             | TicketMessagesApiResponse
             | TicketMessageEnriched[];
-        if (!ticket) {
-          setSelectedOrderId(null);
-          setSelectedOrder(null);
-          setChatMessages([]);
-          setViewerDiscordId(null);
-          setChatImageUrl(null);
-          showToast({ text: t("tickets.toastError"), variant: "error" });
-          return;
+          const messages = Array.isArray(msgJson)
+            ? msgJson
+            : (msgJson.messages ?? []);
+          const did = Array.isArray(msgJson)
+            ? null
+            : (msgJson.viewerDiscordId ?? null);
+          setChatMessages(messages);
+          setViewerDiscordId(did);
+          messagesCacheRef.current.set(orderId, {
+            messages,
+            viewerDiscordId: did,
+          });
+        } catch {
+          if (!cached) {
+            /* Ne pas écraser un cache hit utilisable si la refresh échoue. */
+            showToast({ text: t("tickets.toastError"), variant: "error" });
+          }
+        } finally {
+          setChatMessagesLoading(false);
+          setTicketChatLoading(null);
         }
-        setSelectedOrder(ticket.order);
-        if (Array.isArray(msgJson)) {
-          setChatMessages(msgJson);
-          setViewerDiscordId(null);
-        } else {
-          setChatMessages(msgJson.messages ?? []);
-          setViewerDiscordId(msgJson.viewerDiscordId ?? null);
-        }
-        const img =
-          ticket.order.product && "image" in ticket.order.product
-            ? await getShopImageUrl(
-                ticket.order.product.image as string | null,
-              )
-            : null;
-        setChatImageUrl(img);
-      } catch {
-        showToast({ text: t("tickets.toastError"), variant: "error" });
-        setSelectedOrderId(null);
-        setSelectedOrder(null);
-        setChatMessages([]);
-        syncTicketsUrl(null);
-      } finally {
-        setChatLoading(false);
-        setTicketChatLoading(null);
+      })();
+
+      /** Fetch 2 — image produit (totalement parallèle, ne bloque rien). */
+      if (ticket.order.product && "image" in ticket.order.product) {
+        void getShopImageUrl(ticket.order.product.image as string | null)
+          .then((url) => setChatImageUrl(url))
+          .catch(() => {
+            /* image optionnelle : silencieux */
+          });
       }
     },
     [tickets, t, syncTicketsUrl, setTicketChatLoading, ticketsCacheKey],
@@ -304,15 +331,13 @@ export function TicketsPage() {
       return;
     }
 
-    if (chatLoading) return;
     if (selectedOrderId === orderIdParam && selectedOrder) return;
-    void openChat(orderIdParam, { skipUrlSync: true });
+    openChat(orderIdParam, { skipUrlSync: true });
   }, [
     userId,
     sessionPending,
     orderIdParam,
     loading,
-    chatLoading,
     tickets,
     selectedOrderId,
     selectedOrder,
@@ -391,12 +416,13 @@ export function TicketsPage() {
     );
   }
 
-  if (selectedOrderId && selectedOrder && !chatLoading) {
+  if (selectedOrderId && selectedOrder) {
     return (
       <TicketChat
         orderId={selectedOrderId}
         order={selectedOrder}
         initialMessages={chatMessages}
+        messagesLoading={chatMessagesLoading}
         viewerDiscordId={viewerDiscordId}
         viewerAvatarUrl={session?.user?.image ?? null}
         isAdminOrPartner={isAdminOrPartner}
@@ -441,22 +467,9 @@ export function TicketsPage() {
         </motion.div>
       </motion.div>
 
-      {loading || chatLoading ? (
+      {loading ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-3">
-          {chatLoading ? (
-            <>
-              <HugeiconsIcon
-                icon={Loading03Icon}
-                strokeWidth={2}
-                className="size-8 shrink-0 animate-spin text-muted-foreground"
-              />
-              <p className="max-w-xs text-center text-sm text-muted-foreground">
-                {t("tickets.loadingMessages")}
-              </p>
-            </>
-          ) : (
-            <Progress value={progress} className="h-1 w-48" />
-          )}
+          <Progress value={progress} className="h-1 w-48" />
         </div>
       ) : (
         <TicketList tickets={filteredTickets} onSelect={openChat} />
