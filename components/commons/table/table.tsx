@@ -96,39 +96,40 @@ function CommonTableInner<T>({
   const reduceMotion = useReducedMotion()
 
   const safeData: T[] = Array.isArray(data) ? data : []
-
-  const [page, setPage] = React.useState(1)
   const totalPages = Math.ceil(safeData.length / pageSize) || 1
+
+  /**
+   * Page = dérivée de l'URL. Évite la race condition entre le clic local
+   * (`setPage`) et la sync URL→state via useEffect, qui provoquait :
+   *   1. flash sur l'ancienne page après remount (Suspense / force-dynamic)
+   *   2. animation d'entrée qui se déclenchait deux fois.
+   * Source de vérité unique = `?pagination=`.
+   */
+  const rawPagination = searchParams.get("pagination")
+  const parsedPagination = parsePaginationQueryParam(rawPagination)
+  const page =
+    parsedPagination === null
+      ? 1
+      : Math.max(1, Math.min(parsedPagination, totalPages))
+
   const paginatedData = safeData.slice((page - 1) * pageSize, page * pageSize)
 
-  const paginatedRowsKey = React.useMemo(() => {
-    const slice = safeData.slice((page - 1) * pageSize, page * pageSize)
-    return `${page}:${slice
-      .map((row) => (row as { id?: string }).id ?? "")
-      .join("|")}`
-  }, [safeData, page, pageSize])
+  const paginatedRowsKey = React.useMemo(
+    () =>
+      `${page}:${paginatedData
+        .map((row) => (row as { id?: string }).id ?? "")
+        .join("|")}`,
+    [paginatedData, page],
+  )
 
   const useRowEntrance = rowEntranceAnimation && !reduceMotion
 
   const prevDataLengthRef = React.useRef<number | null>(null)
 
-  /** Synchronise l’état depuis `?pagination=` (uniquement chiffres). Sinon ne rien faire. */
-  React.useEffect(() => {
-    const raw = searchParams.get("pagination")
-    const parsed = parsePaginationQueryParam(raw)
-    if (parsed === null) return
-    const clamped = Math.max(1, Math.min(parsed, totalPages))
-    setPage(clamped)
-    if (String(clamped) !== raw) {
-      const params = new URLSearchParams(searchParams.toString())
-      if (totalPages <= 1) params.delete("pagination")
-      else params.set("pagination", String(clamped))
-      const qs = params.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-    }
-  }, [searchParams, totalPages, pathname, router])
-
-  /** Réinitialise la page quand les données changent (pas au premier montage). */
+  /**
+   * Quand la dataset change de taille (parent refresh / filtre) : nettoyer le param URL.
+   * `page` se reclampe automatiquement via le calcul dérivé ci-dessus.
+   */
   React.useEffect(() => {
     if (prevDataLengthRef.current === null) {
       prevDataLengthRef.current = safeData.length
@@ -137,7 +138,6 @@ function CommonTableInner<T>({
     if (prevDataLengthRef.current === safeData.length) return
     prevDataLengthRef.current = safeData.length
 
-    setPage(1)
     const params = new URLSearchParams(searchParams.toString())
     if (params.has("pagination")) {
       params.delete("pagination")
@@ -146,12 +146,25 @@ function CommonTableInner<T>({
     }
   }, [safeData.length, pathname, router, searchParams])
 
+  /**
+   * Si l'URL pointe vers une page hors limites (totalPages a chuté), corrige le param.
+   * Ne touche au router que si vraiment nécessaire (évite re-renders en cascade).
+   */
+  React.useEffect(() => {
+    if (parsedPagination === null) return
+    if (parsedPagination >= 1 && parsedPagination <= totalPages) return
+    const params = new URLSearchParams(searchParams.toString())
+    if (totalPages <= 1) params.delete("pagination")
+    else params.set("pagination", String(Math.min(parsedPagination, totalPages)))
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }, [parsedPagination, totalPages, pathname, router, searchParams])
+
   const setPageAndUrl = React.useCallback(
     (next: number) => {
       const clamped = Math.max(1, Math.min(totalPages, next))
-      setPage(clamped)
       const params = new URLSearchParams(searchParams.toString())
-      if (totalPages <= 1) {
+      if (totalPages <= 1 || clamped === 1) {
         params.delete("pagination")
       } else {
         params.set("pagination", String(clamped))
