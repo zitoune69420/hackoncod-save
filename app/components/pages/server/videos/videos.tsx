@@ -225,6 +225,7 @@ export function VideosPage() {
             onChange={setSearch}
             onSearch={() => setSearchQuery(search)}
             placeholder={t("videos.searchPlaceholder")}
+            className="w-72 max-w-none sm:w-[26rem] sm:max-w-none"
           />
           <Button
             size="lg"

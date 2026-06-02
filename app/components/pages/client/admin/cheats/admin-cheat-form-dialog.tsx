@@ -230,7 +230,7 @@ export function AdminCheatFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-lg [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         showCloseButton
       >
         <DialogHeader>
@@ -358,9 +358,6 @@ export function AdminCheatFormDialog({
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="h-9 min-h-9 cursor-pointer"
             />
-            <p className="text-xs text-muted-foreground">
-              {t("dashboard.admin.allCheats.dialog.fileHint")}
-            </p>
           </div>
 
           <div className="flex flex-col gap-3 rounded-lg border border-input bg-muted/30 p-3">

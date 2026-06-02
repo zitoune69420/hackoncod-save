@@ -113,7 +113,7 @@ export function AdminShopServicesClientPage() {
       } catch {
         if (!cancelled) {
           showToast({
-            text: t("dashboard.admin.allGames.errorLoading"),
+            text: t("adminShop.services.errorLoading"),
             variant: "error",
           });
         }
@@ -182,7 +182,7 @@ export function AdminShopServicesClientPage() {
     () => [
       {
         key: "name" as const,
-        label: t("dashboard.admin.allGames.table.title"),
+        label: t("adminShop.services.tableHeaders.name"),
       },
       {
         key: "slug" as const,
@@ -257,7 +257,7 @@ export function AdminShopServicesClientPage() {
   if (!canAccess) {
     return (
       <div className="rounded-xl border border-destructive/35 bg-destructive/5 px-5 py-4 text-sm text-destructive">
-        {t("dashboard.admin.allGames.accessDenied")}
+        {t("dashboard.admin.allCheats.accessDenied")}
       </div>
     );
   }
@@ -279,10 +279,10 @@ export function AdminShopServicesClientPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold">
-            {t("dashboard.admin.allGames.shopTitle")}
+            {t("adminShop.services.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("dashboard.admin.allGames.description")}
+            {t("adminShop.services.description")}
           </p>
         </div>
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
@@ -294,14 +294,14 @@ export function AdminShopServicesClientPage() {
             disabled={loading}
           >
             <HugeiconsIcon icon={Refresh01Icon} strokeWidth={2} />
-            {t("dashboard.admin.allGames.refresh")}
+            {t("shop.services.refresh")}
           </Button>
           <div className="min-w-0 sm:w-72">
             <SearchBar
               value={search}
               onChange={setSearch}
               onSearch={() => setSearchQuery(search)}
-              placeholder={t("dashboard.admin.allGames.searchPlaceholder")}
+              placeholder={t("adminShop.services.search")}
             />
           </div>
         </div>

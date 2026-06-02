@@ -268,8 +268,8 @@ export async function ForumPageServer({
               href={`/dashboard?page=forum&thread=${encodeURIComponent(thread.id)}`}
               scroll={false}
             >
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="gap-2 pb-2">
+              <Card className="cursor-pointer transition-colors hover:bg-accent/50 pt-4 pb-3">
+                <CardHeader className="gap-2">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <h2 className="text-lg font-semibold leading-tight">
                       {thread.title ?? "—"}

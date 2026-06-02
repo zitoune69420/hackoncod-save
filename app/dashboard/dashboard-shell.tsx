@@ -200,7 +200,7 @@ const PAGE_KEYS: Record<string, string> = {
   videos: "sidebar.videos",
   reviews: "sidebar.reviews",
   forum: "sidebar.forum",
-  misc: "sidebar.misc",
+  misc: "sidebar.miscFull",
   "vip-cheats": "sidebar.vip",
   "semivip-cheats": "sidebar.semivip",
   partners: "sidebar.partners",
