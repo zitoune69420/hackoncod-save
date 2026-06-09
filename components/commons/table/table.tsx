@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Suspense } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -90,7 +90,6 @@ function CommonTableInner<T>({
   rowEntranceAnimation = false,
 }: CommonTableProps<T>) {
   const { t } = useTranslations()
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const reduceMotion = useReducedMotion()
@@ -124,6 +123,19 @@ function CommonTableInner<T>({
 
   const useRowEntrance = rowEntranceAnimation && !reduceMotion
 
+  /**
+   * Mise à jour shallow de l'URL : la pagination est un état purement client.
+   * `router.replace` déclencherait un re-render RSC (routes force-dynamic) et,
+   * sur /dashboard, un remount complet de la zone contenu (key ErrorHandler).
+   */
+  const replaceUrlShallow = React.useCallback(
+    (params: URLSearchParams) => {
+      const qs = params.toString()
+      window.history.replaceState(null, "", qs ? `${pathname}?${qs}` : pathname)
+    },
+    [pathname],
+  )
+
   const prevDataLengthRef = React.useRef<number | null>(null)
 
   /**
@@ -141,10 +153,9 @@ function CommonTableInner<T>({
     const params = new URLSearchParams(searchParams.toString())
     if (params.has("pagination")) {
       params.delete("pagination")
-      const qs = params.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      replaceUrlShallow(params)
     }
-  }, [safeData.length, pathname, router, searchParams])
+  }, [safeData.length, replaceUrlShallow, searchParams])
 
   /**
    * Si l'URL pointe vers une page hors limites (totalPages a chuté), corrige le param.
@@ -156,9 +167,8 @@ function CommonTableInner<T>({
     const params = new URLSearchParams(searchParams.toString())
     if (totalPages <= 1) params.delete("pagination")
     else params.set("pagination", String(Math.min(parsedPagination, totalPages)))
-    const qs = params.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
-  }, [parsedPagination, totalPages, pathname, router, searchParams])
+    replaceUrlShallow(params)
+  }, [parsedPagination, totalPages, replaceUrlShallow, searchParams])
 
   const setPageAndUrl = React.useCallback(
     (next: number) => {
@@ -169,10 +179,9 @@ function CommonTableInner<T>({
       } else {
         params.set("pagination", String(clamped))
       }
-      const qs = params.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      replaceUrlShallow(params)
     },
-    [pathname, router, searchParams, totalPages],
+    [replaceUrlShallow, searchParams, totalPages],
   )
 
   return (

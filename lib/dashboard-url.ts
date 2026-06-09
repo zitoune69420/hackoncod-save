@@ -114,11 +114,14 @@ export function getDashboardContentPageFromRaw(
 /**
  * Clé pour remonter `ErrorHandler` dans la zone contenu : tout changement d’URL pertinent
  * réinitialise la boundary sans recharger toute la fenêtre (sidebar / shell inchangés).
+ * `pagination` (état client des tableaux CommonTable) est exclu : l’inclure remonterait
+ * toute la zone contenu à chaque changement de page d’un tableau.
  */
 export function getDashboardErrorHandlerResetKey(
   raw: Record<string, string | string[] | undefined>,
 ): string {
   const entries = Object.entries(raw)
+    .filter(([k]) => k !== "pagination")
     .map(([k, v]) => {
       const val = Array.isArray(v) ? v.join("\x1e") : String(v ?? "");
       return [k, val] as const;
