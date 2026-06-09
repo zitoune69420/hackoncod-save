@@ -184,8 +184,13 @@ function CommonTableInner<T>({
     [replaceUrlShallow, searchParams, totalPages],
   )
 
+  /**
+   * overflow-visible : neutralise l'overflow-x-auto du conteneur shadcn, qui
+   * faisait flasher une scrollbar pendant l'animation d'entrée des lignes
+   * (translateY). Ce tableau n'a jamais besoin de scroller.
+   */
   return (
-    <div className="space-y-4 [&_button]:cursor-pointer [&_[data-slot=pagination-link]]:cursor-pointer">
+    <div className="space-y-4 [&_button]:cursor-pointer [&_[data-slot=pagination-link]]:cursor-pointer [&_[data-slot=table-container]]:overflow-visible">
       <Table>
         <TableHeader>
           <TableRow>
