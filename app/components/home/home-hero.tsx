@@ -11,7 +11,7 @@ import {
 } from "@/lib/home-events"
 import { cn } from "@/lib/utils"
 import { gsap } from "gsap"
-import { useLayoutEffect, useRef, useState } from "react"
+import { useLayoutEffect, useRef } from "react"
 
 type HomeHeroProps = {
   fontClassName: string
@@ -20,7 +20,8 @@ type HomeHeroProps = {
   children?: React.ReactNode
 }
 
-/** Sequence: black screen → ColorBends fade-in → title animation → fade-in of content below title. */
+/** Title paints immediately with a fast animation (LCP-friendly); ColorBends
+ *  background fades in independently, then content below the title fades in. */
 export function HomeHero({
   fontClassName,
   title,
@@ -30,7 +31,8 @@ export function HomeHero({
   const rootRef = useRef<HTMLDivElement>(null)
   const bgRef = useRef<HTMLDivElement>(null)
   const restRef = useRef<HTMLDivElement>(null)
-  const [showTitle, setShowTitle] = useState(false)
+  // Title renders immediately so it paints fast (better LCP); the background
+  // fades in independently in parallel instead of gating the title.
 
   useLayoutEffect(() => {
     const root = rootRef.current
@@ -40,14 +42,11 @@ export function HomeHero({
     clearHeroSubtitlePhase()
 
     const ctx = gsap.context(() => {
-      gsap
-        .timeline({ defaults: { ease: "power2.out" } })
-        .fromTo(
-          bg,
-          { opacity: 0 },
-          { opacity: 1, duration: 2, delay: 1 }
-        )
-        .add(() => setShowTitle(true), "+=0.18")
+      gsap.fromTo(
+        bg,
+        { opacity: 0 },
+        { opacity: 1, duration: 1.2, ease: "power2.out" }
+      )
     }, root)
 
     return () => ctx.revert()
@@ -61,8 +60,8 @@ export function HomeHero({
     if (!rest) return
     gsap.fromTo(
       rest,
-      { opacity: 0, y: 16 },
-      { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }
     )
   }
 
@@ -92,36 +91,32 @@ export function HomeHero({
       </div>
 
       <div className="relative z-10 -mt-10 flex w-full max-w-[1400px] flex-col items-center sm:-mt-14 md:-mt-48">
-        {showTitle ? (
-          <>
-            <SplitText
-              text={title}
-              tag="h1"
-              className={cn(
-                "max-w-[1400px] text-center text-[clamp(44px,7vw,88px)] font-extrabold tracking-[-0.03em] text-white",
-                titleClassName
-              )}
-              font={fontClassName}
-              playOnMount
-              mountDelay={0}
-              delay={50}
-              duration={1.25}
-              ease="power3.out"
-              splitType="chars"
-              from={{ opacity: 0, y: 40 }}
-              to={{ opacity: 1, y: 0 }}
-              textAlign="center"
-              onLetterAnimationComplete={onTitleComplete}
-            />
-            {children ? (
-              <div
-                ref={restRef}
-                className="mt-8 flex w-full flex-col items-center gap-4 opacity-0"
-              >
-                {children}
-              </div>
-            ) : null}
-          </>
+        <SplitText
+          text={title}
+          tag="h1"
+          className={cn(
+            "max-w-[1400px] text-center text-[clamp(44px,7vw,88px)] font-extrabold tracking-[-0.03em] text-white",
+            titleClassName
+          )}
+          font={fontClassName}
+          playOnMount
+          mountDelay={0}
+          delay={12}
+          duration={0.35}
+          ease="power3.out"
+          splitType="chars"
+          from={{ opacity: 0, y: 18 }}
+          to={{ opacity: 1, y: 0 }}
+          textAlign="center"
+          onLetterAnimationComplete={onTitleComplete}
+        />
+        {children ? (
+          <div
+            ref={restRef}
+            className="mt-8 flex w-full flex-col items-center gap-4 opacity-0"
+          >
+            {children}
+          </div>
         ) : null}
       </div>
     </div>
