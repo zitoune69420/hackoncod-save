@@ -17,6 +17,11 @@ type ColorBendsProps = {
   mouseInfluence?: number;
   parallax?: number;
   noise?: number;
+  /** Frame rate cap for the render loop. Lower = less main-thread/GPU work. */
+  fps?: number;
+  /** Upper bound on devicePixelRatio. The fragment cost scales with the pixel
+   *  count, so capping this is the single biggest main-thread saving. */
+  maxPixelRatio?: number;
 };
 
 const MAX_COLORS = 8 as const;
@@ -126,7 +131,9 @@ export default function ColorBends({
   warpStrength = 1,
   mouseInfluence = 1,
   parallax = 0.5,
-  noise = 0.1
+  noise = 0.1,
+  fps = 30,
+  maxPixelRatio = 1
 }: ColorBendsProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -180,7 +187,7 @@ export default function ColorBends({
     });
     rendererRef.current = renderer;
     (renderer as any).outputColorSpace = (THREE as any).SRGBColorSpace;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Math.max(maxPixelRatio, 0.5)));
     renderer.setClearColor(0x000000, transparent ? 0 : 1);
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
@@ -188,6 +195,24 @@ export default function ColorBends({
     container.appendChild(renderer.domElement);
 
     const clock = new THREE.Clock();
+
+    const renderFrame = (dt: number) => {
+      const elapsed = clock.elapsedTime;
+      material.uniforms.uTime.value = elapsed;
+
+      const deg = (rotationRef.current % 360) + autoRotateRef.current * elapsed;
+      const rad = (deg * Math.PI) / 180;
+      const c = Math.cos(rad);
+      const s = Math.sin(rad);
+      (material.uniforms.uRot.value as THREE.Vector2).set(c, s);
+
+      const cur = pointerCurrentRef.current;
+      const tgt = pointerTargetRef.current;
+      const amt = Math.min(1, dt * pointerSmoothRef.current);
+      cur.lerp(tgt, amt);
+      (material.uniforms.uPointer.value as THREE.Vector2).copy(cur);
+      renderer.render(scene, camera);
+    };
 
     const handleResize = () => {
       const w = container.clientWidth || 1;
@@ -206,29 +231,83 @@ export default function ColorBends({
       (window as Window).addEventListener('resize', handleResize);
     }
 
+    // Respect users who opt out of motion: render a single static frame.
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      clock.getDelta();
+      renderFrame(0);
+      return () => {
+        if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
+        else (window as Window).removeEventListener('resize', handleResize);
+        geometry.dispose();
+        material.dispose();
+        renderer.dispose();
+        renderer.forceContextLoss();
+        if (renderer.domElement && renderer.domElement.parentElement === container) {
+          container.removeChild(renderer.domElement);
+        }
+      };
+    }
+
+    // Cap the frame rate so the slow ambient animation doesn't render at the
+    // display's full refresh rate (60–120fps) and dominate the main thread.
+    const minFrameTime = 1 / Math.max(fps, 1);
+    let visible = true;
+    let running = false;
+    let acc = 0;
+
     const loop = () => {
+      rafRef.current = requestAnimationFrame(loop);
       const dt = clock.getDelta();
-      const elapsed = clock.elapsedTime;
-      material.uniforms.uTime.value = elapsed;
+      acc += dt;
+      if (acc < minFrameTime) return;
+      renderFrame(acc);
+      acc = 0;
+    };
 
-      const deg = (rotationRef.current % 360) + autoRotateRef.current * elapsed;
-      const rad = (deg * Math.PI) / 180;
-      const c = Math.cos(rad);
-      const s = Math.sin(rad);
-      (material.uniforms.uRot.value as THREE.Vector2).set(c, s);
-
-      const cur = pointerCurrentRef.current;
-      const tgt = pointerTargetRef.current;
-      const amt = Math.min(1, dt * pointerSmoothRef.current);
-      cur.lerp(tgt, amt);
-      (material.uniforms.uPointer.value as THREE.Vector2).copy(cur);
-      renderer.render(scene, camera);
+    const start = () => {
+      if (running || !visible) return;
+      running = true;
+      clock.getDelta(); // drop the time spent paused
       rafRef.current = requestAnimationFrame(loop);
     };
-    rafRef.current = requestAnimationFrame(loop);
+
+    const stop = () => {
+      running = false;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    // Pause while the hero is scrolled out of view or the tab is hidden.
+    let io: IntersectionObserver | null = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          visible = entries[0]?.isIntersecting ?? true;
+          if (visible) start();
+          else stop();
+        },
+        { threshold: 0 }
+      );
+      io.observe(container);
+    }
+
+    const handleVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    start();
 
     return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      stop();
+      if (io) io.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (resizeObserverRef.current) resizeObserverRef.current.disconnect();
       else (window as Window).removeEventListener('resize', handleResize);
       geometry.dispose();
