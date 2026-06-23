@@ -4,6 +4,11 @@ import {
 } from "@/lib/permissions";
 import { getCurrentUserAccess } from "@/lib/permissions-server";
 import { resolveCheatDownloadUrl } from "@/lib/cheat-download-server";
+import { recordCheatDownloadEvent } from "@/lib/supabase/download-events";
+import {
+  countryFromRequestHeaders,
+  parseUserAgent,
+} from "@/lib/analytics/parse-request";
 import { getCheatLinkFlagsById } from "@/lib/supabase/queries";
 import { isUuid } from "@/lib/security/is-uuid";
 import { NextResponse } from "next/server";
@@ -54,6 +59,14 @@ export async function GET(req: Request) {
       { status: resolved.status ?? 500 },
     );
   }
+
+  const { device_type } = parseUserAgent(req.headers.get("user-agent"));
+  await recordCheatDownloadEvent({
+    cheatId,
+    channel: kind === "vip" ? "vip" : "semivip",
+    countryCode: countryFromRequestHeaders(req.headers),
+    deviceType: device_type,
+  });
 
   return NextResponse.json({
     url: resolved.url,

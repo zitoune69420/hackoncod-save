@@ -1,4 +1,9 @@
 import { getClientIpFromHeaders } from "@/lib/banned/client-ip";
+import { recordCheatDownloadEvent } from "@/lib/supabase/download-events";
+import {
+  countryFromRequestHeaders,
+  parseUserAgent,
+} from "@/lib/analytics/parse-request";
 import { resolveCheatDownloadUrl } from "@/lib/cheat-download-server";
 import { getCheatLinkFlagsById } from "@/lib/supabase/queries";
 import { isUuid } from "@/lib/security/is-uuid";
@@ -64,6 +69,14 @@ export async function GET(req: Request) {
         : resolved.error;
     return NextResponse.json({ error: safeError }, { status });
   }
+
+  const { device_type } = parseUserAgent(req.headers.get("user-agent"));
+  await recordCheatDownloadEvent({
+    cheatId,
+    channel: "public",
+    countryCode: countryFromRequestHeaders(req.headers),
+    deviceType: device_type,
+  });
 
   return NextResponse.json({
     url: resolved.url,

@@ -37,6 +37,7 @@ export const DASHBOARD_PAGE_IDS = [
   "admin-shop-accounts",
   "admin-shop-reviews",
   "admin-stats-users",
+  "admin-stats-downloads",
   "admin-stats-performance",
   "admin-stats-security",
 ] as const;
@@ -135,6 +136,15 @@ export function getDashboardStatsDays(
   raw: Record<string, string | string[] | undefined>,
 ): 7 | 30 {
   const d = firstSearchValue(raw, "statsDays");
+  if (d === "30") return 30;
+  return 7;
+}
+
+/** Fenêtre stats downloads (`downloadDays`), pour `?page=admin-stats-downloads`. */
+export function getDashboardDownloadDays(
+  raw: Record<string, string | string[] | undefined>,
+): 7 | 30 {
+  const d = firstSearchValue(raw, "downloadDays");
   if (d === "30") return 30;
   return 7;
 }

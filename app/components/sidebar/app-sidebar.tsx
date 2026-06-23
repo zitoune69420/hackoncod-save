@@ -94,6 +94,7 @@ function useNavData() {
           icon: <HugeiconsIcon icon={Analytics01Icon} strokeWidth={2} />,
           items: [
             { title: "Users", pageId: "admin-stats-users" },
+            { title: "Downloads", pageId: "admin-stats-downloads" },
             { title: "Performance", pageId: "admin-stats-performance" },
             { title: "Security", pageId: "admin-stats-security" },
           ],
