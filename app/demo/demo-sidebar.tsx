@@ -112,12 +112,15 @@ export function DemoSidebar() {
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-secondary text-sidebar-foreground">
-                  <HugeiconsIcon icon={ChevronDoubleCloseIcon} strokeWidth={2} />
+                  <HugeiconsIcon
+                    icon={ChevronDoubleCloseIcon}
+                    strokeWidth={2}
+                  />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Hack on COD</span>
                   <span className="text-xs text-muted-foreground">
-                    v3.2.5 · {t("demo.sidebarTag")}
+                    v3.3.0 · {t("demo.sidebarTag")}
                   </span>
                 </div>
               </Link>
@@ -129,7 +132,11 @@ export function DemoSidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={t("demo.backToDashboard")} className="bg-sidebar-accent text-sidebar-accent-foreground border">
+              <SidebarMenuButton
+                asChild
+                tooltip={t("demo.backToDashboard")}
+                className="bg-sidebar-accent text-sidebar-accent-foreground border"
+              >
                 <Link href="/dashboard">
                   <HugeiconsIcon icon={ArrowLeft02Icon} strokeWidth={2} />
                   <span>{t("demo.backToDashboard")}</span>
