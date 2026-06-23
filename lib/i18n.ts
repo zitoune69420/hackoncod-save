@@ -33,6 +33,25 @@ export function getStoredLanguage(): Locale {
   } catch {
     // ignore
   }
+  // Aucune langue choisie : on se base sur celle du navigateur.
+  // Les utilisateurs français passent en FR, les autres en EN.
+  return detectBrowserLocale()
+}
+
+/**
+ * Détecte la langue du navigateur et la mappe vers une locale supportée.
+ * Renvoie "fr" pour les navigateurs français, sinon DEFAULT_LOCALE ("en").
+ */
+export function detectBrowserLocale(): Locale {
+  if (typeof navigator === "undefined") return DEFAULT_LOCALE
+  const candidates: string[] = [
+    ...(Array.isArray(navigator.languages) ? navigator.languages : []),
+    navigator.language,
+  ].filter(Boolean)
+  for (const lang of candidates) {
+    const code = lang.toLowerCase().split("-")[0]
+    if (isValidLocale(code)) return code as Locale
+  }
   return DEFAULT_LOCALE
 }
 
