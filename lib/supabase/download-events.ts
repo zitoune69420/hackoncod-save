@@ -93,7 +93,7 @@ export async function fetchCheatDownloadStats(
   pStart: string,
   pEnd: string,
   limit = 25,
-): Promise<DownloadStatsPayload | null> {
+): Promise<{ payload: DownloadStatsPayload | null; error: string | null }> {
   try {
     const supabase = createAdminClient();
     const { data, error } = await supabase.rpc("cheat_download_stats", {
@@ -103,22 +103,28 @@ export async function fetchCheatDownloadStats(
     });
     if (error) {
       console.error("[download-events] rpc", error.message);
-      return null;
+      return { payload: null, error: error.message };
     }
-    if (data == null) return null;
+    if (data == null) {
+      return { payload: null, error: "RPC returned no data" };
+    }
     const d = data as Record<string, unknown>;
     const empty = emptyDownloadStatsPayload();
     return {
-      summary: (d.summary ?? empty.summary) as DownloadStatsPayload["summary"],
-      byChannel: (d.byChannel ?? []) as DownloadStatsPayload["byChannel"],
-      series: (d.series ?? []) as DownloadStatsPayload["series"],
-      topCheats: (d.topCheats ?? []) as DownloadStatsPayload["topCheats"],
-      topGames: (d.topGames ?? []) as DownloadStatsPayload["topGames"],
-      topModes: (d.topModes ?? []) as DownloadStatsPayload["topModes"],
-      countries: (d.countries ?? []) as DownloadStatsPayload["countries"],
+      payload: {
+        summary: (d.summary ?? empty.summary) as DownloadStatsPayload["summary"],
+        byChannel: (d.byChannel ?? []) as DownloadStatsPayload["byChannel"],
+        series: (d.series ?? []) as DownloadStatsPayload["series"],
+        topCheats: (d.topCheats ?? []) as DownloadStatsPayload["topCheats"],
+        topGames: (d.topGames ?? []) as DownloadStatsPayload["topGames"],
+        topModes: (d.topModes ?? []) as DownloadStatsPayload["topModes"],
+        countries: (d.countries ?? []) as DownloadStatsPayload["countries"],
+      },
+      error: null,
     };
   } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
     console.error("[download-events] fetchCheatDownloadStats", e);
-    return null;
+    return { payload: null, error: msg };
   }
 }

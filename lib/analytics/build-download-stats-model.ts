@@ -32,29 +32,35 @@ export async function buildDownloadStatsModel(
 
   const range = { start: start.toISOString(), end: end.toISOString(), days: bounded };
 
-  if (!cur) {
+  if (!cur.payload) {
     return {
       ok: false,
-      hint: "Run supabase/migrations/20260623120000_cheat_download_events.sql in Supabase (RPC cheat_download_stats).",
+      hint:
+        `RPC cheat_download_stats unavailable — ${cur.error ?? "unknown error"}. ` +
+        "Check the migration ran on this database and reload the PostgREST schema cache (NOTIFY pgrst, 'reload schema').",
       range,
       current: emptyDownloadStatsPayload(),
       deltas: { downloadsPct: 0, uniqueCheatsPct: 0, uniqueGamesPct: 0 },
     };
   }
 
-  const prevSafe = prev ?? emptyDownloadStatsPayload();
+  const curSafe = cur.payload;
+  const prevSafe = prev.payload ?? emptyDownloadStatsPayload();
   return {
     ok: true,
     range,
-    current: cur,
+    current: curSafe,
     deltas: {
-      downloadsPct: pctDelta(cur.summary.downloads, prevSafe.summary.downloads),
+      downloadsPct: pctDelta(
+        curSafe.summary.downloads,
+        prevSafe.summary.downloads,
+      ),
       uniqueCheatsPct: pctDelta(
-        cur.summary.uniqueCheats,
+        curSafe.summary.uniqueCheats,
         prevSafe.summary.uniqueCheats,
       ),
       uniqueGamesPct: pctDelta(
-        cur.summary.uniqueGames,
+        curSafe.summary.uniqueGames,
         prevSafe.summary.uniqueGames,
       ),
     },

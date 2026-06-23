@@ -107,7 +107,7 @@ begin
   select coalesce(jsonb_agg(row_to_json(t) order by t.downloads desc), '[]'::jsonb) into v_top_cheats
   from (
     select
-      coalesce(e.cheat_id::text, '') as "cheatId",
+      coalesce(max(e.cheat_id::text), '') as "cheatId",
       coalesce(max(e.cheat_name), 'Unknown') as name,
       coalesce(max(e.game_title), '') as "gameTitle",
       count(*)::int as downloads
@@ -121,7 +121,7 @@ begin
   select coalesce(jsonb_agg(row_to_json(t) order by t.downloads desc), '[]'::jsonb) into v_top_games
   from (
     select
-      coalesce(e.game_id::text, '') as "gameId",
+      coalesce(max(e.game_id::text), '') as "gameId",
       coalesce(max(e.game_title), 'Unknown') as title,
       count(*)::int as downloads
     from public.cheat_download_events e
