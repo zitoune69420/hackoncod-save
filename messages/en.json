@@ -264,6 +264,9 @@
         "accessDenied": "Founders only.",
         "deleteSuccess": "Blacklist entry removed.",
         "deleteError": "Could not delete entry.",
+        "remove": "Remove",
+        "removeSuccess": "Member removed from blacklist and unbanned on Discord.",
+        "removeError": "Could not remove this member.",
         "errorLoading": "Could not load blacklist.",
         "addEntry": "Add to blacklist",
         "dialog": {

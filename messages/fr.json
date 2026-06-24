@@ -264,6 +264,9 @@
         "accessDenied": "Accès réservé aux fondateurs.",
         "deleteSuccess": "Entrée retirée de la blacklist.",
         "deleteError": "Impossible de supprimer l’entrée.",
+        "remove": "Retirer",
+        "removeSuccess": "Membre retiré de la blacklist et débanni sur Discord.",
+        "removeError": "Impossible de retirer ce membre.",
         "errorLoading": "Erreur lors du chargement de la blacklist.",
         "addEntry": "Ajouter à la blacklist",
         "dialog": {

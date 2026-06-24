@@ -209,3 +209,74 @@ export async function tryGuildBanMemberForBlock(
     console.warn("[guild-bans] tryGuildBanMemberForBlock failed", id, r);
   }
 }
+
+export type GuildBanDeleteResult =
+  | { ok: true }
+  | { ok: false; status: number; detail?: string };
+
+/**
+ * Lève le bannissement d’un utilisateur sur le serveur configuré
+ * (`DELETE /guilds/.../bans/...`). Succès : 204 (ou 404 si déjà non banni).
+ * Ne lève pas — journalise les erreurs (permissions, etc.).
+ */
+export async function deleteGuildBanMember(
+  rawUserId: string,
+  options?: { reason?: string | null },
+): Promise<GuildBanDeleteResult> {
+  const guildId = normalizeSnowflake(process.env.DISCORD_GUILD_ID ?? "");
+  const userId = normalizeSnowflake(rawUserId);
+  if (!guildId || !userId) {
+    return { ok: false, status: 0, detail: "missing_guild_or_user_id" };
+  }
+  const token = getDiscordBotToken()?.trim();
+  if (!token) {
+    return { ok: false, status: 0, detail: "missing_bot_token" };
+  }
+
+  const reason = (options?.reason ?? "").trim().slice(0, GUILD_BAN_REASON_MAX);
+
+  try {
+    const res = await fetch(
+      `${DISCORD_API_BASE}/guilds/${guildId}/bans/${userId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bot ${token}`,
+          "Content-Type": "application/json",
+          ...(reason ? { "X-Audit-Log-Reason": reason } : {}),
+        },
+        next: { revalidate: 0 },
+      },
+    );
+
+    // 204 : débanni. 404 : pas/plus banni → idempotent, on considère OK.
+    if (res.status === 204 || res.status === 200 || res.status === 404) {
+      return { ok: true };
+    }
+
+    const text = await res.text().catch(() => "");
+    console.warn(
+      "[guild-bans] deleteGuildBanMember HTTP",
+      res.status,
+      text.slice(0, 300),
+    );
+    return { ok: false, status: res.status, detail: text.slice(0, 200) };
+  } catch (e) {
+    console.error("[guild-bans] deleteGuildBanMember", e);
+    return { ok: false, status: 0, detail: "fetch_error" };
+  }
+}
+
+/** Déban Discord best-effort : ignore si pas d’ID ou config incomplète. */
+export async function tryGuildUnbanMember(
+  discordUserId: string | null | undefined,
+  reason: string | null,
+): Promise<GuildBanDeleteResult> {
+  const id = normalizeSnowflake(discordUserId ?? "");
+  if (!id) return { ok: false, status: 0, detail: "missing_guild_or_user_id" };
+  const r = await deleteGuildBanMember(id, { reason });
+  if (!r.ok) {
+    console.warn("[guild-bans] tryGuildUnbanMember failed", id, r);
+  }
+  return r;
+}

@@ -135,23 +135,9 @@ function getAdminBlacklistColumns(
   t: (key: string, params?: Record<string, string | number>) => string,
   onEdit: (row: AdminBlacklistRow) => void,
   onDelete: (row: AdminBlacklistRow) => void,
+  onRemove: (row: AdminBlacklistRow) => void,
 ) {
   return [
-    {
-      key: "user_id" as const,
-      label: t("dashboard.admin.allBlacklist.table.userId"),
-      cellClassName:
-        "min-w-0 max-w-[9rem] sm:max-w-[11rem] whitespace-normal align-top",
-      render: (row: AdminBlacklistRow) => {
-        const uid = normalizeBlacklistRow(row).user_id.trim();
-        if (!uid) return "—";
-        return (
-          <span className="block wrap-break-word font-mono text-xs" title={uid}>
-            {uid}
-          </span>
-        );
-      },
-    },
     {
       key: "discord_display" as const,
       label: t("dashboard.admin.allBlacklist.table.discordName"),
@@ -180,6 +166,21 @@ function getAdminBlacklistColumns(
             <BlacklistAvatarImg src={avatarSrc} />
             <span className="min-w-0 wrap-break-word">{label}</span>
           </div>
+        );
+      },
+    },
+    {
+      key: "user_id" as const,
+      label: t("dashboard.admin.allBlacklist.table.userId"),
+      cellClassName:
+        "min-w-0 max-w-[9rem] sm:max-w-[11rem] whitespace-normal align-top",
+      render: (row: AdminBlacklistRow) => {
+        const uid = normalizeBlacklistRow(row).user_id.trim();
+        if (!uid) return "—";
+        return (
+          <span className="block wrap-break-word font-mono text-xs" title={uid}>
+            {uid}
+          </span>
         );
       },
     },
@@ -235,6 +236,8 @@ function getAdminBlacklistColumns(
       render: (row: AdminBlacklistRow) => {
         const r = normalizeBlacklistRow(row);
         const canDelete = Boolean(r.db_row_id.trim());
+        const hasSnowflake = /^\d{5,24}$/.test(r.user_id.trim());
+        const canRemove = canDelete || hasSnowflake;
         return (
           <div className="flex flex-wrap gap-2">
             <Button
@@ -255,6 +258,16 @@ function getAdminBlacklistColumns(
                 {t("common.delete")}
               </Button>
             ) : null}
+            {canRemove ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => onRemove(row)}
+              >
+                {t("dashboard.admin.allBlacklist.remove")}
+              </Button>
+            ) : null}
           </div>
         );
       },
@@ -266,15 +279,17 @@ function AdminBlacklistTable({
   data = [],
   onEdit,
   onDelete,
+  onRemove,
 }: {
   data?: AdminBlacklistRow[];
   onEdit: (row: AdminBlacklistRow) => void;
   onDelete: (row: AdminBlacklistRow) => void;
+  onRemove: (row: AdminBlacklistRow) => void;
 }) {
   const { t } = useTranslations();
   const columns = useMemo(
-    () => getAdminBlacklistColumns(t, onEdit, onDelete),
-    [t, onEdit, onDelete],
+    () => getAdminBlacklistColumns(t, onEdit, onDelete, onRemove),
+    [t, onEdit, onDelete, onRemove],
   );
   return <CommonTable columns={columns} data={data} pageSize={12} />;
 }
@@ -434,6 +449,45 @@ export function AdminAllBlacklistPage() {
     [t],
   );
 
+  const onRemoveRow = useCallback(
+    (row: AdminBlacklistRow) => {
+      showPendingDeleteConfirmToast({
+        getLine: (sec) =>
+          sec > 0
+            ? t("common.pendingDeleteCountdown", { seconds: sec })
+            : t("common.pendingDeleteApplying"),
+        cancelLabel: t("common.pendingDeleteCancel"),
+        applyingLabel: t("common.pendingDeleteApplying"),
+        successMessage: t("dashboard.admin.allBlacklist.removeSuccess"),
+        errorFallback: t("dashboard.admin.allBlacklist.removeError"),
+        runDelete: async () => {
+          const r = normalizeBlacklistRow(row);
+          const res = await fetch("/api/admin/blacklist/remove", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              db_row_id: r.db_row_id.trim() || undefined,
+              user_id: r.user_id.trim() || undefined,
+              discord: r.discord.trim() || undefined,
+            }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(
+              typeof json?.error === "string"
+                ? json.error
+                : t("dashboard.admin.allBlacklist.removeError"),
+            );
+          }
+          invalidateCache(cacheKey("admin-all-blacklist"));
+          refreshRef.current = true;
+          setRefreshTick((k) => k + 1);
+        },
+      });
+    },
+    [t],
+  );
+
   const handleSaved = useCallback(() => {
     invalidateCache(cacheKey("admin-all-blacklist"));
     refreshRef.current = true;
@@ -523,6 +577,7 @@ export function AdminAllBlacklistPage() {
           data={filteredData}
           onEdit={onEdit}
           onDelete={onDeleteRow}
+          onRemove={onRemoveRow}
         />
       )}
     </div>
