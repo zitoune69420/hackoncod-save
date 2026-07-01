@@ -12,6 +12,7 @@ import { RuntimeErrorListeners } from "@/components/commons/error-handler";
 import { FingerprintInstaller } from "@/app/components/fingerprint-installer";
 import { SiteBanSync } from "@/app/components/site-ban-sync";
 import { PageViewTracker } from "@/app/components/analytics/page-view-tracker";
+import { PagePrefetcher } from "@/app/components/page-prefetcher";
 import { NotificationSoundUnlock } from "@/app/components/notification-sound-unlock";
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -270,6 +271,7 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <PageViewTracker />
               </Suspense>
+              <PagePrefetcher />
               {children}
               <Toaster />
             </TooltipProvider>
