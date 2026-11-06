@@ -1,7 +1,16 @@
 "use client";
 
-import MapLibreGL, { type PopupOptions, type MarkerOptions } from "maplibre-gl";
+import * as MapLibreGL from "maplibre-gl";
+import type { PopupOptions, MarkerOptions } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// v6 calcule l'URL du worker à l'exécution, sans le hash ajouté par le bundler (404) :
+// ce `new URL` statique fait émettre le fichier par Next et donne sa vraie URL.
+if (typeof window !== "undefined") {
+  MapLibreGL.setWorkerUrl(
+    new URL("maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href,
+  );
+}
 import {
   createContext,
   forwardRef,
