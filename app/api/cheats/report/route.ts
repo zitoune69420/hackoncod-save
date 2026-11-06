@@ -1,4 +1,5 @@
 import { auth } from "@/app/auth";
+import { edgeRateLimitAllow } from "@/lib/security/edge-rate-limit";
 import { getHeadersForBetterAuth } from "@/lib/auth/get-headers-for-better-auth";
 import {
   CHEAT_REPORT_REASON_WEBHOOK_LABEL_FR,
@@ -28,6 +29,9 @@ export async function POST(req: NextRequest) {
     const user = session?.user;
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(await edgeRateLimitAllow(user.id, "write")).ok) {
+      return NextResponse.json({ error: "Too Many Requests" }, { status: 429, headers: { "Retry-After": "60" } });
     }
 
     const webhookUrl = getDiscordSuggestionWebhookUrl();

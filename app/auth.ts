@@ -57,6 +57,30 @@ export const auth = betterAuth({
   ...(_authBaseURL ? { baseURL: _authBaseURL } : {}),
   ...(_trustedOrigins ? { trustedOrigins: _trustedOrigins } : {}),
   plugins: [nextCookies()],
+  /**
+   * Connexion Discord uniquement : l'app n'appelle que get-session, sign-in/social, callback et sign-out.
+   * update-user permettait de changer nom/avatar (affichés aux admins), le reste élargit la surface d'attaque.
+   */
+  disabledPaths: [
+    "/update-user",
+    "/change-email",
+    "/change-password",
+    "/delete-user",
+    "/delete-user/callback",
+    "/link-social",
+    "/unlink-account",
+    "/get-access-token",
+    "/refresh-token",
+    "/account-info",
+    "/sign-in/email",
+    "/sign-up/email",
+    "/request-password-reset",
+    "/reset-password",
+    "/send-verification-email",
+    "/verify-email",
+    "/verify-password",
+    "/update-session",
+  ],
   socialProviders: {
     discord: {
       clientId: process.env.DISCORD_CLIENT_ID as string,

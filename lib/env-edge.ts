@@ -3,12 +3,21 @@
  * Réutilise uniquement pour le middleware où `lib/env.ts` est inapproprié (Edge bundle).
  */
 
+/** `KV_REST_API_*` : noms injectés par l'intégration Vercel Marketplace « Upstash for Redis ». */
 export function getUpstashRedisRestUrl(): string | undefined {
-  return process.env.UPSTASH_REDIS_REST_URL?.trim() || undefined;
+  return (
+    process.env.UPSTASH_REDIS_REST_URL?.trim() ||
+    process.env.KV_REST_API_URL?.trim() ||
+    undefined
+  );
 }
 
 export function getUpstashRedisRestToken(): string | undefined {
-  return process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || undefined;
+  return (
+    process.env.UPSTASH_REDIS_REST_TOKEN?.trim() ||
+    process.env.KV_REST_API_TOKEN?.trim() ||
+    undefined
+  );
 }
 
 /**

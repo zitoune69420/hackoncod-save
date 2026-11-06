@@ -33,7 +33,7 @@ export async function POST(
     const access = await getCurrentUserAccess({ source: "db" });
     const isAdminOrPartner = access.role === "founder" || access.role === "partner";
 
-    if (order.user_id !== discordId && !isAdminOrPartner) {
+    if ((!discordId || order.user_id !== discordId) && !isAdminOrPartner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

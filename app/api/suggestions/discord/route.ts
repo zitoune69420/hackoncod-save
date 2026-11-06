@@ -1,4 +1,5 @@
 import { getCurrentUserAccess } from "@/lib/permissions-server";
+import { edgeRateLimitAllow } from "@/lib/security/edge-rate-limit";
 import {
   executeDiscordWebhook,
   type DiscordApiEmbed,
@@ -17,6 +18,9 @@ export async function POST(req: Request) {
   const access = await getCurrentUserAccess({ source: "db" });
   if (!access.isAuthenticated || !access.session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!(await edgeRateLimitAllow(access.session.user.id, "write")).ok) {
+    return NextResponse.json({ error: "Too Many Requests" }, { status: 429, headers: { "Retry-After": "60" } });
   }
 
   const webhookUrl = getDiscordSuggestionWebhookUrl();

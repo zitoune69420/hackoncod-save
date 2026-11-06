@@ -60,7 +60,8 @@ export async function GET(
     const access = await getCurrentUserAccess({ source: "db" });
     const isAdminOrPartner = access.role === "founder" || access.role === "partner";
 
-    if (order.user_id !== discordId && !isAdminOrPartner) {
+    // discordId null ne doit jamais matcher une commande sans user_id (null === null).
+    if ((!discordId || order.user_id !== discordId) && !isAdminOrPartner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -117,7 +118,7 @@ export async function POST(
     const access = await getCurrentUserAccess({ source: "db" });
     const isAdminOrPartner = access.role === "founder" || access.role === "partner";
 
-    if (order.user_id !== discordId && !isAdminOrPartner) {
+    if ((!discordId || order.user_id !== discordId) && !isAdminOrPartner) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -129,6 +130,9 @@ export async function POST(
     const content = typeof body?.content === "string" ? body.content.trim() : "";
     if (!content) {
       return NextResponse.json({ error: "Empty message" }, { status: 400 });
+    }
+    if (content.length > 8000) {
+      return NextResponse.json({ error: "Message too long" }, { status: 400 });
     }
 
     const isClientLanguageSet =

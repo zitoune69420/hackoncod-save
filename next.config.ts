@@ -17,6 +17,7 @@ const contentSecurityPolicyReportOnly = [
   "media-src 'self' https:",
   "frame-src 'self' https:",
   "worker-src 'self' blob:",
+  "frame-ancestors 'self'",
 ].join("; ");
 
 const nextConfig: NextConfig = {
@@ -31,6 +32,18 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy-Report-Only",
             value: contentSecurityPolicyReportOnly,
+          },
+          // Appliqués (pas report-only) : anti-clickjacking du dashboard admin, MIME sniffing, fuite d'URL.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=()",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
           },
         ],
       },

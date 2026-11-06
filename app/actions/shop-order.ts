@@ -23,6 +23,7 @@ import {
 import { headers } from "next/headers";
 import { getServerAuthSession } from "@/lib/auth/get-server-auth-session";
 import { resolveViewerDiscordSnowflake } from "@/lib/shop/resolve-viewer-discord-snowflake";
+import { edgeRateLimitAllow } from "@/lib/security/edge-rate-limit";
 
 export type CreateOrderResult =
   | { ok: true; orderId: string; saleId: string }
@@ -45,15 +46,31 @@ export async function createOrderAction(
   const session = await getServerAuthSession();
   const user = session?.user;
   if (!user?.id) return { ok: false, error: "unauthorized" };
+  // Chaque commande crée vente + ticket + message : sans plafond, un compte peut inonder la boutique.
+  if (!(await edgeRateLimitAllow(user.id, "write")).ok) return { ok: false, error: "invalid" };
 
   const discordId = await resolveViewerDiscordSnowflake(user);
   if (!discordId) return { ok: false, error: "unauthorized" };
 
   const supabase = createAdminClient();
 
-  const { productId, productType, priceId, notes, paymentMethod, senderFirstName, senderLastName, senderAccount } = input;
-
-  if (!productId || !productType || !paymentMethod || !senderFirstName || !senderLastName || !senderAccount) {
+  // Entrées client non fiables : types, UUID et longueurs bornés avant toute écriture.
+  const str = (v: unknown, max: number) =>
+    typeof v === "string" ? v.trim().slice(0, max) : "";
+  const productId = str(input.productId, 64);
+  const productType = input.productType;
+  const priceId = str(input.priceId, 64) || null;
+  const notes = str(input.notes, 2000) || null;
+  const paymentMethod = str(input.paymentMethod, 64);
+  const senderFirstName = str(input.senderFirstName, 100);
+  const senderLastName = str(input.senderLastName, 100);
+  const senderAccount = str(input.senderAccount, 200);
+  if (
+    !isUuid(productId) ||
+    (priceId && !isUuid(priceId)) ||
+    !["cheat", "service", "account"].includes(productType) ||
+    !paymentMethod || !senderFirstName || !senderLastName || !senderAccount
+  ) {
     return { ok: false, error: "invalid" };
   }
 
@@ -69,6 +86,9 @@ export async function createOrderAction(
     .eq("id", productId)
     .maybeSingle();
   if (!productRow) return { ok: false, error: "product_not_found" };
+  if (productType !== "account" && (productRow as { is_active?: boolean }).is_active !== true) {
+    return { ok: false, error: "product_not_found" };
+  }
 
   let finalPrice = 0;
   let priceLabel = "";
@@ -87,11 +107,22 @@ export async function createOrderAction(
       .select("*")
       .eq("id", priceId)
       .eq(fkColumn, productId)
+      .eq("is_active", true)
       .maybeSingle();
     if (!priceRow) return { ok: false, error: "invalid" };
     finalPrice = (priceRow as { price: number }).price;
     currency = (priceRow as { currency: string }).currency ?? "EUR";
     priceLabel = `${(priceRow as { label?: string }).label ?? ""} – ${finalPrice} ${currency === "EUR" ? "€" : currency}`;
+  } else {
+    // Sans priceId, la commande partait à 0 € même si le produit a une grille de prix.
+    const priceTable = productType === "cheat" ? "cheat_prices" : "service_prices";
+    const fkColumn = productType === "cheat" ? "cheat_id" : "service_id";
+    const { count } = await supabase
+      .from(priceTable)
+      .select("id", { count: "exact", head: true })
+      .eq(fkColumn, productId)
+      .eq("is_active", true);
+    if ((count ?? 0) > 0) return { ok: false, error: "invalid" };
   }
 
   const saleTitle = `${(productRow as { name: string }).name}${priceLabel ? ` (${priceLabel})` : ""}`;
@@ -100,7 +131,7 @@ export async function createOrderAction(
   const createdBy = (productRow as { created_by?: string | null }).created_by ?? null;
   const selledByUuid = createdBy && isUuid(createdBy) ? createdBy : null;
 
-  let saleNotes = notes?.trim() ?? "";
+  let saleNotes = notes ?? "";
   if (!buyerUuid) {
     const tag = `Discord acheteur: ${discordId}`;
     saleNotes = saleNotes ? `${saleNotes}\n${tag}` : tag;

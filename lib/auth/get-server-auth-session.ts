@@ -7,18 +7,40 @@ type AuthGetSessionResult = NonNullable<
   Awaited<ReturnType<typeof auth.api.getSession>>
 >;
 
+/** Origines de confiance (env uniquement) : jamais un host fourni par la requête. */
+function trustedAuthOrigins(): string[] {
+  const raw = [
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",") ?? []),
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+  const out: string[] = [];
+  for (const r of raw) {
+    try {
+      if (r?.trim()) out.push(new URL(r.trim()).origin);
+    } catch {
+      /* ignore invalid URL */
+    }
+  }
+  return out;
+}
+
+/**
+ * La réponse de ce fetch est acceptée comme session : l'origine doit être la nôtre.
+ * Un `Host` / `X-Forwarded-Host` arbitraire permettait de renvoyer une session forgée.
+ */
 function resolveAuthOrigin(h: Headers): string | null {
+  const trusted = trustedAuthOrigins();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto =
     h.get("x-forwarded-proto")?.split(",")[0]?.trim() ??
     (process.env.VERCEL ? "https" : "http");
   if (host) {
-    return `${proto}://${host}`;
+    const fromRequest = `${proto}://${host}`;
+    if (trusted.includes(fromRequest)) return fromRequest;
   }
-  const base =
-    process.env.BETTER_AUTH_URL?.trim().replace(/\/$/, "") ??
-    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
-  return base ?? null;
+  return trusted[0] ?? null;
 }
 
 /**

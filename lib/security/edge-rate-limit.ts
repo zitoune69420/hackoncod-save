@@ -40,12 +40,18 @@ async function memLimit(key: string, limit: number): Promise<{ ok: boolean }> {
 let pageLm: Ratelimit | null = null;
 let apiLm: Ratelimit | null = null;
 let apiAuthLm: Ratelimit | null = null;
+let writeLm: Ratelimit | null = null;
+
+/** Écritures qui notifient Discord ou créent des lignes (suggestions, signalements, tickets, commandes). */
+const WRITE_PER_MIN = 6;
 
 function upstashLimiters() {
   const url = getUpstashRedisRestUrl();
   const token = getUpstashRedisRestToken();
   if (!url || !token) return null;
-  if (pageLm && apiLm && apiAuthLm) return { pageLm, apiLm, apiAuthLm };
+  if (pageLm && apiLm && apiAuthLm && writeLm) {
+    return { pageLm, apiLm, apiAuthLm, writeLm };
+  }
   const redis = new Redis({ url, token });
   const pagePerMin = getSecurityStrictPageRatePerMinute();
   const apiPerMin = getSecurityStrictApiRatePerMinute();
@@ -68,10 +74,16 @@ function upstashLimiters() {
     prefix: "rl:api-auth",
     analytics: false,
   });
-  return { pageLm, apiLm, apiAuthLm };
+  writeLm = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(WRITE_PER_MIN, "1 m"),
+    prefix: "rl:write",
+    analytics: false,
+  });
+  return { pageLm, apiLm, apiAuthLm, writeLm };
 }
 
-export type EdgeRateKind = "page" | "api" | "api-auth";
+export type EdgeRateKind = "page" | "api" | "api-auth" | "write";
 
 export async function edgeRateLimitAllow(
   identifier: string,
@@ -82,7 +94,13 @@ export async function edgeRateLimitAllow(
   const up = upstashLimiters();
   if (up) {
     const lm =
-      kind === "page" ? up.pageLm : kind === "api" ? up.apiLm : up.apiAuthLm;
+      kind === "page"
+        ? up.pageLm
+        : kind === "api"
+          ? up.apiLm
+          : kind === "write"
+            ? up.writeLm
+            : up.apiAuthLm;
     const { success } = await lm.limit(key);
     return { ok: success };
   }
@@ -91,6 +109,8 @@ export async function edgeRateLimitAllow(
       ? getSecurityStrictPageRatePerMinute()
       : kind === "api"
         ? getSecurityStrictApiRatePerMinute()
-        : getSecurityStrictApiAuthRatePerMinute();
+        : kind === "write"
+          ? WRITE_PER_MIN
+          : getSecurityStrictApiAuthRatePerMinute();
   return memLimit(key, lim);
 }
