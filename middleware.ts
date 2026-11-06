@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 
 import { isDiscordIdBanWhitelisted } from "@/lib/auth/ban-whitelist";
 import {
   DISCORD_ID_COOKIE,
   verifyDiscordIdCookieValue,
 } from "@/lib/auth/discord-id-cookie";
+import {
+  BAN_MARKER_COOKIE,
+  BAN_MARKER_MAX_AGE,
+  signBanMarker,
+  verifyBanMarker,
+  type BanSignals,
+} from "@/lib/banned/ban-marker-cookie";
 import { fetchIsDiscordBannedEdge } from "@/lib/banned/edge-discord-ban";
 import { fetchIsFingerprintBannedEdge } from "@/lib/banned/edge-fingerprint-ban";
 import { fetchIsIpBannedEdge } from "@/lib/banned/edge-ip-ban";
@@ -22,7 +29,6 @@ import { timingSafeEqualUtf8 } from "@/lib/security/timing-safe-utf8";
 const AUTH_API_PREFIX = "/api/auth";
 const MESSENGER_PATH = "/api/messenger";
 const ANALYTICS_COLLECT = "/api/analytics/collect";
-const SITE_BLOCKED = "hackoncod_site_blocked";
 const FINGERPRINT_HEADER = "x-client-fingerprint";
 
 function getClientIp(req: NextRequest): string {
@@ -38,8 +44,11 @@ async function verifiedDiscordIdFromRequest(
 ): Promise<string | null> {
   const raw = req.cookies.get(DISCORD_ID_COOKIE)?.value;
   if (!raw) return null;
-  const secret = process.env.BETTER_AUTH_SECRET?.trim();
-  return verifyDiscordIdCookieValue(raw, secret);
+  return verifyDiscordIdCookieValue(raw, cookieSecret());
+}
+
+function cookieSecret(): string | undefined {
+  return process.env.BETTER_AUTH_SECRET?.trim() || undefined;
 }
 
 /** Loopback : présent uniquement en dev local, jamais derrière un reverse proxy en prod. */
@@ -158,115 +167,109 @@ function messengerBearerOk(req: NextRequest): boolean {
   return Boolean(token && timingSafeEqualUtf8(token, secret));
 }
 
-function redirectToBanned(req: NextRequest, setMarkerCookie: boolean) {
+function withBanMarker(res: NextResponse, marker: string | null) {
+  if (marker) {
+    res.cookies.set(BAN_MARKER_COOKIE, marker, {
+      path: "/",
+      maxAge: BAN_MARKER_MAX_AGE,
+      sameSite: "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+  return res;
+}
+
+function redirectToBanned(req: NextRequest, marker: string | null = null) {
   const url = req.nextUrl.clone();
   url.pathname = "/banned";
   url.search = "";
-  const res = NextResponse.redirect(url);
-  if (setMarkerCookie) {
-    res.cookies.set(SITE_BLOCKED, "1", {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      httpOnly: true,
-    });
-  }
-  return res;
+  return withBanMarker(NextResponse.redirect(url), marker);
 }
 
-function jsonForbidden(reason?: string, setMarkerCookie = false) {
+function jsonForbidden(reason?: string, marker: string | null = null) {
   const res = NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (reason) res.headers.set("x-mw-block", reason);
-  if (setMarkerCookie) {
-    res.cookies.set(SITE_BLOCKED, "1", {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-      httpOnly: true,
-    });
-  }
-  return res;
+  return withBanMarker(res, marker);
 }
 
-function tooMany() {
-  return NextResponse.json(
-    { error: "Too Many Requests" },
-    { status: 429, headers: { "Retry-After": "60" } },
-  );
+function tooMany(isApi: boolean) {
+  const init = { status: 429, headers: { "Retry-After": "60" } };
+  return isApi
+    ? NextResponse.json({ error: "Too Many Requests" }, init)
+    : new NextResponse("Too Many Requests", init);
 }
-
-type BanSignals = {
-  ip: string | null;
-  fp: string | null;
-  did: string | null;
-};
 
 /**
- * Vérifications ban (IP, fingerprint, Discord) lancées en parallèle.
- * Toute source qui répond `true` suffit à bloquer ; chaque appel a son propre fail-open
- * pour ne pas fermer le site si Supabase est indisponible.
- *
- * Retourne aussi les signaux observés (IP, fingerprint, discord_id) afin que le
- * middleware puisse propager ces signaux dans `banned_ips` / `banned_fingerprints`
- * via `record_ban_signals` quand un ban est détecté.
+ * Vérifications ban (IP, fingerprint, Discord) en parallèle. Fail-open par source :
+ * Supabase indisponible ne ferme pas le site.
  */
-async function runBanChecks(req: NextRequest, opts: {
-  ip: string;
-  skipFingerprint: boolean;
-  skipDiscord: boolean;
-}): Promise<{ banned: boolean; reason?: string; signals: BanSignals }> {
-  const checks: Promise<{ banned: boolean; reason: string } | null>[] = [];
-  const signals: BanSignals = { ip: null, fp: null, did: null };
-
-  if (opts.ip !== "unknown" && !isLoopbackIp(opts.ip)) {
-    signals.ip = opts.ip;
-    checks.push(
-      fetchIsIpBannedEdge(opts.ip)
-        .then((b) => (b ? { banned: true, reason: "ip-banned" } : null))
-        .catch(() => null),
-    );
-  }
-
-  if (!opts.skipFingerprint) {
-    const fp = req.headers.get(FINGERPRINT_HEADER)?.trim();
-    if (fp) {
-      signals.fp = fp;
-      checks.push(
-        fetchIsFingerprintBannedEdge(fp)
-          .then((b) => (b ? { banned: true, reason: "fp-banned" } : null))
-          .catch(() => null),
-      );
-    }
-  }
-
-  if (!opts.skipDiscord) {
-    const rawDid = req.cookies.get(DISCORD_ID_COOKIE)?.value;
-    if (rawDid) {
-      const secret = process.env.BETTER_AUTH_SECRET?.trim();
-      const didPromise = verifyDiscordIdCookieValue(rawDid, secret);
-      checks.push(
-        didPromise
-          .then(async (did) => {
-            if (!did) return null;
-            signals.did = did;
-            const banned = await fetchIsDiscordBannedEdge(did);
-            return banned ? { banned: true, reason: "discord-banned" } : null;
-          })
-          .catch(() => null),
-      );
-    }
-  }
-
-  if (checks.length === 0) return { banned: false, signals };
-
-  const results = await Promise.all(checks);
-  for (const r of results) {
-    if (r?.banned) return { banned: true, reason: r.reason, signals };
-  }
-  return { banned: false, signals };
+async function findBanReason(s: BanSignals): Promise<string | null> {
+  const check = (p: Promise<boolean>, reason: string) =>
+    p.then((b) => (b ? reason : null)).catch(() => null);
+  const results = await Promise.all([
+    s.ip ? check(fetchIsIpBannedEdge(s.ip), "ip-banned") : null,
+    s.fp ? check(fetchIsFingerprintBannedEdge(s.fp), "fp-banned") : null,
+    s.did ? check(fetchIsDiscordBannedEdge(s.did), "discord-banned") : null,
+  ]);
+  return results.find((r) => r != null) ?? null;
 }
 
-export async function middleware(req: NextRequest) {
+type GuardContext = {
+  ip: string;
+  ua: string | null;
+  trustedBot: boolean;
+  isApi: boolean;
+  isAuthRoute: boolean;
+  messengerOk: boolean;
+  analyticsOnly: boolean;
+};
+
+/** Étapes hors ban : bots, rate-limit, VPN, origine des appels API. */
+async function guardRequest(
+  req: NextRequest,
+  c: GuardContext,
+): Promise<NextResponse> {
+  /** 3. Bots d'automatisation bloqués (curl, headless, scrapers connus). */
+  if (!c.messengerOk && isBlockedAutomationUserAgent(c.ua)) {
+    if (c.isApi) return jsonForbidden("bot-ua");
+    return redirectToBanned(req);
+  }
+
+  /** 4. Rate-limit + VPN/proxy. Skip auth (Better Auth gère) et analytics (bursty by design). */
+  const skipGlobalRl = c.isAuthRoute || c.analyticsOnly;
+  if (!skipGlobalRl && c.ip !== "unknown" && !isLoopbackIp(c.ip)) {
+    const sessionKey = c.isApi ? getSessionRateLimitKey(req) : null;
+    /** Navigations client / prefetch (`RSC: 1`) : quota API, sinon le quota page (25/min) saute en quelques clics. */
+    const isRsc = req.headers.get("rsc") === "1";
+    const rl = sessionKey
+      ? await edgeRateLimitAllow(sessionKey, "api-auth")
+      : await edgeRateLimitAllow(c.ip, c.isApi || isRsc ? "api" : "page");
+    if (!rl.ok) return tooMany(c.isApi);
+
+    /** Infra messenger / auth + bots de confiance : tolère IP type datacenter sans inspection VPN. */
+    const skipVpn = c.messengerOk || c.isAuthRoute || c.trustedBot;
+    if (!skipVpn) {
+      try {
+        if (await isBlockedVpnOrProxyEdge(c.ip)) {
+          /** Pas de marqueur : un VPN n'est pas un ban, couper le VPN doit suffire. */
+          return c.isApi ? jsonForbidden("vpn-or-proxy") : redirectToBanned(req);
+        }
+      } catch {
+        /* service VPN externe KO : pas de blocage général */
+      }
+    }
+  }
+
+  /** 5. API : auth Better Auth + caller fiable (Origin/Referer + Sec-Fetch). */
+  if (c.isApi && !c.isAuthRoute && !c.messengerOk && !isTrustedApiCaller(req)) {
+    return jsonForbidden("untrusted-caller");
+  }
+
+  return NextResponse.next();
+}
+
+export async function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl;
   const ip = getClientIp(req);
   const ua = req.headers.get("user-agent");
@@ -290,104 +293,80 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const hasMarker = Boolean(req.cookies.get(BAN_MARKER_COOKIE)?.value);
+  const clearMarker = (res: NextResponse) => {
+    if (hasMarker) res.cookies.set(BAN_MARKER_COOKIE, "", { path: "/", maxAge: 0 });
+    return res;
+  };
+
   /**
    * 0. Whitelist ban-proof : Discord IDs définis dans
    *    `HACKONCOD_BAN_WHITELIST_DISCORD_IDS`. Court-circuit total, efface au passage
-   *    le cookie SITE_BLOCKED si présent pour nettoyer un état "fantôme".
+   *    le marqueur de ban si présent pour nettoyer un état "fantôme".
    */
   const verifiedDid = await verifiedDiscordIdFromRequest(req);
   if (verifiedDid && isDiscordIdBanWhitelisted(verifiedDid)) {
-    const res = NextResponse.next();
-    if (req.cookies.get(SITE_BLOCKED)?.value) {
-      res.cookies.set(SITE_BLOCKED, "", { path: "/", maxAge: 0 });
-    }
-    return res;
+    return clearMarker(NextResponse.next());
   }
 
   /**
-   * 1. Cookie marqueur : ban déjà connu côté client, court-circuit zero-DB.
-   *    Le cookie n'est posé que par le middleware/back ; httpOnly empêche
-   *    la suppression triviale via DevTools dans la plupart des contextes.
-   */
-  if (req.cookies.get(SITE_BLOCKED)?.value === "1") {
-    return isApi
-      ? jsonForbidden("site-blocked-cookie", false)
-      : redirectToBanned(req, false);
-  }
-
-  /**
-   * 2. Ban-first : IP + fingerprint (header) + Discord ID (cookie HMAC).
-   *    Skip fingerprint/Discord pour bots de confiance et infra messenger
-   *    (ils n'exposent ni header fingerprint ni cookie discord_id). IP checké pour tous.
+   * 1-2. Ban : signaux de la requête (IP, fingerprint header, Discord ID du cookie HMAC)
+   *      + signaux du marqueur signé posé lors d'un ban précédent. Le marqueur garde
+   *      le blocage après un changement d'IP, et tombe dès que l'admin débannit.
+   *      Fingerprint/Discord ignorés pour bots de confiance, messenger et routes auth.
    */
   const skipFpDid = trustedBot || messengerOk || isAuthRoute;
-  const ban = await runBanChecks(req, {
-    ip,
-    skipFingerprint: skipFpDid,
-    skipDiscord: skipFpDid,
-  });
-  if (ban.banned) {
+  const current: BanSignals = {
+    ip: ip !== "unknown" && !isLoopbackIp(ip) ? ip : null,
+    fp: skipFpDid ? null : req.headers.get(FINGERPRINT_HEADER)?.trim() || null,
+    did: skipFpDid ? null : verifiedDid,
+  };
+  const secret = cookieSecret();
+  const marked = hasMarker
+    ? await verifyBanMarker(req.cookies.get(BAN_MARKER_COOKIE)?.value, secret)
+    : null;
+  const [currentReason, markedReason] = await Promise.all([
+    findBanReason(current),
+    marked ? findBanReason(marked) : null,
+  ]);
+  const reason = currentReason ?? markedReason;
+
+  if (reason) {
     /**
-     * Propagation : enregistre les signaux observés (IP, fingerprint, discord_id)
-     * dans banned_ips / banned_fingerprints. Fire-and-forget — pas d'attente,
-     * une erreur ne bloque pas la redirection.
+     * Propagation des nouveaux signaux (IP, fingerprint) seulement si l'identité Discord
+     * bannie est prouvée (cookie HMAC ou marqueur signé). Une IP ou une empreinte seules
+     * peuvent être partagées (4G, box, école) : les propager bannirait des innocents en cascade.
      */
-    void fetchRecordBanSignalsEdge({
-      ip: ban.signals.ip,
-      fp: ban.signals.fp,
-      did: ban.signals.did,
-      reason: ban.reason ?? "auto-propagation",
-    });
-    return isApi
-      ? jsonForbidden(ban.reason ?? "banned", true)
-      : redirectToBanned(req, true);
+    const provenDid =
+      currentReason === "discord-banned"
+        ? current.did
+        : markedReason === "discord-banned"
+          ? marked?.did ?? null
+          : null;
+    if (provenDid) {
+      event.waitUntil(
+        fetchRecordBanSignalsEdge({
+          ip: current.ip,
+          fp: current.fp,
+          did: provenDid,
+          reason: "auto-propagation",
+        }),
+      );
+    }
+    const marker = secret ? await signBanMarker(marked ?? current, secret) : null;
+    return isApi ? jsonForbidden(reason, marker) : redirectToBanned(req, marker);
   }
 
-  /** 3. Bots d'automatisation bloqués (curl, headless, scrapers connus). */
-  if (!messengerOk && isBlockedAutomationUserAgent(ua)) {
-    if (isApi) return jsonForbidden("bot-ua");
-    return NextResponse.redirect(new URL("/banned", req.url));
-  }
-
-  /** 4. Rate-limit + VPN/proxy. Skip auth (Better Auth gère) et analytics (bursty by design). */
-  const skipGlobalRl = isAuthRoute || analyticsOnly;
-  if (!skipGlobalRl && ip !== "unknown" && !isLoopbackIp(ip)) {
-    const sessionKey = isApi ? getSessionRateLimitKey(req) : null;
-    const rl = sessionKey
-      ? await edgeRateLimitAllow(sessionKey, "api-auth")
-      : await edgeRateLimitAllow(ip, isApi ? "api" : "page");
-    if (!rl.ok) {
-      return isApi
-        ? tooMany()
-        : NextResponse.redirect(new URL("/banned", req.url));
-    }
-
-    /** Infra messenger / auth + bots de confiance : tolère IP type datacenter sans inspection VPN. */
-    const skipVpn = messengerOk || isAuthRoute || trustedBot;
-    if (!skipVpn) {
-      try {
-        if (await isBlockedVpnOrProxyEdge(ip)) {
-          return isApi
-            ? jsonForbidden("vpn-or-proxy")
-            : redirectToBanned(req, true);
-        }
-      } catch {
-        /* service VPN externe KO : pas de blocage général */
-      }
-    }
-  }
-
-  /** 5. API : auth Better Auth + caller fiable (Origin/Referer + Sec-Fetch). */
-  if (isApi) {
-    if (isAuthRoute || messengerOk) {
-      return NextResponse.next();
-    }
-    if (!isTrustedApiCaller(req)) {
-      return jsonForbidden("untrusted-caller");
-    }
-  }
-
-  return NextResponse.next();
+  const res = await guardRequest(req, {
+    ip,
+    ua,
+    trustedBot,
+    isApi,
+    isAuthRoute,
+    messengerOk,
+    analyticsOnly,
+  });
+  return clearMarker(res);
 }
 
 export const config = {

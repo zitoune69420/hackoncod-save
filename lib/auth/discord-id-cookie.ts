@@ -47,6 +47,43 @@ async function importKey(secret: string): Promise<CryptoKey> {
   );
 }
 
+/** `<payload>.<base64url(HMAC-SHA256(payload))>` ; le payload ne doit pas contenir de `.`. */
+export async function signHmacToken(
+  payload: string,
+  secret: string,
+): Promise<string> {
+  const key = await importKey(secret);
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, encoder.encode(payload)),
+  );
+  return `${payload}.${bytesToBase64Url(sig)}`;
+}
+
+/** Retourne le payload si la signature est valide, sinon null. Ne logge rien. */
+export async function verifyHmacToken(
+  raw: string | undefined | null,
+  secret: string | undefined | null,
+): Promise<string | null> {
+  if (!raw || !secret) return null;
+  const dot = raw.indexOf(".");
+  if (dot <= 0 || dot === raw.length - 1) return null;
+  const payload = raw.slice(0, dot);
+  const sig = base64UrlToBytes(raw.slice(dot + 1));
+  if (!sig) return null;
+  try {
+    const key = await importKey(secret);
+    const ok = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sig as BufferSource,
+      encoder.encode(payload),
+    );
+    return ok ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Signe un snowflake Discord avec `BETTER_AUTH_SECRET`. Retourne la valeur prête pour `Set-Cookie`. */
 export async function signDiscordIdCookieValue(
   discordId: string,
@@ -54,11 +91,7 @@ export async function signDiscordIdCookieValue(
 ): Promise<string | null> {
   const did = discordId.trim();
   if (!DISCORD_SNOWFLAKE_RE.test(did) || !secret) return null;
-  const key = await importKey(secret);
-  const sig = new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, encoder.encode(did)),
-  );
-  return `${did}.${bytesToBase64Url(sig)}`;
+  return signHmacToken(did, secret);
 }
 
 /**
@@ -69,24 +102,6 @@ export async function verifyDiscordIdCookieValue(
   raw: string | undefined | null,
   secret: string | undefined | null,
 ): Promise<string | null> {
-  if (!raw || !secret) return null;
-  const dot = raw.indexOf(".");
-  if (dot <= 0 || dot === raw.length - 1) return null;
-  const did = raw.slice(0, dot);
-  const sigB64 = raw.slice(dot + 1);
-  if (!DISCORD_SNOWFLAKE_RE.test(did)) return null;
-  const sig = base64UrlToBytes(sigB64);
-  if (!sig) return null;
-  try {
-    const key = await importKey(secret);
-    const ok = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      sig as BufferSource,
-      encoder.encode(did),
-    );
-    return ok ? did : null;
-  } catch {
-    return null;
-  }
+  const did = await verifyHmacToken(raw, secret);
+  return did && DISCORD_SNOWFLAKE_RE.test(did) ? did : null;
 }

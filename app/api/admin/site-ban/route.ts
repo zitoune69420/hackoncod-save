@@ -1,10 +1,13 @@
 import { requireFounderDiscordLive } from "@/lib/require-founder-live";
 import {
-  deleteBannedIpsByDiscordId,
   findDiscordAccountId,
+  purgeBanSideTablesForDiscordSnowflake,
   setUserSiteBan,
 } from "@/lib/banned/site-ban-db";
-import { tryGuildBanMemberForBlock } from "@/lib/discord/guild-bans";
+import {
+  tryGuildBanMemberForBlock,
+  tryGuildUnbanMember,
+} from "@/lib/discord/guild-bans";
 import { NextResponse } from "next/server";
 
 function parseBody(raw: unknown): {
@@ -68,7 +71,11 @@ export async function POST(req: Request) {
       );
     } else {
       const discordId = await findDiscordAccountId(parsed.targetAuthUserId);
-      if (discordId) await deleteBannedIpsByDiscordId(discordId);
+      if (discordId) {
+        // Le ban a posé un ban Discord serveur (bloquant au login) : le déban doit le lever aussi.
+        await purgeBanSideTablesForDiscordSnowflake(discordId);
+        await tryGuildUnbanMember(discordId, "Débannissement site (admin)");
+      }
     }
 
     return NextResponse.json({ ok: true });

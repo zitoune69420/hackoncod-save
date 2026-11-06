@@ -6,10 +6,13 @@ import {
   insertBannedFingerprintRow,
   insertBannedIpRow,
 } from "@/lib/banned/site-ban-db";
+import {
+  BAN_MARKER_COOKIE,
+  BAN_MARKER_MAX_AGE,
+  signBanMarker,
+} from "@/lib/banned/ban-marker-cookie";
 import { tryGuildBanMemberForBlock } from "@/lib/discord/guild-bans";
-
-const SITE_BLOCKED_COOKIE =
-  "hackoncod_site_blocked=1; Path=/; Max-Age=604800; SameSite=Lax";
+import { getBetterAuthSecret } from "@/lib/env";
 
 /** Context hook Better Auth (éviter import de types internes fragiles). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,11 +84,16 @@ export async function buildSiteBanOAuthResponse(
   if (reason?.trim()) q.set("reason", reason.trim());
   const loc = `${base}/banned${q.toString() ? `?${q}` : ""}`;
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: loc,
-      "Set-Cookie": SITE_BLOCKED_COOKIE,
-    },
-  });
+  const secret = getBetterAuthSecret()?.trim();
+  const marker = secret
+    ? await signBanMarker({ ip, fp: fp || null, did: discordId }, secret)
+    : null;
+  const res = new Response(null, { status: 302, headers: { Location: loc } });
+  if (marker) {
+    res.headers.append(
+      "Set-Cookie",
+      `${BAN_MARKER_COOKIE}=${marker}; Path=/; Max-Age=${BAN_MARKER_MAX_AGE}; SameSite=Lax; HttpOnly; Secure`,
+    );
+  }
+  return res;
 }

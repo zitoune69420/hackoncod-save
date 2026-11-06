@@ -141,6 +141,25 @@ export async function deleteBannedIpsByDiscordId(
   }
 }
 
+/** Sans ce nettoyage, un débanni reste bloqué par l'empreinte propagée pendant son ban. */
+export async function deleteBannedFingerprintsByDiscordId(
+  discordId: string,
+): Promise<void> {
+  const id = discordId.trim();
+  if (!id) return;
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from("banned_fingerprints")
+    .delete()
+    .eq("discord_id", id);
+  if (error && error.code !== "42P01") {
+    console.error(
+      "[site-ban-db] deleteBannedFingerprintsByDiscordId",
+      error.message,
+    );
+  }
+}
+
 const BANNED_LIST_TABLE =
   process.env.SUPABASE_BANNED_LIST_TABLE?.trim() || "banned_list";
 
@@ -168,14 +187,17 @@ export async function deleteBannedListRowsByDiscordId(
   }
 }
 
-/** Après retrait de la blacklist (`retard`) : nettoie `banned_ips` + `banned_list`. */
+/** Au déban : nettoie `banned_ips` + `banned_fingerprints` + `banned_list`. */
 export async function purgeBanSideTablesForDiscordSnowflake(
   discordSnowflake: string | null | undefined,
 ): Promise<void> {
   const id = discordSnowflake?.trim();
   if (!id) return;
-  await deleteBannedIpsByDiscordId(id);
-  await deleteBannedListRowsByDiscordId(id);
+  await Promise.all([
+    deleteBannedIpsByDiscordId(id),
+    deleteBannedFingerprintsByDiscordId(id),
+    deleteBannedListRowsByDiscordId(id),
+  ]);
 }
 
 export async function insertBannedIpRow(input: {
@@ -496,6 +518,72 @@ export async function setUserSiteBan(input: {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, message: msg };
   }
+}
+
+export type UnbanReport = {
+  ips: number;
+  fingerprints: number;
+  blacklist: number;
+  siteBans: number;
+};
+
+async function deleteCount(
+  table: string,
+  column: string,
+  value: string,
+): Promise<number> {
+  const supabase = createAdminClient();
+  const { error, count } = await supabase
+    .from(table)
+    .delete({ count: "exact" })
+    .eq(column, value);
+  if (error) {
+    if (error.code !== "42P01") {
+      console.error(`[site-ban-db] unban ${table}.${column}`, error.message);
+    }
+    return 0;
+  }
+  return count ?? 0;
+}
+
+/**
+ * Déban complet : toutes les sources lues par le middleware et le login
+ * (banned_ips, banned_fingerprints, retard, users.site_banned, banned_list).
+ * Le ban Discord serveur est levé par l'appelant (route admin).
+ */
+export async function unbanEverywhere(input: {
+  discordId: string | null;
+  ip: string | null;
+}): Promise<UnbanReport> {
+  const report: UnbanReport = { ips: 0, fingerprints: 0, blacklist: 0, siteBans: 0 };
+  const did = input.discordId?.trim();
+  const ip = input.ip?.trim();
+
+  if (ip) report.ips += await deleteCount("banned_ips", "ip", ip);
+
+  if (did && DISCORD_SNOWFLAKE_RE.test(did)) {
+    const supabase = createAdminClient();
+    const [ips, fps, blacklist, siteBan] = await Promise.all([
+      deleteCount("banned_ips", "discord_id", did),
+      deleteCount("banned_fingerprints", "discord_id", did),
+      deleteCount(RETARD_TABLE, "user_id", did),
+      supabase
+        .from(APP_USERS_TABLE)
+        .update({ site_banned: false, site_ban_reason: null }, { count: "exact" })
+        .eq("discord_user_id", did)
+        .eq("site_banned", true),
+      deleteBannedListRowsByDiscordId(did),
+    ]);
+    if (siteBan.error) {
+      console.error("[site-ban-db] unban users.site_banned", siteBan.error.message);
+    }
+    report.ips += ips;
+    report.fingerprints += fps;
+    report.blacklist += blacklist;
+    report.siteBans += siteBan.count ?? 0;
+  }
+
+  return report;
 }
 
 export { getClientIpFromHeaders };

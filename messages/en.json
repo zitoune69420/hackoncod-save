@@ -304,6 +304,16 @@
           "action": "Action"
         }
       },
+      "unban": {
+        "open": "Unban",
+        "title": "Unban someone",
+        "description": "Removes every ban trace: IPs, fingerprints, blacklist, site ban and Discord server ban. With an IP, only that IP's rows are removed.",
+        "target": "Discord ID or IP address",
+        "submit": "Unban everywhere",
+        "submitting": "Unbanning…",
+        "success": "Unbanned — IPs: {{ips}}, fingerprints: {{fingerprints}}, blacklist: {{blacklist}}, site ban: {{siteBans}}, Discord: {{discord}}",
+        "error": "Could not unban."
+      },
       "allBannedIps": {
         "title": "Banned IPs",
         "description": "IP addresses stored in banned_ips. Add entries using the same dialog as blacklist (IP tab selected by default) or delete a row.",

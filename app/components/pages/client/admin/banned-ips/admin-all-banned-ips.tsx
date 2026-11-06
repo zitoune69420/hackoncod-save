@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CommonTable } from "@/components/commons/table/table";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, Refresh01Icon } from "@hugeicons/core-free-icons";
+import { Add01Icon, Refresh01Icon, SquareUnlock02Icon } from "@hugeicons/core-free-icons";
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
@@ -20,6 +20,7 @@ import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
 import { AdminBlacklistFormDialog } from "@/app/components/pages/client/admin/blacklist/admin-blacklist-form-dialog";
+import { AdminUnbanDialog } from "@/app/components/pages/client/admin/banned-ips/admin-unban-dialog";
 import type { BannedIpAdminRow } from "@/lib/banned/banned-ip-admin-row";
 import { truncateText } from "@/lib/truncate-text";
 
@@ -389,6 +390,7 @@ export function AdminAllBannedIpsPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshRef = useRef(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [unbanOpen, setUnbanOpen] = useState(false);
 
   const filteredFlat = useMemo(() => {
     if (!searchQuery.trim()) return data;
@@ -553,6 +555,11 @@ export function AdminAllBannedIpsPage() {
         onSaved={handleSaved}
         defaultCreateMode="ip"
       />
+      <AdminUnbanDialog
+        open={unbanOpen}
+        onOpenChange={setUnbanOpen}
+        onUnbanned={handleSaved}
+      />
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
         <div className="min-w-0 shrink">
           <h1 className="text-2xl font-semibold">
@@ -571,6 +578,15 @@ export function AdminAllBannedIpsPage() {
           >
             <HugeiconsIcon icon={Add01Icon} strokeWidth={2} />
             {t("dashboard.admin.allBannedIps.addEntry")}
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setUnbanOpen(true)}
+            className="shrink-0 gap-2 px-3"
+          >
+            <HugeiconsIcon icon={SquareUnlock02Icon} strokeWidth={2} />
+            {t("dashboard.admin.unban.open")}
           </Button>
           <Button
             size="lg"

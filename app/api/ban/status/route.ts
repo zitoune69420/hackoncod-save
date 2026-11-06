@@ -12,7 +12,7 @@ import {
 } from "@/lib/banned/site-ban-db";
 import { getBetterAuthSecret } from "@/lib/env";
 import { cookies as nextCookies, headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 
 /**
  * État de blocage pour la session courante + IP (côté serveur).
@@ -64,12 +64,15 @@ export async function GET() {
      * Ferme le trou OAuth callback où le fingerprint n'est pas capturable au login.
      */
     if (status.banned) {
-      void fetchRecordBanSignalsEdge({
-        ip: getClientIpFromHeaders(h),
-        fp: h.get("x-client-fingerprint"),
-        did: discordId,
-        reason: status.reason ?? "session-status-propagation",
-      });
+      // after() : la réponse part tout de suite, mais l'écriture va au bout (un `void fetch` peut être coupé).
+      after(() =>
+        fetchRecordBanSignalsEdge({
+          ip: getClientIpFromHeaders(h),
+          fp: h.get("x-client-fingerprint"),
+          did: discordId,
+          reason: status.reason ?? "session-status-propagation",
+        }),
+      );
     }
 
     return NextResponse.json(status, {

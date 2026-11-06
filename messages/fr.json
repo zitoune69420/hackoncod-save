@@ -304,6 +304,16 @@
           "action": "Action"
         }
       },
+      "unban": {
+        "open": "Débannir",
+        "title": "Débannir quelqu'un",
+        "description": "Retire toutes les traces de ban : IPs, empreintes, blacklist, ban site et ban Discord serveur. Avec une IP, seules les lignes de cette IP sont retirées.",
+        "target": "Discord ID ou adresse IP",
+        "submit": "Débannir partout",
+        "submitting": "Déban en cours…",
+        "success": "Débanni — IPs : {{ips}}, empreintes : {{fingerprints}}, blacklist : {{blacklist}}, ban site : {{siteBans}}, Discord : {{discord}}",
+        "error": "Impossible de débannir."
+      },
       "allBannedIps": {
         "title": "IPs bannies",
         "description": "Liste des adresses IP enregistrées dans banned_ips. Tu peux en ajouter (même dialogue que la blacklist, onglet IP par défaut) ou supprimer une ligne.",

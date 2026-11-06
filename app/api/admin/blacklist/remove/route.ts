@@ -53,9 +53,6 @@ export async function POST(req: Request) {
           );
         }
         await deleteBlacklist(dbRowId);
-        if (snowflake) {
-          await purgeBanSideTablesForDiscordSnowflake(snowflake);
-        }
       }
     }
 
@@ -71,6 +68,7 @@ export async function POST(req: Request) {
       ok: true,
     };
     if (snowflake) {
+      await purgeBanSideTablesForDiscordSnowflake(snowflake);
       discordUnban = await tryGuildUnbanMember(
         snowflake,
         "Hackoncod — retrait de la liste noire (admin)",

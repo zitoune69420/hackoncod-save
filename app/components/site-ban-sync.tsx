@@ -40,7 +40,6 @@ export function SiteBanSync() {
           } catch {
             /* ignore */
           }
-          document.cookie = `${LS_KEY}=1; path=/; max-age=${60 * 60 * 24 * 7}; samesite=lax`;
           router.replace("/banned");
         } else {
           try {
