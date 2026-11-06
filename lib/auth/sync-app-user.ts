@@ -5,6 +5,7 @@ import { getOAuthBanOutcome } from "@/lib/banned/site-ban-db";
 import { extractDiscordSnowflakeFromAvatarUrl } from "@/lib/discord/extract-discord-snowflake-from-avatar";
 import { resolveUserRoleForUserId } from "@/lib/permissions-server";
 import {
+  getAppUserRole,
   persistAuthUserDiscordSnowflake,
   upsertAppUserFromSession,
 } from "@/lib/supabase/app-users";
@@ -24,7 +25,11 @@ export async function syncUserProfileAfterLogin(
   user: SessionUserLike,
   options?: { discordAccountId?: string | null },
 ): Promise<SyncProfileResult> {
-  const role = await resolveUserRoleForUserId(user.id, user);
+  // Discord injoignable : on garde le rôle déjà en base plutôt que de le remettre à « user ».
+  const role =
+    (await resolveUserRoleForUserId(user.id, user)) ??
+    (await getAppUserRole(user.id)) ??
+    "user";
   const saved = await upsertAppUserFromSession(
     user.id,
     { name: user.name, email: user.email },

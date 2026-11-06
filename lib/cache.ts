@@ -1,12 +1,12 @@
 /**
  * Persistent cache (localStorage + memory) for fetched data.
  * - Survives page reload.
- * - Expires after 3 days.
+ * - Expires after 5 minutes (admin edits must reach users quickly).
  * - "Refresh" button deletes entry then refetches.
  */
 
 const PREFIX = "hackoncod_cache:";
-const TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const TTL_MS = 5 * 60 * 1000;
 const memory = new Map<string, { value: unknown; expiresAt: number }>();
 
 function storageKey(key: string) {
@@ -21,7 +21,8 @@ function getFromStorage<T>(
     const raw = localStorage.getItem(storageKey(key));
     if (!raw) return undefined;
     const entry = JSON.parse(raw) as { value: T; expiresAt: number };
-    if (Date.now() > entry.expiresAt) {
+    // Upper bound also drops entries written with the former 3-day TTL.
+    if (Date.now() > entry.expiresAt || entry.expiresAt > Date.now() + TTL_MS) {
       removeFromStorage(key);
       return undefined;
     }
@@ -93,6 +94,25 @@ export function setCached<T>(key: string, data: T): void {
 export function invalidateCache(key: string): void {
   memory.delete(key);
   removeFromStorage(key);
+}
+
+/** Listes cheats publiques / VIP / semi-VIP, à vider après une mutation admin. */
+export function invalidateCheatListCaches(): void {
+  const isCheatList = (k: string) =>
+    k.startsWith("cheats:") ||
+    k === cacheKey("vip-cheats") ||
+    k === cacheKey("semivip-cheats");
+  for (const k of [...memory.keys()]) if (isCheatList(k)) memory.delete(k);
+  if (typeof window === "undefined") return;
+  try {
+    for (const sk of Object.keys(localStorage)) {
+      if (sk.startsWith(PREFIX) && isCheatList(sk.slice(PREFIX.length))) {
+        localStorage.removeItem(sk);
+      }
+    }
+  } catch {
+    // ignore
+  }
 }
 
 export function cacheKey(

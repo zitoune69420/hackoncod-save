@@ -145,18 +145,24 @@ export function AdminCheatFormDialog({
       let uploadedPath: string | undefined;
 
       if (file) {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("folder", modsFolder);
         const up = await fetch("/api/admin/mods/upload", {
           method: "POST",
-          body: fd,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: file.name,
+            size: file.size,
+            folder: modsFolder,
+          }),
         });
-        const upJson = await up.json().catch(() => ({}));
+        const upJson = (await up.json().catch(() => ({}))) as {
+          error?: unknown;
+          path?: unknown;
+          signedUrl?: unknown;
+        };
         if (!up.ok) {
           showToast({
             text:
-              typeof upJson?.error === "string"
+              typeof upJson.error === "string"
                 ? upJson.error
                 : t("dashboard.admin.allCheats.dialog.errorUpload"),
             variant: "error",
@@ -164,10 +170,20 @@ export function AdminCheatFormDialog({
           return;
         }
         uploadedPath =
-          typeof (upJson as { path?: unknown }).path === "string"
-            ? (upJson as { path: string }).path.trim()
-            : undefined;
-        if (!uploadedPath) {
+          typeof upJson.path === "string" ? upJson.path.trim() : undefined;
+        // Upload direct navigateur → Supabase Storage (pas de limite 4,5 Mo Vercel).
+        const put =
+          uploadedPath && typeof upJson.signedUrl === "string"
+            ? await fetch(upJson.signedUrl, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": file.type || "application/octet-stream",
+                  "x-upsert": "false",
+                },
+                body: file,
+              })
+            : null;
+        if (!uploadedPath || !put?.ok) {
           showToast({
             text: t("dashboard.admin.allCheats.dialog.errorUpload"),
             variant: "error",
@@ -222,6 +238,11 @@ export function AdminCheatFormDialog({
       });
       onSaved();
       onOpenChange(false);
+    } catch {
+      showToast({
+        text: t("dashboard.admin.allCheats.dialog.errorSave"),
+        variant: "error",
+      });
     } finally {
       setSaving(false);
     }

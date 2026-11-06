@@ -529,34 +529,43 @@ export function TicketChat({
   async function handleArchive() {
     const archived = !order.archived;
     try {
-      await fetch(`/api/admin/tickets/${orderId}/archive`, {
+      const res = await fetch(`/api/admin/tickets/${orderId}/archive`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ archived }),
       });
+      if (!res.ok) throw new Error();
       setOrder((o) => ({ ...o, archived }));
       showToast({
         text: archived ? t("tickets.archiveSuccess") : t("tickets.unarchiveSuccess"),
         variant: "success",
       });
-    } catch { /* silent */ }
+    } catch {
+      showToast({ text: t("tickets.errorUpdating"), variant: "error" });
+    }
   }
 
   async function handleConfirmSale() {
     try {
-      await fetch(`/api/admin/tickets/${orderId}/confirm-sale`, { method: "POST" });
+      const res = await fetch(`/api/admin/tickets/${orderId}/confirm-sale`, { method: "POST" });
+      if (!res.ok) throw new Error();
       setOrder((o) => ({ ...o, status: "completed" }));
       showToast({ text: t("tickets.saleConfirmed"), variant: "success" });
-    } catch { /* silent */ }
+    } catch {
+      showToast({ text: t("tickets.errorUpdating"), variant: "error" });
+    }
   }
 
   async function handleDelete() {
     if (!confirm(t("tickets.deleteConfirm"))) return;
     try {
-      await fetch(`/api/admin/tickets/${orderId}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/tickets/${orderId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
       showToast({ text: t("tickets.deleteSuccess"), variant: "success" });
       onBack();
-    } catch { /* silent */ }
+    } catch {
+      showToast({ text: t("tickets.errorUpdating"), variant: "error" });
+    }
   }
 
   const canSend = !order.archived || isAdminOrPartner;

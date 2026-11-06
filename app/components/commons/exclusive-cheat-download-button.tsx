@@ -45,18 +45,24 @@ export function CheatDownloadButton({
   const onClick = async () => {
     if (!hasFile) return;
 
+    // Ouvert pendant le clic : après des `await`, Safari/Firefox bloquent window.open (popup).
+    const tab = window.open("", "_blank");
+    if (tab) tab.opener = null;
+    const fail = (text: string) => {
+      tab?.close();
+      showToast({ text, variant: "error" });
+    };
+
     try {
       let url: string;
       if (channel === "public") {
         const tok = await issuePublicCheatDownloadToken(cheatId);
         if (!tok.ok) {
-          showToast({
-            text:
-              tok.error === "rate_limited"
-                ? t("common.exclusiveDownload.rateLimited")
-                : t("common.exclusiveDownload.urlError"),
-            variant: "error",
-          });
+          fail(
+            tok.error === "rate_limited"
+              ? t("common.exclusiveDownload.rateLimited")
+              : t("common.exclusiveDownload.urlError"),
+          );
           return;
         }
         const q = new URLSearchParams({
@@ -76,24 +82,20 @@ export function CheatDownloadButton({
         error?: string;
       };
       if (!res.ok || typeof json.url !== "string") {
-        showToast({
-          text:
-            res.status === 429
-              ? t("common.exclusiveDownload.rateLimited")
-              : typeof json.error === "string"
-                ? json.error
-                : t("common.exclusiveDownload.urlError"),
-          variant: "error",
-        });
+        fail(
+          res.status === 429
+            ? t("common.exclusiveDownload.rateLimited")
+            : typeof json.error === "string"
+              ? json.error
+              : t("common.exclusiveDownload.urlError"),
+        );
         return;
       }
-      window.open(json.url, "_blank", "noopener,noreferrer");
+      if (tab) tab.location.href = json.url;
+      else window.location.assign(json.url);
       reviewToast();
     } catch {
-      showToast({
-        text: t("common.exclusiveDownload.networkError"),
-        variant: "error",
-      });
+      fail(t("common.exclusiveDownload.networkError"));
     }
   };
 

@@ -14,7 +14,13 @@ import {
 import { useTranslations } from "@/app/components/i18n-provider";
 import { Progress } from "@/components/ui/progress";
 import { SearchBar } from "@/components/commons/search-bar";
-import { cacheKey, getCached, invalidateCache, setCached } from "@/lib/cache";
+import {
+  cacheKey,
+  getCached,
+  invalidateCache,
+  invalidateCheatListCaches,
+  setCached,
+} from "@/lib/cache";
 import { showToast } from "@/components/commons/toasts";
 import { showPendingDeleteConfirmToast } from "@/components/commons/pending-delete-toast";
 import { useUserRole } from "@/hooks/use-user-role";
@@ -315,6 +321,7 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
             );
           }
           invalidateCache(cacheKey("admin-all-cheats"));
+          invalidateCheatListCaches();
           refreshRef.current = true;
           setRefreshTick((k) => k + 1);
         },
@@ -325,6 +332,7 @@ export function AdminAllCheatsPage({ scope }: { scope: AdminAllCheatsScope }) {
 
   const handleCheatSaved = useCallback(() => {
     invalidateCache(cacheKey("admin-all-cheats"));
+    invalidateCheatListCaches();
     refreshRef.current = true;
     setRefreshTick((k) => k + 1);
   }, []);

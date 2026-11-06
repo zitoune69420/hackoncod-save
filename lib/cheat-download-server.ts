@@ -31,9 +31,10 @@ export async function resolveCheatDownloadUrl(
   let lastMsg = "";
 
   for (const bucket of buckets) {
+    // download: Content-Disposition attachment, sinon les scripts texte s'affichent au lieu de se télécharger.
     const { data, error } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(parsed.objectPath, ttlSeconds);
+      .createSignedUrl(parsed.objectPath, ttlSeconds, { download: true });
 
     if (!error && data?.signedUrl) {
       return { url: data.signedUrl };

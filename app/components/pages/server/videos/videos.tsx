@@ -26,7 +26,7 @@ export type VideoRow = {
 
 async function fetchVideos(): Promise<VideoRow[]> {
   const res = await fetch("/api/videos");
-  const json = await res.json();
+  const json = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(json?.error ?? `Error ${res.status}`);
   }
@@ -186,7 +186,7 @@ export function VideosPage() {
         showToast({ text: t("videos.toasts.errorLoading"), variant: "error" });
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadData();

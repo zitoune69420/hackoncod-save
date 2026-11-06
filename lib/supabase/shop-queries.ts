@@ -83,9 +83,11 @@ export async function getPublicShopCheatsForApi(): Promise<ShopCheatPublic[]> {
     .order("created_at", { ascending: false });
   if (error) return [];
   const cheats = (data ?? []) as ShopCheatPublic[];
-  for (const cheat of cheats) {
-    cheat.prices = await getCheatPrices(cheat.id);
-  }
+  await Promise.all(
+    cheats.map(async (cheat) => {
+      cheat.prices = await getCheatPrices(cheat.id);
+    }),
+  );
   return cheats;
 }
 
@@ -98,9 +100,11 @@ export async function getPublicShopServicesForApi(): Promise<ShopServicePublic[]
     .order("created_at", { ascending: false });
   if (error) return [];
   const services = (data ?? []) as ShopServicePublic[];
-  for (const service of services) {
-    service.prices = await getServicePrices(service.id);
-  }
+  await Promise.all(
+    services.map(async (service) => {
+      service.prices = await getServicePrices(service.id);
+    }),
+  );
   return services;
 }
 
@@ -682,9 +686,11 @@ export async function getShopCheatsForAdmin(
   }
   const cheats = (data ?? []) as ShopCheat[];
   const withCreators = await attachShopCreatorsToRows(cheats);
-  for (const cheat of withCreators) {
-    cheat.prices = await getCheatPrices(cheat.id);
-  }
+  await Promise.all(
+    withCreators.map(async (cheat) => {
+      cheat.prices = await getCheatPrices(cheat.id);
+    }),
+  );
   return withCreators;
 }
 
@@ -711,9 +717,11 @@ export async function getShopServicesForAdmin(
   }
   const services = (data ?? []) as ShopService[];
   const withCreators = await attachShopCreatorsToRows(services);
-  for (const service of withCreators) {
-    service.prices = await getServicePrices(service.id);
-  }
+  await Promise.all(
+    withCreators.map(async (service) => {
+      service.prices = await getServicePrices(service.id);
+    }),
+  );
   return withCreators;
 }
 

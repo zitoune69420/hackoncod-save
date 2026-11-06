@@ -461,10 +461,11 @@ export async function getDiscordRoleResolutionDebug(
   };
 }
 
+/** `null` = Discord injoignable (429, 5xx, réseau) : ne pas persister, sinon un VIP serait rétrogradé en base. */
 export async function resolveUserRoleForUserId(
   appUserId: string | null | undefined,
   user?: SessionUserLike | null,
-): Promise<UserRole> {
+): Promise<UserRole | null> {
   if (!appUserId) {
     return "user";
   }
@@ -473,7 +474,7 @@ export async function resolveUserRoleForUserId(
     return await resolveDiscordRoleForUser(appUserId, user?.image);
   } catch (error) {
     console.error("[roles] unable to resolve Discord guild role", error);
-    return "user";
+    return null;
   }
 }
 
@@ -482,7 +483,7 @@ export async function getResolvedPermissionsForUserId(
   user?: SessionUserLike | null,
 ): Promise<readonly Permission[]> {
   const role = await resolveUserRoleForUserId(appUserId, user);
-  return getRolePermissions(role);
+  return getRolePermissions(role ?? "user");
 }
 
 export async function getCurrentUserAccess(options?: {
@@ -505,12 +506,17 @@ export async function getCurrentUserAccess(options?: {
 
   if (source === "live") {
     const live = await resolveUserRoleForUserId(u.id, u);
-    const saved = await upsertAppUserFromSession(
-      u.id,
-      { name: u.name, email: u.email },
-      live,
-    );
-    if (!saved.ok) {
+    const saved =
+      live === null
+        ? null
+        : await upsertAppUserFromSession(
+            u.id,
+            { name: u.name, email: u.email },
+            live,
+          );
+    if (saved === null) {
+      role = (await getAppUserRole(u.id)) ?? "user";
+    } else if (!saved.ok) {
       console.error(
         "[roles] Impossible d’enregistrer l’utilisateur Supabase (live) — accès refusé côté rôle :",
         saved.message,
@@ -519,7 +525,7 @@ export async function getCurrentUserAccess(options?: {
     } else {
       const fromDb = await getAppUserRole(u.id);
       /** Même logique que `db` : la base est la source pour les autorisations une fois persistée. */
-      role = fromDb ?? live;
+      role = fromDb ?? live ?? "user";
     }
   } else {
     let fromDb = await getAppUserRole(u.id);
@@ -530,7 +536,7 @@ export async function getCurrentUserAccess(options?: {
       const saved = await upsertAppUserFromSession(
         u.id,
         { name: u.name, email: u.email },
-        live,
+        live ?? "user",
       );
       if (!saved.ok) {
         console.error("[roles] Impossible d’enregistrer l’utilisateur Supabase (db) :", saved.message);

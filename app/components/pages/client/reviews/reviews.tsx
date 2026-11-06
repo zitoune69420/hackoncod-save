@@ -92,7 +92,7 @@ async function fetchReviews(
   limit: number,
 ): Promise<ReviewWithAuthor[]> {
   const res = await fetch(`/api/reviews?offset=${offset}&limit=${limit}`)
-  const data = await res.json()
+  const data = await res.json().catch(() => null)
   if (!res.ok) throw new Error(data?.error ?? "Error")
   return Array.isArray(data) ? data : []
 }
@@ -100,7 +100,9 @@ async function fetchReviews(
 export function prefetchReviews(): void {
   const key = cacheKey("reviews")
   if (getCached<ReviewWithAuthor[]>(key)) return
-  fetchReviews(0, PAGE_SIZE).then((data) => setCached(key, data))
+  fetchReviews(0, PAGE_SIZE)
+    .then((data) => setCached(key, data))
+    .catch(() => {})
 }
 
 function StarRating({ note }: { note: number }) {
